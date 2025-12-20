@@ -1,0 +1,40 @@
+# APKs et fichiers décompilés (volumineux)
+/extracted/
+
+# Configuration locale Claude
+.claude/
+
+# Fichiers temporaires Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.temp
