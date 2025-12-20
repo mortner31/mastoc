@@ -8,15 +8,19 @@ mastock est un projet visant à créer une application personnelle pour visualis
 
 ## 🎯 Objectif Actuel
 
-**TODO 03** : Analyse approfondie du bundle Hermes via agents
+**TODO 04** : Test Extraction Données Montoboard
 
-**Statut** : À faire (0%)
+**Statut** : En cours (25%)
 
-**Contexte** : L'extraction directe via API a partiellement fonctionné (auth OK, liste gyms OK) mais les endpoints détaillés (faces, climbs) donnent des erreurs. Avant de faire d'autres requêtes, il faut analyser le code pour comprendre exactement comment l'app fonctionne.
+**Contexte** : L'analyse Hermes (TODO 03 à 95%) a révélé les endpoints, mais les tests montrent que plusieurs endpoints retournent 404. Il faut analyser plus en profondeur la construction des requêtes.
+
+**Problème identifié** : Les endpoints comme `api/gyms/{id}/climbs` retournent 404 malgré un token valide. Piste : analyser `fetchMySentClimbs` pour comprendre la construction exacte des URLs.
 
 **Fichiers clés** :
-- `/docs/TODOS/03_analyse_hermes_agents.md` - Plan de travail
-- `/docs/TODOS/03_analyse_hermes_agents_STATUS.md` - Progression
+- `/docs/TODOS/04_test_extraction_montoboard_STATUS.md` - Progression
+- `/docs/TODOS/03_analyse_hermes_agents_STATUS.md` - Analyse Hermes (95%)
+- `/docs/reverse_engineering/INDEX.md` - Base documentaire RE
+- Code : `/extracted/stockt_decompiled/decompiled/stokt_decompiled.js`
 
 ## 📋 TODOs
 
@@ -24,7 +28,8 @@ mastock est un projet visant à créer une application personnelle pour visualis
 |------|-------------|--------|
 | 01 | Analyse de l'app Stōkt | 80% - Bloqué sur extraction données |
 | 02 | Conception schéma SQLite | 0% - En attente |
-| 03 | Analyse Hermes via agents | 0% - **Prioritaire** |
+| 03 | Analyse Hermes via agents | 95% - Endpoints documentés |
+| 04 | Test extraction Montoboard | 25% - **Prioritaire** - Analyser requêtes |
 
 ## 🔑 Données clés
 
@@ -51,6 +56,16 @@ cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
 
 ## 📊 Résumé des sessions
 
+### Session 2025-12-20 (soir)
+- ✅ Installation hermes-dec (décompileur Hermes v96)
+- ✅ Désassemblage complet du bundle (95 Mo)
+- ✅ Configuration app extraite
+- ✅ 40+ endpoints API documentés
+- ✅ 100+ actions Redux cataloguées
+- ✅ Structures Climb/Face extraites
+- ✅ Base documentaire créée : `/docs/reverse_engineering/`
+- 📝 TODO 03 avancé à 85%
+
 ### Session 2025-12-20 (après-midi)
 - ✅ Authentification API réussie (`sostokt.com`, pas `getstokt.com`)
 - ✅ Token DRF obtenu
@@ -74,11 +89,21 @@ cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
 
 ## 📁 Rapports disponibles
 
+- `/docs/reports/SESSION_2025-12-20_analyse_hermes.md` - **Analyse Hermes (nouveau)**
 - `/docs/reports/SESSION_2025-12-20_api_extraction.md` - Test extraction API
 - `/docs/reports/SESSION_2025-12-20_analyse_complete_stokt.md` - Analyse complète
 - `/docs/reports/SESSION_2025-12-20_patch_apk_mitm.md` - Tentative patch APK
 - `/docs/reports/SESSION_2025-11-10_extraction_stockt.md` - Extraction initiale
 - `/docs/reports/ANALYSE_STRUCTURE_FIREBASE_API.md` - Structure API/Firebase
+
+## 📚 Documentation Reverse Engineering
+
+- `/docs/reverse_engineering/INDEX.md` - **Index racine**
+- `/docs/reverse_engineering/01_CONFIGURATION.md` - Configuration app
+- `/docs/reverse_engineering/02_AUTHENTIFICATION.md` - Flux auth
+- `/docs/reverse_engineering/03_ENDPOINTS.md` - Liste endpoints
+- `/docs/reverse_engineering/04_STRUCTURES.md` - Structures données
+- `/docs/reverse_engineering/05_REDUX_ACTIONS.md` - Actions Redux
 
 ## 🗂️ Structure du Projet
 
@@ -104,15 +129,20 @@ cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
 
 ## 🎯 Prochaine session
 
-**Priorité : TODO 03 - Analyse Hermes**
+**Priorité : Analyser construction des requêtes**
 
-1. Installer un décompileur Hermes (`hermes-dec` ou équivalent)
-2. Décompiler le bundle `index.android.bundle`
-3. Analyser le flux Redux pour comprendre les requêtes API
-4. Documenter les endpoints exacts avec leurs paramètres
-5. Préparer un script d'extraction sûr
+1. **Analyser `fetchMySentClimbs`** (ligne 442389 dans stokt_decompiled.js)
+   - Comprendre comment l'URL `/my-sent-climbs` est construite
+   - Vérifier s'il y a des headers additionnels
+2. Comparer la construction des requêtes avec ce qu'on envoie
+3. Tester avec les corrections trouvées
+4. Si échec → intercepter le trafic réel de l'app
 
-**Stratégie** : Utiliser des agents Explore pour analyser le code sans faire de requêtes API risquées.
+**Fonctions clés à analyser** :
+- `fetchMySentClimbs` (ligne 442389)
+- `fetchGymRecentClimbs` (ligne 458971)
+
+**Documentation de référence** : `/docs/reverse_engineering/03_ENDPOINTS.md`
 
 ---
 

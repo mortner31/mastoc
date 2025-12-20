@@ -7,7 +7,44 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
-## 2025-12-20
+## 2025-12-20 (nuit)
+
+- **TODO 04 avancé à 25%** - Tests d'extraction
+  - Authentification réussie (token valide)
+  - Tests des endpoints : plusieurs retournent 404
+  - Endpoints OK : `api/token-auth`, `api/users/me`, `api/version`, `api/my-notifications`
+  - Endpoints 404 : `api/gyms/{id}/climbs`, `api/gyms/{id}/faces`, `api/users/{id}/sent-climbs`
+  - **Découverte** : L'API a peut-être changé, ou il manque des headers
+  - **Prochaine étape** : Analyser `fetchMySentClimbs` pour comprendre la construction des requêtes
+
+- **TODO 03 avancé à 95%** - Endpoints supplémentaires découverts
+  - Endpoint climbs récents : `api/gyms/{gymId}/climbs?max_age=60`
+  - Endpoint sent-climbs : `api/users/{userId}/sent-climbs?limit=X`
+  - Endpoint my-sent-climbs : `api/gyms/{gymId}/my-sent-climbs`
+  - Paramètres filtrage complets documentés
+  - HomeScreen analysé (flux de chargement)
+
+## 2025-12-20 (soir)
+
+- **TODO 04 créé** - Test extraction données Montoboard
+  - Objectif : Tester les endpoints découverts
+  - Récupérer gym, faces, climbs, images
+  - Analyser le format holdsList
+  - Exporter en JSON
+  - Statut : À faire (0%)
+
+- **TODO 03 avancé à 85%** - Analyse Hermes réussie
+  - Installation de hermes-dec (décompileur Hermes v96)
+  - Désassemblage complet du bundle (95 Mo)
+  - Configuration app extraite (`baseURL`, `appVersion`, etc.)
+  - Flux authentification documenté (`Token <value>`)
+  - 40+ endpoints API identifiés et documentés
+  - 100+ actions Redux cataloguées
+  - Structures de données Climb/Face extraites
+  - **Création base documentaire** : `/docs/reverse_engineering/`
+  - Rapport : `/docs/reports/SESSION_2025-12-20_analyse_hermes.md`
+
+## 2025-12-20 (après-midi)
 
 - **Test d'extraction API directe**
   - Authentification réussie sur `sostokt.com` (pas getstokt.com)
