@@ -80,8 +80,11 @@ Format découvert : `S829279 S829528 O828906 O828964 O828985 O829120 O829377 O82
 - [x] Exporter en JSON (`extracted/data/montoboard_20251220.json`)
 
 ### Phase 5 : Analyse holdsList
-- [ ] Mapper les IDs de prises avec les positions sur l'image
-- [ ] Comprendre le système de coordonnées
+- [x] Format holdsList décodé (S/O/F/T + ID)
+- [x] 738 prises uniques identifiées
+- [x] Prise la plus utilisée : 829098 (78 fois)
+- [ ] Récupérer `api/faces/{faceId}/setup` pour les coordonnées
+- [ ] Mapper les IDs vers positions (x, y) sur l'image
 
 ## 📁 Fichiers de référence
 

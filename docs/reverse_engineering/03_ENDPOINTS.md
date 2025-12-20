@@ -165,7 +165,20 @@ curl "https://www.sostokt.com/api/gyms/$GYM_ID/my-sent-climbs" \
 ]
 ```
 
-## ENDPOINTS NON FONCTIONNELS
+## ENDPOINT SETUP (COORDONNÉES PRISES)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/faces/{faceId}/setup` | GET | **Setup de la face avec coordonnées des prises** |
+
+Cet endpoint retourne la configuration complète de la face, incluant :
+- `picture` : image de la face (name, width, height)
+- Liste des prises avec leurs coordonnées (x, y) sur l'image
+- Permet de mapper les IDs de prises (ex: 829279) vers des positions pixel
+
+**Note** : Peut nécessiter des permissions (créateur de mur, abonnement actif).
+
+## ENDPOINTS NON FONCTIONNELS (pour utilisateur standard)
 
 | Endpoint | Statut | Note |
 |----------|--------|------|
@@ -175,7 +188,6 @@ curl "https://www.sostokt.com/api/gyms/$GYM_ID/my-sent-climbs" \
 | `api/faces/{faceId}/latest-climbs/paginated` | ❌ 404 | Endpoint protégé |
 | `api/users/{id}/sent-climbs` | ❌ 404 | Utiliser `/gyms/{id}/my-sent-climbs` |
 | `api/efforts` | ❌ 403 | Permission refusée |
-| `api/gyms/paginated` | ❌ 404 | Non testé en détail |
 
 ## ENDPOINTS DÉCOUVERTS (NON TESTÉS)
 

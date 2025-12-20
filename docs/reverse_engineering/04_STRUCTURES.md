@@ -261,6 +261,46 @@ holds = parse_holds_list("S829279 O828906 T829009")
 }
 ```
 
+## Face Setup (Coordonnées Prises)
+
+L'endpoint `api/faces/{faceId}/setup` retourne la configuration de la face avec les coordonnées de toutes les prises.
+
+### Structure attendue
+
+```json
+{
+  "picture": {
+    "name": "CACHE/images/walls/.../ref_pic.jpg",
+    "width": 905,
+    "height": 1200
+  },
+  "holds": [
+    {
+      "id": 829279,
+      "x": 0.45,
+      "y": 0.32
+    }
+  ]
+}
+```
+
+### Mapping ID → Position
+
+Les IDs de prises dans `holdsList` (ex: `S829279`) correspondent aux `id` dans le setup.
+Les coordonnées `x` et `y` sont probablement des ratios (0-1) par rapport aux dimensions de l'image.
+
+**Position pixel** :
+```python
+pixel_x = hold.x * picture.width   # ex: 0.45 * 905 = 407px
+pixel_y = hold.y * picture.height  # ex: 0.32 * 1200 = 384px
+```
+
+### Statistiques prises (Montoboard)
+
+- **738 prises uniques** sur la face
+- Prise la plus utilisée : **829098** (78 fois sur 1017 climbs)
+- Total utilisations : 8785 prises dans tous les climbs
+
 ---
 
 **Dernière mise à jour** : 2025-12-20
