@@ -9,6 +9,20 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-20
 
+- **Test d'extraction API directe**
+  - Authentification réussie sur `sostokt.com` (pas getstokt.com)
+  - Token DRF obtenu via `/api/token-auth`
+  - Salle Montoboard identifiée (ID: `be149ef2-317d-4c73-8d7d-50074577d2fa`)
+  - Endpoints `/api/faces`, `/api/climbs` : erreurs/timeout
+  - **Décision** : Analyse statique approfondie avant nouvelles requêtes
+  - Rapport : `/docs/reports/SESSION_2025-12-20_api_extraction.md`
+
+- **TODO 03 créé** - Analyse approfondie du bundle Hermes via agents
+  - Objectif : Comprendre exactement les flux API de l'app
+  - Stratégie : Décompilation Hermes + analyse Redux
+  - Contrainte : Pas de requêtes exploratoires (risque bannissement)
+  - Statut : À faire (0%)
+
 - **TODO 01 mis à jour** - Analyse complète refaite depuis zéro
   - Re-analyse de l'APK et du bundle JavaScript
   - 40+ endpoints API identifiés
