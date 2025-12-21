@@ -8,28 +8,32 @@ mastock est un projet visant à créer une application personnelle pour visualis
 
 ## 🎯 Objectif Actuel
 
-**TODO 04** : Test Extraction Données Montoboard
+**TODO 05** : Structure Package Python mastock
 
-**Statut** : En cours (25%)
+**Statut** : A faire (0%)
 
-**Contexte** : L'analyse Hermes (TODO 03 à 95%) a révélé les endpoints, mais les tests montrent que plusieurs endpoints retournent 404. Il faut analyser plus en profondeur la construction des requêtes.
+**Contexte** : L'extraction des données Montoboard est complète (TODO 04 terminé). On passe maintenant au développement du prototype Python.
 
-**Problème identifié** : Les endpoints comme `api/gyms/{id}/climbs` retournent 404 malgré un token valide. Piste : analyser `fetchMySentClimbs` pour comprendre la construction exacte des URLs.
+**Objectif** : Créer un package Python installable (`pip install -e .`) avec interface PyQtGraph pour :
+- Visualiser les climbs et prises sur le mur
+- Tester les concepts d'interaction avec la BD
+- Servir de base pour l'application mobile
 
 **Fichiers clés** :
-- `/docs/TODOS/04_test_extraction_montoboard_STATUS.md` - Progression
-- `/docs/TODOS/03_analyse_hermes_agents_STATUS.md` - Analyse Hermes (95%)
-- `/docs/reverse_engineering/INDEX.md` - Base documentaire RE
-- Code : `/extracted/stockt_decompiled/decompiled/stokt_decompiled.js`
+- `/docs/TODOS/05_python_package_structure.md` - Plan détaillé
+- `/docs/TODOS/05_python_package_structure_STATUS.md` - Progression
+- `/mastock/src/stokt_api.py` - API client existant
+- `/extracted/data/montoboard_setup.json` - 776 prises avec polygones
 
 ## 📋 TODOs
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| 01 | Analyse de l'app Stōkt | 80% - Bloqué sur extraction données |
-| 02 | Conception schéma SQLite | 0% - En attente |
-| 03 | Analyse Hermes via agents | 95% - Endpoints documentés |
-| 04 | Test extraction Montoboard | 25% - **Prioritaire** - Analyser requêtes |
+| 01 | Analyse de l'app Stōkt | 80% - Terminé (objectif atteint) |
+| 02 | Conception schéma SQLite | 0% - Fusionné dans TODO 05 |
+| 03 | Analyse Hermes via agents | 95% - Terminé |
+| 04 | Test extraction Montoboard | 100% - Terminé |
+| 05 | Structure Package Python | 0% - **Prioritaire** |
 
 ## 🔑 Données clés
 
@@ -55,6 +59,14 @@ cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
 ```
 
 ## 📊 Résumé des sessions
+
+### Session 2025-12-21
+- TODO 04 complété (100%)
+- Endpoint `/api/faces/{faceId}/setup` testé et documenté
+- 776 prises avec polygones récupérées
+- Image haute résolution (2263x3000) téléchargée
+- TODO 05 créé : Structure Package Python mastock
+- Objectif : prototype Python avec PyQtGraph + SQLite
 
 ### Session 2025-12-20 (soir)
 - ✅ Installation hermes-dec (décompileur Hermes v96)
@@ -129,22 +141,21 @@ cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
 
 ## 🎯 Prochaine session
 
-**Priorité : Analyser construction des requêtes**
+**Priorité : Créer la structure du package Python**
 
-1. **Analyser `fetchMySentClimbs`** (ligne 442389 dans stokt_decompiled.js)
-   - Comprendre comment l'URL `/my-sent-climbs` est construite
-   - Vérifier s'il y a des headers additionnels
-2. Comparer la construction des requêtes avec ce qu'on envoie
-3. Tester avec les corrections trouvées
-4. Si échec → intercepter le trafic réel de l'app
+1. **Créer `pyproject.toml`** avec dépendances (PyQtGraph, PyQt6, requests)
+2. **Réorganiser le code** en `src/mastock/` avec modules api/, db/, gui/, core/
+3. **Créer le schéma SQLite** pour stocker climbs, prises, metadata sync
+4. **Prototype GUI** : afficher l'image du mur avec les polygones des prises
 
-**Fonctions clés à analyser** :
-- `fetchMySentClimbs` (ligne 442389)
-- `fetchGymRecentClimbs` (ligne 458971)
+**Stack technique** :
+- PyQtGraph + PyQt6 pour l'interface interactive
+- SQLite pour le stockage local
+- pytest pour les tests
 
-**Documentation de référence** : `/docs/reverse_engineering/03_ENDPOINTS.md`
+**Documentation de référence** : `/docs/TODOS/05_python_package_structure.md`
 
 ---
 
-**Dernière mise à jour** : 2025-12-20
-**Statut du projet** : Phase d'analyse approfondie
+**Dernière mise à jour** : 2025-12-21
+**Statut du projet** : Phase de développement prototype Python

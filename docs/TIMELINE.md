@@ -7,6 +7,21 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-21
+
+- **TODO 05 créé** - Structure Package Python mastock
+  - Objectif : Restructurer le code en package installable (`pip install -e .`)
+  - Stack : PyQtGraph + PyQt6 pour GUI, SQLite pour stockage local
+  - Fonctionnalités : stockage BD, sync, filtres climbs, visualisation prises
+  - Servira de prototype avant l'application mobile
+  - Statut : À faire (0%)
+
+- **TODO 04 complété à 100%** - Extraction données Montoboard
+  - Endpoint `/api/faces/{faceId}/setup` découvert et testé
+  - 776 prises avec polygones récupérées
+  - Image haute résolution téléchargée (2263x3000)
+  - Documentation mise à jour
+
 ## 2025-12-20 (nuit)
 
 - **TODO 04 avancé à 25%** - Tests d'extraction

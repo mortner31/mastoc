@@ -83,18 +83,20 @@ Format découvert : `S829279 S829528 O828906 O828964 O828985 O829120 O829377 O82
 - [x] Format holdsList décodé (S/O/F/T + ID)
 - [x] 738 prises uniques identifiées
 - [x] Prise la plus utilisée : 829098 (78 fois)
-- [ ] Récupérer `api/faces/{faceId}/setup` pour les coordonnées
-- [ ] Mapper les IDs vers positions (x, y) sur l'image
+- [x] **Récupérer `api/faces/{faceId}/setup`** ✅ (2025-12-21)
+- [x] **776 prises avec polygones récupérées**
+- [x] Image haute résolution téléchargée (2263×3000)
+- [ ] Mapper les IDs vers positions (x, y) sur l'image (utiliser `centroidStr`)
 
 ## 📁 Fichiers de référence
 
 - Code décompilé : `/extracted/stockt_decompiled/decompiled/stokt_decompiled.js`
 - Image face small : `/extracted/images/face_small.jpg` (339x450)
-- Image face full : `/extracted/images/face_full.jpg` (905x1200)
+- Image face full HR : `/extracted/images/face_full_hires.jpg` (2263x3000) ✅ NEW
 - API Client : `/mastock/src/stokt_api.py`
-- Script extraction : `/mastack/src/extract_all_climbs.py`
-- Données (459 climbs/365j) : `/extracted/data/montoboard_20251220.json`
+- Script extraction : `/mastock/src/extract_all_climbs.py`
 - Données (1017 climbs/ALL) : `/extracted/data/montoboard_ALL_climbs.json`
+- **Setup avec polygones** : `/extracted/data/montoboard_setup.json` (776 prises) ✅ NEW
 
 ## 📊 Résultats d'extraction
 

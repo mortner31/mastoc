@@ -261,47 +261,102 @@ holds = parse_holds_list("S829279 O828906 T829009")
 }
 ```
 
-## Face Setup (Coordonnées Prises)
+## Face Setup (Coordonnées Prises) ✅ TESTÉ
 
-L'endpoint `api/faces/{faceId}/setup` retourne la configuration de la face avec les coordonnées de toutes les prises.
+L'endpoint `api/faces/{faceId}/setup` retourne la configuration de la face avec les polygones de toutes les prises.
 
-### Structure attendue
+### Structure réelle (testée 2025-12-21)
 
 ```json
 {
+  "id": "61b42d14-c629-434a-8827-801512151a18",
+  "gym": "Montoboard",
+  "wall": "Stōkt board",
   "picture": {
-    "name": "CACHE/images/walls/.../ref_pic.jpg",
-    "width": 905,
-    "height": 1200
+    "name": "CACHE/images/walls/.../07a8d28cb558f811ef292ca0bb0269f9.jpg",
+    "width": 2263,
+    "height": 3000
   },
+  "feetRulesOptions": ["Tous pieds", "Pieds des mains", "No foot", ...],
+  "hasSymmetry": false,
   "holds": [
     {
-      "id": 829279,
-      "x": 0.45,
-      "y": 0.32
+      "id": 828902,
+      "area": "2226.00",
+      "polygonStr": "559.96,2358.89 536.00,2382.86 536.00,2409.59 ...",
+      "touchPolygonStr": "611.34,2537.10 619.79,2525.36 ...",
+      "pathStr": "M559.96,2358.89L536.00,2382.86L536.00,2409.59...z",
+      "centroidStr": "572.53 2397.11",
+      "topPolygonStr": "552.37,2331.13 511.00,2372.50 ...",
+      "centerTapeStr": "564.16 2433.00 541.45 2530.39",
+      "rightTapeStr": "583.42 2433.00 612.44 2528.69",
+      "leftTapeStr": "547.62 2423.70 479.26 2496.69"
     }
   ]
 }
 ```
 
-### Mapping ID → Position
+### Structure d'un Hold
 
-Les IDs de prises dans `holdsList` (ex: `S829279`) correspondent aux `id` dans le setup.
-Les coordonnées `x` et `y` sont probablement des ratios (0-1) par rapport aux dimensions de l'image.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | number | ID unique (ex: 828902) - correspond aux IDs dans holdsList |
+| `area` | string | Surface en pixels² |
+| `polygonStr` | string | Points du polygone SVG (format `x,y x,y...`) |
+| `touchPolygonStr` | string | Zone tactile élargie |
+| `pathStr` | string | Chemin SVG (format `Mx,yLx,y...z`) |
+| `centroidStr` | string | Centre de la prise (format `x y`) |
+| `topPolygonStr` | string | Polygone élargi pour prises finish |
+| `centerTapeStr` | string | Position tape centrale |
+| `rightTapeStr` | string | Position tape droite |
+| `leftTapeStr` | string | Position tape gauche |
 
-**Position pixel** :
+### Mapping holdsList → polygones
+
 ```python
-pixel_x = hold.x * picture.width   # ex: 0.45 * 905 = 407px
-pixel_y = hold.y * picture.height  # ex: 0.32 * 1200 = 384px
+def get_climb_polygons(climb, setup):
+    """
+    Récupère les polygones d'un climb depuis le setup
+    """
+    holds_map = {h['id']: h for h in setup['holds']}
+    result = {'start': [], 'other': [], 'feet': [], 'top': []}
+
+    for token in climb['holdsList'].split():
+        hold_type = token[0]
+        hold_id = int(token[1:])
+        hold = holds_map.get(hold_id)
+
+        if hold:
+            if hold_type == 'S':
+                result['start'].append(hold['polygonStr'])
+            elif hold_type == 'O':
+                result['other'].append(hold['polygonStr'])
+            elif hold_type == 'F':
+                result['feet'].append(hold['polygonStr'])
+            elif hold_type == 'T':
+                result['top'].append(hold['polygonStr'])
+                result['top'].append(hold['topPolygonStr'])
+
+    return result
+```
+
+### Position pixel (via centroidStr)
+
+```python
+# centroidStr contient déjà les coordonnées en pixels
+centroid = hold['centroidStr'].split()
+pixel_x = float(centroid[0])  # ex: 572.53
+pixel_y = float(centroid[1])  # ex: 2397.11
 ```
 
 ### Statistiques prises (Montoboard)
 
-- **738 prises uniques** sur la face
-- Prise la plus utilisée : **829098** (78 fois sur 1017 climbs)
-- Total utilisations : 8785 prises dans tous les climbs
+- **776 prises** sur la face (setup)
+- IDs de 828902 à 829677
+- Image : 2263×3000 pixels
+- Fichier setup : 504 Ko
 
 ---
 
-**Dernière mise à jour** : 2025-12-20
+**Dernière mise à jour** : 2025-12-21
 **Source des données** : Montoboard (be149ef2-317d-4c73-8d7d-50074577d2fa)

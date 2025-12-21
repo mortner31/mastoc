@@ -165,16 +165,163 @@ curl "https://www.sostokt.com/api/gyms/$GYM_ID/my-sent-climbs" \
 ]
 ```
 
-## ENDPOINT SETUP (COORDONNÉES PRISES)
+## ENDPOINT SETUP (COORDONNÉES PRISES) ⭐
 
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
-| `api/faces/{faceId}/setup` | GET | **Setup de la face avec coordonnées des prises** |
+| `api/faces/{faceId}/setup` | GET | **Setup de la face avec polygones des prises** |
 
-Cet endpoint retourne la configuration complète de la face, incluant :
-- `picture` : image de la face (name, width, height)
-- Liste des prises avec leurs coordonnées (x, y) sur l'image
-- Permet de mapper les IDs de prises (ex: 829279) vers des positions pixel
+### Construction de l'URL (code source ligne 441393-441395)
+
+```javascript
+// fetchSetup / fetchStandaloneSetup
+r4 = 'api/faces/';
+r1 = '/setup';
+r1 = HermesInternal.concat(r4, faceId, r1);
+// Résultat: 'api/faces/{faceId}/setup'
+```
+
+### URL pour Montoboard
+
+```
+GET https://www.sostokt.com/api/faces/61b42d14-c629-434a-8827-801512151a18/setup
+Authorization: Token {token}
+```
+
+**Statut : ✅ TESTÉ ET FONCTIONNEL** (2025-12-21)
+
+### Structure de la réponse (données réelles)
+
+```json
+{
+  "id": "61b42d14-c629-434a-8827-801512151a18",
+  "gym": "Montoboard",
+  "wall": "Stōkt board",
+  "picture": {
+    "name": "CACHE/images/walls/.../07a8d28cb558f811ef292ca0bb0269f9.jpg",
+    "width": 2263,
+    "height": 3000
+  },
+  "feetRulesOptions": ["Tous pieds", "Pieds des mains", "No foot", ...],
+  "hasSymmetry": false,
+  "holds": [
+    {
+      "id": 828902,
+      "area": "2226.00",
+      "polygonStr": "559.96,2358.89 536.00,2382.86 ...",
+      "touchPolygonStr": "611.34,2537.10 619.79,2525.36 ...",
+      "pathStr": "M559.96,2358.89L536.00,2382.86...z",
+      "centroidStr": "572.53 2397.11",
+      "topPolygonStr": "552.37,2331.13 511.00,2372.50 ...",
+      "centerTapeStr": "564.16 2433.00 541.45 2530.39",
+      "rightTapeStr": "583.42 2433.00 612.44 2528.69",
+      "leftTapeStr": "547.62 2423.70 479.26 2496.69"
+    }
+  ]
+}
+```
+
+### Statistiques Montoboard
+
+| Métrique | Valeur |
+|----------|--------|
+| Nombre de prises | **776** |
+| IDs des prises | 828902 → 829677 |
+| Image dimensions | 2263 × 3000 px |
+| Image taille | ~1.4 Mo |
+
+### Structure d'un Hold
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | number | ID unique de la prise (ex: 828902) |
+| `area` | string | Surface de la prise en pixels² |
+| `polygonStr` | string | Points du polygone pour rendu (format `x,y x,y...`) |
+| `touchPolygonStr` | string | Zone tactile élargie du polygone |
+| `pathStr` | string | Chemin SVG complet (format `Mx,yLx,y...z`) |
+| `centroidStr` | string | Centre de la prise (format `x y`) |
+| `topPolygonStr` | string | Polygone élargi pour prises finish (T) |
+| `centerTapeStr` | string | Position ligne tape centrale (format `x1 y1 x2 y2`) |
+| `rightTapeStr` | string | Position ligne tape droite |
+| `leftTapeStr` | string | Position ligne tape gauche |
+
+### URLs des images
+
+Deux résolutions officielles :
+
+| Version | Dimensions | Source | Usage dans l'app |
+|---------|------------|--------|------------------|
+| Small | 339×450 | `/walls` → `faces[].smallPicture.name` | Vignettes dans les listes de walls |
+| Full | 2263×3000 | `/setup` → `picture.name` | Visualisation et création de climb |
+
+### Usage des images par contexte
+
+| Contexte dans l'app | Image utilisée | Endpoint source |
+|---------------------|----------------|-----------------|
+| Liste des walls/faces | **Small** (339×450) | `api/gyms/{id}/walls` |
+| Visualiser un climb existant | **Full** (2263×3000) | `api/faces/{id}/setup` |
+| Créer un nouveau climb | **Full** (2263×3000) | `api/faces/{id}/setup` |
+
+**Code source** (lignes 419299-419307, 587496) :
+```javascript
+// Visualisation/Création climb → image full
+r0 = setup.picture;
+r5 = r0.name;
+url = baseURL + 'media/' + r5;
+
+// Liste walls → image small
+r1 = face.smallPicture;
+r22 = r1.name;
+```
+
+**URLs Montoboard :**
+
+```bash
+# Small (40 Ko) - pour vignettes
+https://www.sostokt.com/media/CACHE/images/walls/1ab81c9a-ecfa-4a1a-b56e-1490f3445d99/faces/61b42d14-c629-434a-8827-801512151a18/ref_pic_qMsRutJ_small.jpg
+
+# Full haute résolution (1.4 Mo) - pour climbs
+https://www.sostokt.com/media/CACHE/images/walls/1ab81c9a-ecfa-4a1a-b56e-1490f3445d99/faces/61b42d14-c629-434a-8827-801512151a18/ref_pic_qMsRutJ/07a8d28cb558f811ef292ca0bb0269f9.jpg
+```
+
+### Lien holdsList → holds du setup
+
+Le champ `holdsList` d'un climb contient des tokens de format `{TYPE}{ID}` :
+
+```
+holdsList: "S829279 S829528 O828906 O828964 T829009"
+            │  │
+            │  └── ID numérique → correspond à holds[].id dans setup
+            └── Type de prise
+```
+
+**Types de prises** (parseHoldsListString, ligne 915642) :
+| Code | Type | Description |
+|------|------|-------------|
+| `S` | Start | Prise de départ |
+| `O` | Other | Prise intermédiaire |
+| `F` | Feet | Pied obligatoire ("pieds des mains") |
+| `T` | Top | Prise finale |
+
+### Algorithme de rendu (ligne 922163-922265)
+
+```javascript
+// Pour chaque hold dans holdsList, on cherche le hold correspondant dans setup.holds
+// Puis on collecte son polygonStr selon le type :
+holds.forEach(hold => {
+  holdsListIds.forEach(id => {
+    if (hold.id === id) {
+      if (type === 'S' || type === 'O') {
+        polygons.push(hold.polygonStr);
+      } else if (type === 'F') {
+        feetPolygons.push(hold.polygonStr);
+      } else if (type === 'T') {
+        finishPolygons.push(hold.polygonStr, hold.topPolygonStr);
+      }
+    }
+  });
+});
+```
 
 **Note** : Peut nécessiter des permissions (créateur de mur, abonnement actif).
 
