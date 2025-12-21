@@ -7,6 +7,18 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-21 (soir)
+
+- **TODO 05 avancé à 50%** - Package Python mastock fonctionnel
+  - Phase 1 (100%) : Structure package avec `pyproject.toml`
+  - Phase 2 (100%) : Base SQLite avec 1017 climbs et 776 prises importés
+  - Phase 4 (50%) : Viewer PyQtGraph avec rendu avancé
+    - Image haute résolution avec effet gris/couleur
+    - Détection automatique couleur des prises
+    - 3 sliders interactifs (fond, contour, épaisseur)
+  - 39 tests unitaires passent
+  - Usage : `python3 -m mastock.gui.climb_viewer --name "Nia" --setter "Mathias" --image`
+
 ## 2025-12-21
 
 - **TODO 05 créé** - Structure Package Python mastock
