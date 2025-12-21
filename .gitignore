@@ -1,6 +1,9 @@
 # APKs et fichiers décompilés (volumineux)
 /extracted/
 
+# Base de données SQLite locale
+/mastock/data/
+
 # Configuration locale Claude
 .claude/
 
