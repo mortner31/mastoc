@@ -14,7 +14,8 @@ import pyqtgraph as pg
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QLabel, QListWidget, QListWidgetItem, QPushButton,
-    QFrame, QStatusBar, QSlider, QRadioButton, QButtonGroup, QComboBox
+    QFrame, QStatusBar, QSlider, QRadioButton, QButtonGroup, QComboBox,
+    QCheckBox, QScrollArea, QGroupBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QImage, QPainter
@@ -82,6 +83,10 @@ class HoldSelectorApp(QMainWindow):
         self.max_ircra = 26.5
         self.brightness = 25  # % luminosité fond (0-100)
 
+        # Filtre setters (TODO 08)
+        self.setter_filter_mode = "none"  # "none", "include", "exclude"
+        self.filtered_setters: set[str] = set()
+
         # Mode : "exploration" ou "parcours"
         self.mode = "exploration"
         self.current_climb_index = -1  # Index du bloc courant en mode parcours
@@ -144,36 +149,23 @@ class HoldSelectorApp(QMainWindow):
         left_layout.addWidget(self._separator())
 
         # === Mode de coloration (TODO 08) ===
-        mode_label = QLabel("Mode de coloration")
-        mode_label.setStyleSheet("font-weight: bold;")
-        left_layout.addWidget(mode_label)
+        mode_row = QWidget()
+        mode_layout = QHBoxLayout(mode_row)
+        mode_layout.setContentsMargins(0, 5, 0, 0)
+        mode_layout.addWidget(QLabel("Coloration:"))
 
-        self.mode_group = QButtonGroup(self)
-        mode_widget = QWidget()
-        mode_layout = QVBoxLayout(mode_widget)
-        mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(2)
-
-        self.radio_min = QRadioButton("Niveau min (accessible dès)")
-        self.radio_min.setChecked(True)
-        self.mode_group.addButton(self.radio_min, 0)
-        mode_layout.addWidget(self.radio_min)
-
-        self.radio_max = QRadioButton("Niveau max (utilisée jusqu'à)")
-        self.mode_group.addButton(self.radio_max, 1)
-        mode_layout.addWidget(self.radio_max)
-
-        self.radio_freq = QRadioButton("Fréquence (popularité)")
-        self.mode_group.addButton(self.radio_freq, 2)
-        mode_layout.addWidget(self.radio_freq)
-
-        left_layout.addWidget(mode_widget)
-        self.mode_group.idClicked.connect(self.on_color_mode_changed)
+        self.color_mode_combo = QComboBox()
+        self.color_mode_combo.addItem("Niveau min", ColorMode.MIN_GRADE)
+        self.color_mode_combo.addItem("Niveau max", ColorMode.MAX_GRADE)
+        self.color_mode_combo.addItem("Fréquence", ColorMode.FREQUENCY)
+        self.color_mode_combo.currentIndexChanged.connect(self.on_color_mode_changed)
+        mode_layout.addWidget(self.color_mode_combo, stretch=1)
+        left_layout.addWidget(mode_row)
 
         # Palette de couleurs
         palette_row = QWidget()
         palette_layout = QHBoxLayout(palette_row)
-        palette_layout.setContentsMargins(0, 5, 0, 0)
+        palette_layout.setContentsMargins(0, 2, 0, 0)
         palette_layout.addWidget(QLabel("Palette:"))
 
         self.palette_combo = QComboBox()
@@ -189,6 +181,73 @@ class HoldSelectorApp(QMainWindow):
         self.palette_preview.setStyleSheet("border: 1px solid #666;")
         left_layout.addWidget(self.palette_preview)
         self._update_palette_preview()
+
+        # Séparateur
+        left_layout.addWidget(self._separator())
+
+        # === Filtre par ouvreur (TODO 08) ===
+        setter_label = QLabel("Filtre ouvreurs")
+        setter_label.setStyleSheet("font-weight: bold;")
+        left_layout.addWidget(setter_label)
+
+        # Mode du filtre
+        setter_mode_widget = QWidget()
+        setter_mode_layout = QHBoxLayout(setter_mode_widget)
+        setter_mode_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.setter_mode_group = QButtonGroup(self)
+        self.radio_setter_none = QRadioButton("Tous")
+        self.radio_setter_none.setChecked(True)
+        self.setter_mode_group.addButton(self.radio_setter_none, 0)
+        setter_mode_layout.addWidget(self.radio_setter_none)
+
+        self.radio_setter_include = QRadioButton("Inclure")
+        self.setter_mode_group.addButton(self.radio_setter_include, 1)
+        setter_mode_layout.addWidget(self.radio_setter_include)
+
+        self.radio_setter_exclude = QRadioButton("Exclure")
+        self.setter_mode_group.addButton(self.radio_setter_exclude, 2)
+        setter_mode_layout.addWidget(self.radio_setter_exclude)
+
+        left_layout.addWidget(setter_mode_widget)
+        self.setter_mode_group.idClicked.connect(self.on_setter_mode_changed)
+
+        # Liste des ouvreurs avec checkboxes
+        self.setter_scroll = QScrollArea()
+        self.setter_scroll.setWidgetResizable(True)
+        self.setter_scroll.setMaximumHeight(120)
+        self.setter_scroll.setStyleSheet("QScrollArea { border: 1px solid #444; }")
+
+        setter_container = QWidget()
+        self.setter_layout = QVBoxLayout(setter_container)
+        self.setter_layout.setContentsMargins(4, 4, 4, 4)
+        self.setter_layout.setSpacing(2)
+
+        self.setter_checkboxes: dict[str, QCheckBox] = {}
+        for name, count in self.index.setters[:20]:  # Top 20 setters
+            cb = QCheckBox(f"{name} ({count})")
+            cb.stateChanged.connect(self.on_setter_checkbox_changed)
+            self.setter_layout.addWidget(cb)
+            self.setter_checkboxes[name] = cb
+
+        self.setter_layout.addStretch()
+        self.setter_scroll.setWidget(setter_container)
+        left_layout.addWidget(self.setter_scroll)
+
+        # Boutons Tout/Rien
+        setter_btns = QWidget()
+        setter_btns_layout = QHBoxLayout(setter_btns)
+        setter_btns_layout.setContentsMargins(0, 2, 0, 0)
+
+        self.setter_all_btn = QPushButton("Tout")
+        self.setter_all_btn.clicked.connect(self.select_all_setters)
+        setter_btns_layout.addWidget(self.setter_all_btn)
+
+        self.setter_none_btn = QPushButton("Rien")
+        self.setter_none_btn.clicked.connect(self.select_no_setters)
+        setter_btns_layout.addWidget(self.setter_none_btn)
+
+        left_layout.addWidget(setter_btns)
 
         # Séparateur
         left_layout.addWidget(self._separator())
@@ -319,13 +378,13 @@ class HoldSelectorApp(QMainWindow):
         logger.info(f"Brightness changed to {value}%")
         self.update_background_image()
 
-    def on_color_mode_changed(self, button_id: int):
+    def on_color_mode_changed(self, index: int):
         """Appelé quand le mode de coloration change."""
-        modes = [ColorMode.MIN_GRADE, ColorMode.MAX_GRADE, ColorMode.FREQUENCY]
-        mode = modes[button_id]
-        logger.info(f"Color mode changed to {mode.value}")
-        self.hold_overlay.set_color_mode(mode)
-        self.update_display()
+        mode = self.color_mode_combo.currentData()
+        if mode:
+            logger.info(f"Color mode changed to {mode.value}")
+            self.hold_overlay.set_color_mode(mode)
+            self.update_display()
 
     def on_colormap_changed(self, index: int):
         """Appelé quand la palette change."""
@@ -355,6 +414,36 @@ class HoldSelectorApp(QMainWindow):
                 img.setPixel(x, y, (255 << 24) | (r << 16) | (g << 8) | b)
 
         self.palette_preview.setPixmap(QPixmap.fromImage(img))
+
+    def on_setter_mode_changed(self, button_id: int):
+        """Appelé quand le mode de filtre setter change."""
+        modes = ["none", "include", "exclude"]
+        self.setter_filter_mode = modes[button_id]
+        logger.info(f"Setter filter mode: {self.setter_filter_mode}")
+        self.update_display()
+
+    def on_setter_checkbox_changed(self, state: int):
+        """Appelé quand une checkbox setter change."""
+        self._update_filtered_setters()
+        if self.setter_filter_mode != "none":
+            self.update_display()
+
+    def _update_filtered_setters(self):
+        """Met à jour le set des setters cochés."""
+        self.filtered_setters = set()
+        for name, cb in self.setter_checkboxes.items():
+            if cb.isChecked():
+                self.filtered_setters.add(name)
+
+    def select_all_setters(self):
+        """Coche tous les setters."""
+        for cb in self.setter_checkboxes.values():
+            cb.setChecked(True)
+
+    def select_no_setters(self):
+        """Décoche tous les setters."""
+        for cb in self.setter_checkboxes.values():
+            cb.setChecked(False)
 
     def update_background_image(self):
         """Met à jour l'image de fond avec la luminosité actuelle."""
@@ -401,11 +490,21 @@ class HoldSelectorApp(QMainWindow):
 
     def update_results(self):
         """Met à jour la liste des blocs filtrés."""
+        # Préparer les filtres setters
+        include_setters = None
+        exclude_setters = None
+        if self.setter_filter_mode == "include" and self.filtered_setters:
+            include_setters = self.filtered_setters
+        elif self.setter_filter_mode == "exclude" and self.filtered_setters:
+            exclude_setters = self.filtered_setters
+
         # Filtrer les blocs
         self.filtered_climbs = self.index.get_filtered_climbs(
             hold_ids=self.selected_holds if self.selected_holds else None,
             min_ircra=self.min_ircra,
-            max_ircra=self.max_ircra
+            max_ircra=self.max_ircra,
+            include_setters=include_setters,
+            exclude_setters=exclude_setters
         )
 
         # Trier par grade
@@ -414,17 +513,17 @@ class HoldSelectorApp(QMainWindow):
         )
 
         # Collecter les prises et IDs des blocs filtrés
+        # Toujours calculer valid_climb_ids pour les quantiles (mode fréquence)
         valid_holds = None
-        valid_climb_ids = None
+        valid_climb_ids = set(c.id for c in self.filtered_climbs)
+
         if self.selected_holds:
             valid_holds = set()
-            valid_climb_ids = set()
             for climb in self.filtered_climbs:
-                valid_climb_ids.add(climb.id)
                 for ch in climb.get_holds():
                     valid_holds.add(ch.hold_id)
 
-        # Mettre à jour les couleurs (double filtre : grade + prises sélectionnées)
+        # Mettre à jour les couleurs (triple filtre : grade + prises + setters)
         self.hold_overlay.update_colors(
             self.min_ircra, self.max_ircra, valid_holds, valid_climb_ids
         )

@@ -27,6 +27,12 @@ class HoldClimbIndex:
         # Prises
         self.holds: dict[int, Hold] = {}
 
+        # Setter → liste de blocs (TODO 08)
+        self.setter_to_climbs: dict[str, list[str]] = defaultdict(list)
+
+        # Liste des setters triés par nombre de blocs
+        self.setters: list[tuple[str, int]] = []
+
     @classmethod
     def from_database(cls, db: Database) -> "HoldClimbIndex":
         """Crée l'index depuis la base de données."""
@@ -55,6 +61,16 @@ class HoldClimbIndex:
             # Index prise → blocs
             for ch in climb.get_holds():
                 index.hold_to_climbs[ch.hold_id].append(climb.id)
+
+            # Index setter → blocs
+            if climb.setter:
+                index.setter_to_climbs[climb.setter.full_name].append(climb.id)
+
+        # Construire la liste des setters triés par nombre de blocs
+        index.setters = sorted(
+            [(name, len(cids)) for name, cids in index.setter_to_climbs.items()],
+            key=lambda x: -x[1]
+        )
 
         return index
 
@@ -97,15 +113,19 @@ class HoldClimbIndex:
         self,
         hold_ids: list[int] = None,
         min_ircra: float = None,
-        max_ircra: float = None
+        max_ircra: float = None,
+        include_setters: set[str] = None,
+        exclude_setters: set[str] = None
     ) -> list[Climb]:
         """
-        Retourne les blocs filtrés par prises ET plage de grade.
+        Retourne les blocs filtrés par prises, plage de grade et setters.
 
         Args:
             hold_ids: Liste des prises à inclure (logique ET)
             min_ircra: Grade minimum (inclus)
             max_ircra: Grade maximum (inclus)
+            include_setters: Si fourni, inclure UNIQUEMENT ces setters
+            exclude_setters: Si fourni, exclure ces setters
         """
         # Commencer avec tous les blocs ou ceux filtrés par prises
         if hold_ids:
@@ -120,6 +140,18 @@ class HoldClimbIndex:
             climbs = [
                 c for c in climbs
                 if min_g <= self.climb_grades.get(c.id, 0) <= max_g
+            ]
+
+        # Filtrer par setters (TODO 08)
+        if include_setters:
+            climbs = [
+                c for c in climbs
+                if c.setter and c.setter.full_name in include_setters
+            ]
+        elif exclude_setters:
+            climbs = [
+                c for c in climbs
+                if not c.setter or c.setter.full_name not in exclude_setters
             ]
 
         return climbs

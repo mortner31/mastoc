@@ -530,3 +530,86 @@ class TestColormaps:
         # Fin: rouge
         r255, g255, b255 = lut[255]
         assert r255 > b255  # Plus rouge que bleu
+
+
+class TestSetterFilter:
+    """Tests pour le filtre par setter (TODO 08)."""
+
+    def test_setter_index_created(self, populated_db):
+        """Vérifie que l'index setter → climbs est créé."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Vérifier que l'index setter existe
+        assert hasattr(index, 'setter_to_climbs')
+        assert hasattr(index, 'setters')
+
+        # Alice a 2 blocs (c1, c2), Bob a 1 bloc (c3)
+        assert "Alice" in index.setter_to_climbs
+        assert len(index.setter_to_climbs["Alice"]) == 2
+        assert "Bob" in index.setter_to_climbs
+        assert len(index.setter_to_climbs["Bob"]) == 1
+
+    def test_setters_sorted_by_count(self, populated_db):
+        """Les setters sont triés par nombre de blocs décroissant."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Alice (2) avant Bob (1)
+        names = [name for name, count in index.setters]
+        assert names.index("Alice") < names.index("Bob")
+
+    def test_include_setters_filter(self, populated_db):
+        """Test du filtre include_setters."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Inclure uniquement Alice
+        climbs = index.get_filtered_climbs(include_setters={"Alice"})
+        assert len(climbs) == 2
+        for c in climbs:
+            assert c.setter.full_name == "Alice"
+
+        # Inclure uniquement Bob
+        climbs = index.get_filtered_climbs(include_setters={"Bob"})
+        assert len(climbs) == 1
+        assert climbs[0].setter.full_name == "Bob"
+
+    def test_exclude_setters_filter(self, populated_db):
+        """Test du filtre exclude_setters."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Exclure Alice → Bob + blocs sans setter
+        climbs = index.get_filtered_climbs(exclude_setters={"Alice"})
+        for c in climbs:
+            if c.setter:
+                assert c.setter.full_name != "Alice"
+
+    def test_setter_filter_with_grade(self, populated_db):
+        """Test combiné setter + grade."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Alice dans plage 14-16 → seulement c1 (grade 14)
+        climbs = index.get_filtered_climbs(
+            include_setters={"Alice"},
+            min_ircra=14,
+            max_ircra=16
+        )
+        assert len(climbs) == 1
+        assert climbs[0].id == "c1"
+
+    def test_setter_filter_with_holds(self, populated_db):
+        """Test combiné setter + prises."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Alice + prise 100 → c1 et c2
+        climbs = index.get_filtered_climbs(
+            hold_ids=[100],
+            include_setters={"Alice"}
+        )
+        assert len(climbs) == 2
+
+        # Alice + prise 101 → seulement c2
+        climbs = index.get_filtered_climbs(
+            hold_ids=[101],
+            include_setters={"Alice"}
+        )
+        assert len(climbs) == 1
+        assert climbs[0].id == "c2"
