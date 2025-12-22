@@ -336,9 +336,51 @@ holds.forEach(hold => {
 | `api/users/{id}/sent-climbs` | ❌ 404 | Utiliser `/gyms/{id}/my-sent-climbs` |
 | `api/efforts` | ❌ 403 | Permission refusée |
 
+## ENDPOINTS INTERACTIONS SOCIALES (découverts, non testés)
+
+### Likes (lignes 466084-466295)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/climbs/{climbId}/likes` | GET | Liste des likes |
+| `api/climbs/{climbId}/likes` | POST | Ajouter un like |
+| `api/climbs/{climbId}/likes` | DELETE | Retirer un like |
+| `api/gyms/{gymId}/my-liked-climbs` | GET | Mes climbs likés |
+
+### Commentaires (lignes 467185-467380)
+
+| Endpoint | Méthode | Body | Description |
+|----------|---------|------|-------------|
+| `api/climbs/{climbId}/comments?limit={n}` | GET | - | Liste des commentaires |
+| `api/climbs/{climbId}/comments` | POST | `{text, replied_to_id}` | Poster un commentaire |
+| `api/climbs/{climbId}/comments/{commentId}` | DELETE | - | Supprimer un commentaire |
+
+### Bookmarks (lignes 466950-467018)
+
+| Endpoint | Méthode | Body | Description |
+|----------|---------|------|-------------|
+| `api/climbs/{climbId}/bookmarked` | PATCH | `{added, removed}` | Toggle favori |
+| `api/gyms/{gymId}/my-bookmarked-climbs` | GET | - | Mes climbs favoris |
+
+### Efforts/Ascensions (lignes 466297-466505)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/efforts` | POST | Enregistrer une ascension |
+| `api/efforts/{effortId}` | PATCH | Modifier une ascension |
+| `api/efforts/{effortId}` | DELETE | Supprimer une ascension |
+| `api/climbs/{climbId}/latest-sends` | GET | Dernières ascensions |
+
+### Notes (lignes 466506-466560)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/ratings` | POST | Soumettre une note de difficulté |
+| `api/climbs/{climbId}/crowd-grades` | GET | Notes de la communauté |
+
 ## ENDPOINTS DÉCOUVERTS (NON TESTÉS)
 
-### Depuis le code décompilé
+### Autres endpoints depuis le code décompilé
 
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
@@ -349,8 +391,6 @@ holds.forEach(hold => {
 | `api/social-auth/google/login` | POST | Login Google |
 | `api/favorite-gyms` | GET | Gyms favoris |
 | `api/climbs/` | GET/POST | Climbs |
-| `api/efforts/` | POST | Enregistrer effort |
-| `api/ratings` | POST | Notes |
 | `api/lists/` | GET | Listes |
 | `api/follow/` | POST | Suivre |
 | `api/feeds/` | GET | Flux social |
@@ -421,5 +461,5 @@ https://www.sostokt.com/media/CACHE/images/walls/1ab81c9a.../ref_pic_small.jpg
 
 ---
 
-**Dernière mise à jour** : 2025-12-20
+**Dernière mise à jour** : 2025-12-22
 **Testé avec** : API v1.3.0, App v6.1.13

@@ -1,27 +1,38 @@
 # STATUS - TODO 07 : Interactions avec les Blocs
 
-**Progression** : 0%
+**Progression** : 15%
 
-## Phase 1 : Investigation API (0%)
+## Phase 1 : Investigation API ✅
 
-- [ ] Tester endpoint ascensions
-- [ ] Tester endpoint commentaires
-- [ ] Tester endpoint favoris (GET/POST/DELETE)
-- [ ] Documenter les structures de réponse
+- [x] Identifier tous les endpoints (analyse code décompilé)
+- [x] Documenter les endpoints likes, comments, bookmarks, efforts
+- [x] Identifier les données déjà disponibles dans Climb (compteurs)
+- [ ] Tester les endpoints avec token réel
 
-## Phase 2 : Décision architecture (0%)
+## Phase 2 : Lecture seule (0%)
 
-- [ ] Choisir Option A/B/C (API / Local / Hybride)
-- [ ] Définir stratégie de cache si hybride
-- [ ] Valider avec contraintes offline
+- [ ] Afficher compteurs dans vue détail
+- [ ] Implémenter `fetchLatestSends`
+- [ ] Implémenter `fetchComments`
+- [ ] UI pour liste ascensions
+- [ ] UI pour liste commentaires
 
-## Phase 3 : Implémentation (0%)
+## Phase 3 : Actions utilisateur (0%)
 
-- [ ] Modèles de données
-- [ ] Repositories
-- [ ] Widgets UI
-- [ ] Tests
+- [ ] Like/unlike
+- [ ] Bookmark toggle
+- [ ] Poster commentaire
+
+## Phase 4 : Mes données (0%)
+
+- [ ] Mes favoris
+- [ ] Mes likes
+- [ ] Vue dédiée
 
 ## Notes
 
-_À compléter après investigation_
+Endpoints confirmés par analyse du code décompilé (lignes 466084-467380) :
+- Likes : `api/climbs/{id}/likes` (GET/POST/DELETE)
+- Comments : `api/climbs/{id}/comments` (GET/POST), `/comments/{id}` (DELETE)
+- Bookmarks : `api/climbs/{id}/bookmarked` (PATCH)
+- Sends : `api/climbs/{id}/latest-sends` (GET)
