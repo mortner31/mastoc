@@ -21,12 +21,12 @@ from mastock.db import Database, ClimbRepository, HoldRepository
 from mastock.api.models import Climb, Hold, HoldType
 
 
-# Couleurs pour les types de prises (mode sans image)
+# Couleurs pour les types de prises (comme dans l'app Stokt)
 HOLD_COLORS = {
-    HoldType.START: (0, 255, 0, 200),    # Vert
-    HoldType.OTHER: (0, 150, 255, 200),  # Bleu
-    HoldType.FEET: (255, 255, 0, 200),   # Jaune
-    HoldType.TOP: (255, 0, 0, 200),      # Rouge
+    HoldType.START: (0, 255, 0, 200),      # Vert
+    HoldType.OTHER: (0, 150, 255, 200),    # Bleu
+    HoldType.FEET: (49, 218, 255, 200),    # NEON_BLUE #31DAFF (cyan)
+    HoldType.TOP: (255, 0, 0, 200),        # Rouge
 }
 
 
@@ -53,6 +53,25 @@ def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
             x, y = point.split(",")
             points.append((float(x), float(y)))
     return points
+
+
+def parse_tape_line(tape_str: str) -> tuple[tuple[float, float], tuple[float, float]] | None:
+    """
+    Parse un tapeStr en deux points (p1, p2).
+
+    Format: "x1 y1 x2 y2"
+    Retourne ((x1, y1), (x2, y2)) ou None si invalide.
+    """
+    if not tape_str:
+        return None
+    parts = tape_str.split()
+    if len(parts) != 4:
+        return None
+    try:
+        x1, y1, x2, y2 = map(float, parts)
+        return ((x1, y1), (x2, y2))
+    except ValueError:
+        return None
 
 
 def get_dominant_color(img: Image.Image, centroid: tuple[float, float]) -> tuple[int, int, int]:
@@ -255,6 +274,11 @@ class ClimbViewerWindow(QMainWindow):
             contour_color = blend_color(base_color, self.contour_white)
             contour_draw.polygon(points, outline=(*contour_color, 255), width=self.contour_width)
 
+            # Prise FEET : contour NEON_BLUE additionnel
+            if ch.hold_type == HoldType.FEET:
+                NEON_BLUE = (49, 218, 255, 255)
+                contour_draw.polygon(points, outline=NEON_BLUE, width=self.contour_width)
+
         # Fusionner : couleur sur les prises, gris/blend ailleurs
         result = Image.composite(self.img_color, img_blend, mask)
         result = result.convert('RGBA')
@@ -272,7 +296,10 @@ class ClimbViewerWindow(QMainWindow):
 
     def draw_climb_holds_simple(self):
         """Dessine les prises du climb (mode sans image)."""
-        for ch in self.climb.get_holds():
+        climb_holds = self.climb.get_holds()
+        start_holds = [ch for ch in climb_holds if ch.hold_type == HoldType.START]
+
+        for ch in climb_holds:
             hold = self.holds_map.get(ch.hold_id)
             if not hold:
                 continue
@@ -293,6 +320,43 @@ class ClimbViewerWindow(QMainWindow):
                 [cx], [cy], size=10, pen=pg.mkPen(color), brush=pg.mkBrush(color)
             )
             self.plot.addItem(scatter)
+
+        # Dessiner les lignes de tape pour les prises de départ
+        self._draw_start_tapes(start_holds)
+
+    def _draw_start_tapes(self, start_holds: list):
+        """
+        Dessine les lignes de tape pour les prises de départ.
+
+        Logique (comme dans l'app Stokt) :
+        - 1 prise de départ → 2 lignes (left + right) formant un "V"
+        - 2+ prises de départ → 1 ligne centrale par prise
+        """
+        for ch in start_holds:
+            hold = self.holds_map.get(ch.hold_id)
+            if not hold:
+                continue
+
+            if len(start_holds) == 1:
+                # Une seule prise : deux lignes (V)
+                self._add_tape_line(hold.left_tape_str)
+                self._add_tape_line(hold.right_tape_str)
+            else:
+                # Plusieurs prises : ligne centrale
+                self._add_tape_line(hold.center_tape_str)
+
+    def _add_tape_line(self, tape_str: str):
+        """Ajoute une ligne de tape au plot."""
+        line = parse_tape_line(tape_str)
+        if not line:
+            return
+
+        (x1, y1), (x2, y2) = line
+        item = pg.PlotDataItem(
+            [x1, x2], [y1, y2],
+            pen=pg.mkPen(color='w', width=4)  # Blanc, épais
+        )
+        self.plot.addItem(item)
 
 
 def show_climb(

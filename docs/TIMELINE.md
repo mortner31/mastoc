@@ -7,7 +7,69 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-22 (nuit 2)
+
+- **Marquage prises de départ - vraies données tape**
+  - Analyse code décompilé Stokt (lignes 922271-922322)
+  - Découverte format tape : `centerTapeStr`, `leftTapeStr`, `rightTapeStr`
+  - Logique : 1 prise → 2 lignes (V), 2+ prises → 1 ligne centrale
+  - Remplacement trait artisanal 45° dans 5 fichiers
+  - Rapport : `docs/reports/SESSION_2025-12-22_start_tapes.md`
+
+- **Contour NEON_BLUE pour prises FEET**
+  - Couleur `#31DAFF` (RGB 49, 218, 255) pour pieds obligatoires
+  - Ajouté dans : `app.py`, `climb_viewer.py`, `picto.py`
+  - Déjà configuré dans : `climb_detail.py`, `hold_overlay.py`
+  - 108 tests passent
+
+## 2025-12-22 (soir)
+
+- **Améliorations UI mastock**
+  - Filtrage par grade min/max (deux sliders Fontainebleau)
+  - Contrôle luminosité fond (slider 10-100%)
+  - Navigation clavier avec mise à jour auto du viewer
+  - Système de logs de débugage
+  - Génération de pictos (miniatures) pour les blocs
+    - Cercles colorés proportionnels aux prises
+    - Top 20 prises en gris (contexte)
+    - Marqueurs START et TOP (double cercle)
+  - Cache persistant des pictos sur disque (`~/.mastock/pictos/`)
+  - Menu "Outils > Régénérer pictos"
+  - Marqueurs dans viewer : START (lignes tape), TOP (double polygone écarté 135%)
+  - Documentation créée : `01_architecture.md`, `02_design_decisions.md`
+  - 108 tests passent
+
+## 2025-12-22 (nuit)
+
+- **TODO 06 complété à 100%** - Interface de Filtrage et Sélection de Blocs
+  - Double slider de niveau (4 → 8A)
+  - Coloration dynamique des prises (vert→rouge selon grade)
+  - Sélection multi-prises avec logique ET
+  - Liste des blocs filtrés avec vue détaillée
+  - Navigation Previous/Next
+  - 108 tests passent au total
+  - Usage : `python -m mastock.gui.hold_selector`
+
+## 2025-12-21 (nuit)
+
+- **TODO 05 archivé** - Package Python mastock (100%)
+  - Phase 1-5 toutes complétées
+  - 90 tests unitaires et d'intégration passent
+  - Modules créés : `core/sync.py`, `core/filters.py`, `gui/app.py`, `gui/widgets/climb_list.py`, `gui/dialogs/login.py`
+  - Application principale fonctionnelle avec liste de climbs, filtres et visualisation
+  - Archivé dans `/archive/TODOS/`
+
 ## 2025-12-21 (soir)
+
+- **TODO 06 créé** - Interface de Filtrage et Sélection de Blocs
+  - Objectif : Retrouver un bloc à partir des prises de façon interactive
+  - Double slider de niveau (4+ → 8A)
+  - Coloration des prises selon le grade du bloc le plus facile (dégradé vert→rouge)
+  - Sélection multi-prises (logique ET)
+  - Liste des blocs filtrés (nom, auteur, grade)
+  - Vue détaillée avec navigation Previous/Next
+  - Complète le TODO 05
+  - Statut : À faire (0%)
 
 - **TODO 05 avancé à 50%** - Package Python mastock fonctionnel
   - Phase 1 (100%) : Structure package avec `pyproject.toml`

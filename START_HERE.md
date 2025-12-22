@@ -1,41 +1,50 @@
-# 🚀 Start Here - mastock
+# Start Here - mastock
 
 **Point d'entrée rapide pour comprendre le projet et commencer à travailler.**
 
-## 📌 Qu'est-ce que mastock ?
+## Qu'est-ce que mastock ?
 
-mastock est un projet visant à créer une application personnelle pour visualiser et gérer des blocs d'escalade. Le projet part de l'analyse d'une application existante (Stōkt) qui présente des problèmes en mode hors ligne, avec pour objectif de créer une version simplifiée et optimisée pour un usage offline-first, spécialisée sur la salle **Montoboard** (Caraman, France).
+mastock est un projet visant à créer une application personnelle pour visualiser et gérer des blocs d'escalade. Le projet part de l'analyse d'une application existante (Stokt) qui présente des problèmes en mode hors ligne, avec pour objectif de créer une version simplifiée et optimisée pour un usage offline-first, spécialisée sur la salle **Montoboard** (Caraman, France).
 
-## 🎯 Objectif Actuel
+## Objectif Actuel
 
-**TODO 05** : Structure Package Python mastock
+**Prototype Python mastock** : COMPLET
 
-**Statut** : A faire (0%)
+Le package Python est fonctionnel avec deux applications :
 
-**Contexte** : L'extraction des données Montoboard est complète (TODO 04 terminé). On passe maintenant au développement du prototype Python.
+### 1. Application principale (`gui/app.py`)
+- Liste de climbs avec filtres (grade, setter, texte)
+- Visualisation des blocs sur le mur
+- Synchronisation API
 
-**Objectif** : Créer un package Python installable (`pip install -e .`) avec interface PyQtGraph pour :
-- Visualiser les climbs et prises sur le mur
-- Tester les concepts d'interaction avec la BD
-- Servir de base pour l'application mobile
+```bash
+cd /media/veracrypt1/Repositories/mastock/mastock
+python -m mastock.gui.app
+```
 
-**Fichiers clés** :
-- `/docs/TODOS/05_python_package_structure.md` - Plan détaillé
-- `/docs/TODOS/05_python_package_structure_STATUS.md` - Progression
-- `/mastock/src/stokt_api.py` - API client existant
-- `/extracted/data/montoboard_setup.json` - 776 prises avec polygones
+### 2. Sélecteur par prises (`gui/hold_selector.py`)
+- Double slider de niveau (4 → 8A)
+- Coloration dynamique des prises (vert→rouge)
+- Sélection multi-prises (logique ET)
+- Vue détaillée avec navigation
 
-## 📋 TODOs
+```bash
+cd /media/veracrypt1/Repositories/mastock/mastock
+python -m mastock.gui.hold_selector
+```
+
+## TODOs
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| 01 | Analyse de l'app Stōkt | 80% - Terminé (objectif atteint) |
-| 02 | Conception schéma SQLite | 0% - Fusionné dans TODO 05 |
+| 01 | Analyse de l'app Stokt | 80% - Terminé |
+| 02 | Conception schéma SQLite | Fusionné dans TODO 05 |
 | 03 | Analyse Hermes via agents | 95% - Terminé |
 | 04 | Test extraction Montoboard | 100% - Terminé |
-| 05 | Structure Package Python | 0% - **Prioritaire** |
+| 05 | Structure Package Python | 100% - **Archivé** |
+| 06 | Interface Filtrage Blocs | 100% - **Terminé** |
 
-## 🔑 Données clés
+## Données clés
 
 | Information | Valeur |
 |-------------|--------|
@@ -43,119 +52,77 @@ mastock est un projet visant à créer une application personnelle pour visualis
 | Endpoint auth | `POST /api/token-auth` (username + password) |
 | Salle cible | Montoboard |
 | Gym ID | `be149ef2-317d-4c73-8d7d-50074577d2fa` |
-| Bundle | Hermes bytecode v96 (à décompiler) |
+| Climbs | 1017 |
+| Prises | 776 |
 
-## 🔄 Workflow de Session
+## Architecture du Package
 
-### Pour Claude (début de session)
-
-```bash
-# 1. Lire ce fichier (START_HERE.md)
-# 2. Consulter le TODO actif
-cat /media/veracrypt1/Repositories/mastock/docs/TODOS/03_analyse_hermes_agents_STATUS.md
-
-# 3. Vérifier la timeline
-cat /media/veracrypt1/Repositories/mastock/docs/TIMELINE.md
+```
+mastock/
+├── pyproject.toml          # Configuration package
+├── src/mastock/
+│   ├── api/
+│   │   ├── client.py       # API Stokt
+│   │   └── models.py       # Dataclasses Climb, Hold, etc.
+│   ├── db/
+│   │   ├── database.py     # SQLite connexion
+│   │   └── repository.py   # ClimbRepository, HoldRepository
+│   ├── core/
+│   │   ├── sync.py         # Synchronisation API ↔ BD
+│   │   ├── filters.py      # Filtres par grade, setter, prises
+│   │   └── hold_index.py   # Index prises ↔ blocs
+│   └── gui/
+│       ├── app.py          # Application principale
+│       ├── hold_selector.py # Sélecteur par prises (TODO 06)
+│       ├── climb_viewer.py  # Visualisation climb
+│       ├── widgets/        # Composants réutilisables
+│       └── dialogs/        # Login, etc.
+└── tests/                  # 108 tests
 ```
 
-## 📊 Résumé des sessions
+## Tests
+
+```bash
+cd /media/veracrypt1/Repositories/mastock/mastock
+python -m pytest tests/ -v
+# 108 tests passent
+```
+
+## Résumé des sessions
+
+### Session 2025-12-22 (nuit)
+- TODO 06 complété (100%)
+- Interface de sélection par prises fonctionnelle
+- 108 tests passent
+
+### Session 2025-12-21 (nuit)
+- TODO 05 complété et archivé (100%)
+- Package Python mastock fonctionnel
+- 90 tests passent
+
+### Session 2025-12-21 (soir)
+- TODO 06 créé : Interface de Filtrage et Sélection de Blocs
+- TODO 05 avancé à 50%
 
 ### Session 2025-12-21
 - TODO 04 complété (100%)
-- Endpoint `/api/faces/{faceId}/setup` testé et documenté
 - 776 prises avec polygones récupérées
-- Image haute résolution (2263x3000) téléchargée
-- TODO 05 créé : Structure Package Python mastock
-- Objectif : prototype Python avec PyQtGraph + SQLite
+- TODO 05 créé
 
-### Session 2025-12-20 (soir)
-- ✅ Installation hermes-dec (décompileur Hermes v96)
-- ✅ Désassemblage complet du bundle (95 Mo)
-- ✅ Configuration app extraite
-- ✅ 40+ endpoints API documentés
-- ✅ 100+ actions Redux cataloguées
-- ✅ Structures Climb/Face extraites
-- ✅ Base documentaire créée : `/docs/reverse_engineering/`
-- 📝 TODO 03 avancé à 85%
+## Documentation
 
-### Session 2025-12-20 (après-midi)
-- ✅ Authentification API réussie (`sostokt.com`, pas `getstokt.com`)
-- ✅ Token DRF obtenu
-- ✅ Montoboard identifié (ID récupéré)
-- ❌ Endpoints faces/climbs : erreurs 500 ou timeout
-- ⚠️ Risque de bannissement si requêtes exploratoires
-- 📝 TODO 03 créé pour analyse approfondie
+- `/docs/TIMELINE.md` - Historique complet
+- `/docs/TODOS/06_interface_filtrage_blocs.md` - TODO 06
+- `/archive/TODOS/05_python_package_structure.md` - TODO 05 (archivé)
+- `/docs/reverse_engineering/` - Documentation API
 
-### Session 2025-12-20 (matin)
-- ✅ Re-analyse complète de l'APK Stōkt
-- ✅ 40+ endpoints API documentés
-- ✅ 150+ actions Redux identifiées
-- ✅ Système de prises analysé (coordonnées X/Y)
-- ❌ Patch APK pour mitmproxy échoué (bug manifest)
-- 📝 TODO 02 créé pour conception SQLite
+## Prochaines étapes possibles
 
-### Session 2025-11-10
-- ✅ Application Stōkt identifiée et extraite
-- ✅ Architecture React Native + Expo + Firebase
-- ✅ Cause du problème offline identifiée
-
-## 📁 Rapports disponibles
-
-- `/docs/reports/SESSION_2025-12-20_analyse_hermes.md` - **Analyse Hermes (nouveau)**
-- `/docs/reports/SESSION_2025-12-20_api_extraction.md` - Test extraction API
-- `/docs/reports/SESSION_2025-12-20_analyse_complete_stokt.md` - Analyse complète
-- `/docs/reports/SESSION_2025-12-20_patch_apk_mitm.md` - Tentative patch APK
-- `/docs/reports/SESSION_2025-11-10_extraction_stockt.md` - Extraction initiale
-- `/docs/reports/ANALYSE_STRUCTURE_FIREBASE_API.md` - Structure API/Firebase
-
-## 📚 Documentation Reverse Engineering
-
-- `/docs/reverse_engineering/INDEX.md` - **Index racine**
-- `/docs/reverse_engineering/01_CONFIGURATION.md` - Configuration app
-- `/docs/reverse_engineering/02_AUTHENTIFICATION.md` - Flux auth
-- `/docs/reverse_engineering/03_ENDPOINTS.md` - Liste endpoints
-- `/docs/reverse_engineering/04_STRUCTURES.md` - Structures données
-- `/docs/reverse_engineering/05_REDUX_ACTIONS.md` - Actions Redux
-
-## 🗂️ Structure du Projet
-
-```
-/mastock/
-├── README.md              # Description générale
-├── START_HERE.md          # Ce fichier
-├── CLAUDE.md              # Guide de contribution
-├── /data/                 # Données extraites (à venir)
-│   └── /montoboard/       # Données Montoboard
-├── /docs/
-│   ├── TIMELINE.md        # Historique du projet
-│   ├── 02_guide_interception_https.md
-│   ├── /TODOS/            # Tâches actives (01, 02, 03)
-│   └── /reports/          # Rapports de sessions
-├── /extracted/            # APKs et fichiers décompilés (git ignored)
-│   ├── stockt_apk/        # APKs originaux
-│   ├── stockt_decompiled/ # APK décompilé + bundle Hermes
-│   └── stockt_patched/    # APKs patchés (non fonctionnels)
-├── /tools/                # Scripts d'analyse
-└── /archive/              # Documents archivés
-```
-
-## 🎯 Prochaine session
-
-**Priorité : Créer la structure du package Python**
-
-1. **Créer `pyproject.toml`** avec dépendances (PyQtGraph, PyQt6, requests)
-2. **Réorganiser le code** en `src/mastock/` avec modules api/, db/, gui/, core/
-3. **Créer le schéma SQLite** pour stocker climbs, prises, metadata sync
-4. **Prototype GUI** : afficher l'image du mur avec les polygones des prises
-
-**Stack technique** :
-- PyQtGraph + PyQt6 pour l'interface interactive
-- SQLite pour le stockage local
-- pytest pour les tests
-
-**Documentation de référence** : `/docs/TODOS/05_python_package_structure.md`
+1. **Application mobile** : Porter le prototype vers React Native ou Flutter
+2. **Synchronisation** : Améliorer la sync incrémentale
+3. **Création de blocs** : Ajouter la fonctionnalité de création
 
 ---
 
-**Dernière mise à jour** : 2025-12-21
-**Statut du projet** : Phase de développement prototype Python
+**Dernière mise à jour** : 2025-12-22
+**Statut du projet** : Prototype Python complet - Prêt pour migration mobile

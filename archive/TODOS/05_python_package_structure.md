@@ -80,11 +80,8 @@ mastock/
 - [ ] Click → affiche le climb sur le mur
 
 ### e) Interface de balayage par prises
-- [ ] Afficher l'image du mur avec les polygones des prises
-- [ ] Click sur une prise → toggle sélection
-- [ ] Filtrer les climbs qui **contiennent** les prises sélectionnées
-- [ ] Combinaison avec filtre de niveau
-- [ ] Affichage du nombre de résultats en temps réel
+
+**→ Voir TODO 06** : Cette fonctionnalité est détaillée dans le TODO 06 (Interface de Filtrage et Sélection de Blocs).
 
 ### f) Interface de création de climb (optionnel)
 - [ ] Mode "création" : click sur prises pour les ajouter
@@ -100,6 +97,7 @@ mastock/
 - Endpoints : `/docs/reverse_engineering/03_ENDPOINTS.md`
 - Données extraites : `/extracted/data/montoboard_ALL_climbs.json`
 - Setup prises : `/extracted/data/montoboard_setup.json`
+- **TODO 06** : `/docs/TODOS/06_interface_filtrage_blocs.md` (interface de sélection par prises)
 
 ## Notes techniques
 

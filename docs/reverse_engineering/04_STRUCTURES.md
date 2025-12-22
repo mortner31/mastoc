@@ -356,7 +356,57 @@ pixel_y = float(centroid[1])  # ex: 2397.11
 - Image : 2263×3000 pixels
 - Fichier setup : 504 Ko
 
+## Lignes de Tape (Start Holds) ✅ ANALYSÉ
+
+Les champs `centerTapeStr`, `leftTapeStr`, `rightTapeStr` définissent les lignes de marquage pour les prises de départ.
+
+### Format
+
+```
+"centerTapeStr": "x1 y1 x2 y2"
+```
+
+4 valeurs séparées par des espaces : coordonnées de début (x1, y1) et fin (x2, y2) de la ligne.
+
+### Logique d'affichage (code décompilé lignes 922271-922322)
+
+| Nb prises START | Affichage |
+|-----------------|-----------|
+| 1 prise | 2 lignes : `leftTapeStr` + `rightTapeStr` → forme "V" |
+| 2+ prises | 1 ligne `centerTapeStr` par prise |
+
+### Code simplifié (extrait décompilé)
+
+```javascript
+// stokt_decompiled.js lignes 922271-922322
+if (startHolds.length !== 1) {
+    // Plus d'une prise de départ → trait central uniquement
+    tapeLines.push(hold.centerTapeStr);
+} else {
+    // Une seule prise de départ → deux traits (gauche + droite)
+    tapeLines.push(hold.leftTapeStr, hold.rightTapeStr);
+}
+```
+
+### Rendu
+
+Les lignes sont dessinées en **blanc**, avec un `strokeWidth` configurable.
+
+### Parser Python
+
+```python
+def parse_tape_line(tape_str: str) -> tuple | None:
+    """Parse un tapeStr en deux points (p1, p2)."""
+    if not tape_str:
+        return None
+    parts = tape_str.split()
+    if len(parts) != 4:
+        return None
+    x1, y1, x2, y2 = map(float, parts)
+    return ((x1, y1), (x2, y2))
+```
+
 ---
 
-**Dernière mise à jour** : 2025-12-21
+**Dernière mise à jour** : 2025-12-22
 **Source des données** : Montoboard (be149ef2-317d-4c73-8d7d-50074577d2fa)

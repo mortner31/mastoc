@@ -9,23 +9,26 @@ Ce fichier recense toute la documentation du projet mastock.
 
 ## 📂 TODOs Actifs
 
-| ID | Nom | Statut | Progression |
-|----|-----|--------|-------------|
-| 01 | Analyse et Décompilation de l'Application d'Escalade | En cours | 0% |
+| ID | Nom | Statut |
+|----|-----|--------|
+| 06 | Interface filtrage blocs | En cours |
 
 Voir `/docs/TODOS/` pour les détails.
 
 ## 📊 Rapports
 
-Aucun rapport généré pour le moment.
+| Date | Description |
+|------|-------------|
+| 2025-12-22 | Améliorations UI (filtres, pictos, viewer) |
 
 Voir `/docs/reports/` pour les rapports de sessions et d'analyses.
 
 ## 📚 Documentation Technique
 
-À créer au fur et à mesure de l'avancement du projet.
-
-Les fichiers de documentation technique seront préfixés par un numéro (ex: `01_architecture.md`).
+| Fichier | Description |
+|---------|-------------|
+| `01_architecture.md` | Architecture du projet mastock |
+| `02_design_decisions.md` | Décisions de design (UI, pictos, couleurs) |
 
 ## 🗃️ Archive
 
@@ -33,4 +36,4 @@ Les TODOs complétés et documents obsolètes sont déplacés dans `/archive/`.
 
 ---
 
-**Dernière mise à jour** : 2025-11-10
+**Dernière mise à jour** : 2025-12-22

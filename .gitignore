@@ -41,3 +41,5 @@ Thumbs.db
 # Fichiers temporaires
 *.tmp
 *.temp
+hermes-dec/
+tools/hermes-dec/

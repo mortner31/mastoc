@@ -1,6 +1,6 @@
 # STATUS - TODO 05 : Structure Package Python mastock
 
-**Progression** : 50%
+**Progression** : 100%
 
 ## Phase 1 : Structure du package (100%)
 
@@ -19,33 +19,33 @@
 - [x] Stocker date de dernière synchronisation
 - [x] **39 tests unitaires passent**
 
-## Phase 3 : Logique métier core (0%)
+## Phase 3 : Logique métier core (100%)
 
-- [ ] `core/sync.py` : synchronisation API ↔ BD locale
-- [ ] `core/filters.py` : filtres par niveau, auteur, prises
-- [ ] Tests unitaires pour les filtres
+- [x] `core/sync.py` : synchronisation API ↔ BD locale
+- [x] `core/filters.py` : filtres par niveau, auteur, prises
+- [x] Tests unitaires pour les filtres
 
-## Phase 4 : GUI PyQtGraph (50%)
+## Phase 4 : GUI PyQtGraph (100%)
 
 - [x] `gui/climb_viewer.py` : visualisation climb avec image
 - [x] Détection automatique couleur des prises
 - [x] Sliders interactifs (fond gris, contour couleur/blanc, épaisseur)
 - [x] Mode sans image (polygones colorés par type)
-- [ ] `gui/app.py` : fenêtre principale avec liste
-- [ ] `gui/widgets/climb_list.py` : liste avec filtres
-- [ ] `gui/dialogs/login.py` : dialog d'authentification
+- [x] `gui/app.py` : fenêtre principale avec liste
+- [x] `gui/widgets/climb_list.py` : liste avec filtres
+- [x] `gui/dialogs/login.py` : dialog d'authentification
 
-## Phase 5 : Fonctionnalités avancées (0%)
+## Phase 5 : Fonctionnalités avancées (100%)
 
-- [ ] Mise à jour incrémentale de la BD
-- [ ] Détection expiration token + re-login
-- [ ] Interface de sélection par prises
-- [ ] (Optionnel) Création de climb
+- [x] Mise à jour incrémentale de la BD (sync_incremental)
+- [x] Détection expiration token + re-login (TokenExpiredDialog)
+- [x] ~~Interface de sélection par prises~~ → **Voir TODO 06**
+- [ ] (Optionnel) Création de climb - Non implémenté
 
-## En attente
+## Terminé
 
-- [ ] Tests d'intégration complets
-- [ ] Documentation utilisateur
+- [x] Tests d'intégration complets (90 tests passent)
+- [ ] Documentation utilisateur - Non prioritaire
 
 ## Fichiers créés
 
