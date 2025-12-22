@@ -37,26 +37,9 @@ def pil_to_qicon(pil_image: PILImage.Image) -> QIcon:
     return QIcon(pixmap)
 
 
-# Grades Fontainebleau avec valeurs IRCRA
-FONT_GRADES = [
-    ('4', 10.0),
-    ('4+', 11.0),
-    ('5', 12.0),
-    ('5+', 13.0),
-    ('6A', 14.0),
-    ('6A+', 15.0),
-    ('6B', 16.0),
-    ('6B+', 17.0),
-    ('6C', 18.0),
-    ('6C+', 19.0),
-    ('7A', 20.0),
-    ('7A+', 21.0),
-    ('7B', 22.0),
-    ('7B+', 23.0),
-    ('7C', 24.0),
-    ('7C+', 25.0),
-    ('8A', 26.0),
-]
+# Grades Fontainebleau avec valeurs IRCRA (valeurs réelles de la DB)
+# Import depuis level_slider pour garder une seule source de vérité
+from mastock.gui.widgets.level_slider import FONT_GRADES
 
 
 class ClimbListItem(QListWidgetItem):
@@ -233,7 +216,13 @@ class ClimbFilterWidget(QWidget):
         min_idx = self.grade_min_slider.value()
         max_idx = self.grade_max_slider.value()
         _, min_ircra = FONT_GRADES[min_idx]
-        _, max_ircra = FONT_GRADES[max_idx]
+        # Pour le max, on prend la borne inf du grade SUIVANT - epsilon
+        # afin d'inclure tous les blocs du grade max sélectionné
+        if max_idx < len(FONT_GRADES) - 1:
+            _, next_ircra = FONT_GRADES[max_idx + 1]
+            max_ircra = next_ircra - 0.01
+        else:
+            max_ircra = 30.0
         filter_obj.grade_min = min_ircra
         filter_obj.grade_max = max_ircra
 

@@ -6,25 +6,25 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QSlider
 from PyQt6.QtCore import Qt, pyqtSignal
 
 
-# Grades Fontainebleau avec valeurs IRCRA correspondantes
+# Grades Fontainebleau avec valeurs IRCRA correspondantes (valeurs réelles de la DB)
+# Note: chaque grade a une plage IRCRA, on utilise la borne inférieure
 FONT_GRADES = [
-    ('4', 10.0),
-    ('4+', 11.0),
-    ('5', 12.0),
-    ('5+', 13.0),
-    ('6A', 14.0),
-    ('6A+', 15.0),
-    ('6B', 16.0),
-    ('6B+', 17.0),
-    ('6C', 18.0),
-    ('6C+', 19.0),
-    ('7A', 20.0),
-    ('7A+', 21.0),
-    ('7B', 22.0),
-    ('7B+', 23.0),
-    ('7C', 24.0),
-    ('7C+', 25.0),
-    ('8A', 26.0),
+    ('4', 12.0),    # 12.0 - 13.12
+    ('4+', 13.25),  # 13.25 - 14.12
+    ('5', 14.25),   # 14.25 - 14.88
+    ('5+', 15.0),   # 15.0 - 15.25
+    ('6A', 15.5),   # 15.5 - 16.25
+    ('6A+', 16.5),  # 16.5 - 17.25
+    ('6B', 17.5),   # 17.5 - 17.75
+    ('6B+', 18.0),  # 18.0 - 18.25
+    ('6C', 18.5),   # 18.5 - 19.25
+    ('6C+', 19.5),  # 19.5 - 20.0
+    ('7A', 20.5),   # 20.5 - 21.25
+    ('7A+', 21.5),  # 21.5 - 22.0
+    ('7B', 22.5),   # 22.5 - 23.0
+    ('7B+', 23.5),  # 23.5
+    ('7C', 24.5),   # 24.5
+    ('8A', 26.5),   # 26.5
 ]
 
 
@@ -138,13 +138,24 @@ class LevelRangeSlider(QWidget):
     def emit_range(self):
         """Émet le signal range_changed."""
         _, min_ircra = index_to_grade(self.min_index)
-        _, max_ircra = index_to_grade(self.max_index)
+        # Pour le max, on prend la borne inf du grade SUIVANT - epsilon
+        # afin d'inclure tous les blocs du grade max sélectionné
+        if self.max_index < len(FONT_GRADES) - 1:
+            _, next_ircra = index_to_grade(self.max_index + 1)
+            max_ircra = next_ircra - 0.01
+        else:
+            # Dernier grade (8A) : on prend une valeur haute
+            max_ircra = 30.0
         self.range_changed.emit(min_ircra, max_ircra)
 
     def get_range(self) -> tuple[float, float]:
         """Retourne la plage actuelle (min_ircra, max_ircra)."""
         _, min_ircra = index_to_grade(self.min_index)
-        _, max_ircra = index_to_grade(self.max_index)
+        if self.max_index < len(FONT_GRADES) - 1:
+            _, next_ircra = index_to_grade(self.max_index + 1)
+            max_ircra = next_ircra - 0.01
+        else:
+            max_ircra = 30.0
         return min_ircra, max_ircra
 
     def get_range_grades(self) -> tuple[str, str]:

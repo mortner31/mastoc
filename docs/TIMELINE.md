@@ -7,6 +7,30 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-22 (après-midi)
+
+- **Refactoring TODO 06** - Architecture deux modes + renderer commun
+  - **Mode Sélection** : Overlay pyqtgraph avec couleurs par niveau (vert→rouge)
+  - **Mode Parcours** : Rendu PIL identique à `app.py`
+  - Création `climb_renderer.py` : renderer commun pour les deux applications
+  - Bouton Undo pour annuler la dernière sélection
+  - Slider de luminosité pour ajuster le fond
+  - Suppression du panneau de détail (double-click)
+  - 111 tests passent
+
+## 2025-12-22 (matin)
+
+- **Debug TODO 06** - Corrections et nouvelles fonctionnalites
+  - Bug IRCRA corrige : 4=12.0 (pas 10.0), 133 blocs 4-5+ (vs 13 avant)
+  - Bug click prises : conversion coordonnees scene→plot + point-dans-polygone
+  - Image fond grisee 85% + luminosite 50%
+  - Optimisation : items selection crees a la demande (lazy)
+  - Double filtre : couleurs basees sur blocs filtres (grade + prises)
+  - **Deux modes** : Exploration (toutes prises) / Parcours (bloc courant)
+    - Boutons Prec/Suiv/Retour selection
+  - 21 tests passent
+  - Rapport : `docs/reports/SESSION_2025-12-22_debug_todo06.md`
+
 ## 2025-12-22 (nuit 2)
 
 - **TODO 07 créé** - Interactions avec les Blocs

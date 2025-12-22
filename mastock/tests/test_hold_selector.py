@@ -97,25 +97,42 @@ class TestLevelSlider:
 
     def test_font_grades_count(self):
         """Vérifie le nombre de grades."""
-        assert len(FONT_GRADES) == 17
+        assert len(FONT_GRADES) == 16  # 4 à 8A (sans 7C+)
 
     def test_grade_to_index(self):
         """Teste conversion grade → index."""
         assert grade_to_index("4") == 0
         assert grade_to_index("6A") == 4
-        assert grade_to_index("8A") == 16
+        assert grade_to_index("8A") == 15
 
     def test_index_to_grade(self):
         """Teste conversion index → grade."""
-        assert index_to_grade(0) == ("4", 10.0)
-        assert index_to_grade(4) == ("6A", 14.0)
-        assert index_to_grade(16) == ("8A", 26.0)
+        assert index_to_grade(0) == ("4", 12.0)      # Grade 4 = IRCRA 12.0
+        assert index_to_grade(4) == ("6A", 15.5)     # Grade 6A = IRCRA 15.5
+        assert index_to_grade(15) == ("8A", 26.5)    # Grade 8A = IRCRA 26.5
 
     def test_ircra_to_index(self):
         """Teste conversion IRCRA → index."""
-        assert ircra_to_index(10.0) == 0
-        assert ircra_to_index(14.0) == 4
-        assert ircra_to_index(26.0) == 16
+        assert ircra_to_index(12.0) == 0   # Grade 4
+        assert ircra_to_index(15.5) == 4   # Grade 6A
+        assert ircra_to_index(26.5) == 15  # Grade 8A
+
+    def test_ircra_values_match_real_data(self):
+        """Vérifie que les valeurs IRCRA correspondent aux données réelles."""
+        # Valeurs observées dans la base de données
+        expected = {
+            "4": 12.0,     # 4 commence à 12.0
+            "4+": 13.25,   # 4+ commence à 13.25
+            "5": 14.25,    # 5 commence à 14.25
+            "5+": 15.0,    # 5+ commence à 15.0
+            "6A": 15.5,    # 6A commence à 15.5
+            "6B": 17.5,    # 6B commence à 17.5
+            "7A": 20.5,    # 7A commence à 20.5
+        }
+        for grade_name, expected_ircra in expected.items():
+            idx = grade_to_index(grade_name)
+            _, actual_ircra = index_to_grade(idx)
+            assert actual_ircra == expected_ircra, f"Grade {grade_name}: attendu {expected_ircra}, obtenu {actual_ircra}"
 
 
 class TestColorInterpolation:
@@ -123,21 +140,21 @@ class TestColorInterpolation:
 
     def test_min_grade_is_green(self):
         """Le grade minimum doit être vert."""
-        color = interpolate_color(10, 26, 10)
+        color = interpolate_color(12, 26, 12)  # IRCRA réel
         r, g, b, a = color
         assert g == 255
         assert r == 0
 
     def test_max_grade_is_red(self):
         """Le grade maximum doit être rouge."""
-        color = interpolate_color(10, 26, 26)
+        color = interpolate_color(12, 26, 26)
         r, g, b, a = color
         assert r == 255
         assert g == 0
 
     def test_mid_grade_is_orange(self):
         """Le grade moyen doit être orange/jaune."""
-        color = interpolate_color(10, 26, 18)
+        color = interpolate_color(12, 26, 19)  # Milieu entre 12 et 26
         r, g, b, a = color
         assert r == 255
         assert g > 0
@@ -254,7 +271,7 @@ class TestEdgeCases:
 
         climbs = index.get_filtered_climbs(
             hold_ids=[],
-            min_ircra=10,
+            min_ircra=12,   # IRCRA réel pour grade 4
             max_ircra=30
         )
         # 3 blocs avec grade (c4 a grade=0 donc exclu sauf si on met min=0)
@@ -278,3 +295,48 @@ class TestEdgeCases:
         index = HoldClimbIndex.from_database(populated_db)
 
         assert index.climb_grades["c4"] == 0
+
+
+class TestIrcraFilteringIntegration:
+    """Tests d'intégration pour le filtrage IRCRA avec données réelles."""
+
+    def test_grade_4_to_5plus_range(self):
+        """Test du filtrage 4-5+ avec les vraies données de la base."""
+        from mastock.db import Database
+        from mastock.core.filters import ClimbFilterService, ClimbFilter
+
+        db = Database()
+        svc = ClimbFilterService(db)
+
+        # Plage 4-5+ avec les nouvelles valeurs IRCRA corrigées
+        # 4 commence à 12.0, 5+ va jusqu'à ~15.25, 6A commence à 15.5
+        f = ClimbFilter(grade_min=12.0, grade_max=15.49)
+        climbs = svc.filter_climbs(f)
+
+        # Collecter les grades trouvés
+        grades = set()
+        for c in climbs:
+            if c.grade:
+                grades.add(c.grade.font)
+
+        # Vérifier qu'on a bien les grades 4, 4+, 5, 5+
+        expected_grades = {"4", "4+", "5", "5+"}
+        assert grades == expected_grades, f"Attendu {expected_grades}, obtenu {grades}"
+
+        # Vérifier qu'on a au moins 100 blocs (il y en a 133 dans la vraie base)
+        assert len(climbs) >= 100, f"Attendu >= 100 blocs, obtenu {len(climbs)}"
+
+    def test_slider_range_calculation(self):
+        """Test que le slider calcule correctement les bornes IRCRA."""
+        from mastock.gui.widgets.level_slider import FONT_GRADES
+
+        # Pour 4-5+ (indices 0-3), le max devrait être juste avant 6A
+        min_idx = 0  # Grade 4
+        max_idx = 3  # Grade 5+
+
+        _, min_ircra = FONT_GRADES[min_idx]
+        _, next_ircra = FONT_GRADES[max_idx + 1]  # Grade 6A
+        max_ircra = next_ircra - 0.01
+
+        assert min_ircra == 12.0, f"Min IRCRA attendu 12.0, obtenu {min_ircra}"
+        assert max_ircra == 15.49, f"Max IRCRA attendu 15.49, obtenu {max_ircra}"

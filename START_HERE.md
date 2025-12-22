@@ -23,10 +23,19 @@ python -m mastock.gui.app
 ```
 
 ### 2. Sélecteur par prises (`gui/hold_selector.py`)
-- Double slider de niveau (4 → 8A)
-- Coloration dynamique des prises (vert→rouge)
-- Sélection multi-prises (logique ET)
-- Vue détaillée avec navigation
+
+**Deux modes distincts :**
+
+1. **Mode Sélection** : Overlay pyqtgraph avec couleurs par niveau
+   - Double slider de niveau (4 → 8A)
+   - Coloration dynamique (vert→rouge)
+   - Multi-sélection de prises (logique ET)
+   - Bouton Undo pour annuler
+
+2. **Mode Parcours** : Rendu PIL identique à `app.py`
+   - Prises du bloc en couleur originale
+   - Contours blancs, FEET cyan, TOP double contour
+   - Navigation Préc/Suiv
 
 ```bash
 cd /media/veracrypt1/Repositories/mastock/mastock
@@ -75,9 +84,12 @@ mastock/
 │       ├── app.py          # Application principale
 │       ├── hold_selector.py # Sélecteur par prises (TODO 06)
 │       ├── climb_viewer.py  # Visualisation climb
-│       ├── widgets/        # Composants réutilisables
+│       ├── widgets/
+│       │   ├── climb_renderer.py  # Renderer commun (PIL)
+│       │   ├── hold_overlay.py    # Overlay prises (pyqtgraph)
+│       │   └── ...
 │       └── dialogs/        # Login, etc.
-└── tests/                  # 108 tests
+└── tests/                  # 111 tests
 ```
 
 ## Tests
@@ -85,10 +97,16 @@ mastock/
 ```bash
 cd /media/veracrypt1/Repositories/mastock/mastock
 python -m pytest tests/ -v
-# 108 tests passent
+# 111 tests passent
 ```
 
 ## Résumé des sessions
+
+### Session 2025-12-22 (après-midi)
+- Refactoring TODO 06 : architecture deux modes
+- Renderer commun `climb_renderer.py` créé
+- Bouton Undo + slider luminosité
+- 111 tests passent
 
 ### Session 2025-12-22 (nuit)
 - TODO 06 complété (100%)

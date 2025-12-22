@@ -128,11 +128,18 @@ class HoldClimbIndex:
         self,
         hold_id: int,
         min_ircra: float = None,
-        max_ircra: float = None
+        max_ircra: float = None,
+        valid_climb_ids: set[str] = None
     ) -> Optional[float]:
         """
         Retourne le grade IRCRA du bloc le plus facile contenant cette prise
         dans la plage spécifiée.
+
+        Args:
+            hold_id: ID de la prise
+            min_ircra: Grade minimum
+            max_ircra: Grade maximum
+            valid_climb_ids: Si fourni, ne considère que ces blocs
 
         Returns:
             Grade IRCRA ou None si aucun bloc dans la plage
@@ -144,11 +151,13 @@ class HoldClimbIndex:
         min_g = min_ircra if min_ircra is not None else 0
         max_g = max_ircra if max_ircra is not None else 100
 
-        grades = [
-            self.climb_grades[cid]
-            for cid in climb_ids
-            if cid in self.climb_grades and min_g <= self.climb_grades[cid] <= max_g
-        ]
+        grades = []
+        for cid in climb_ids:
+            # Filtre par valid_climb_ids si fourni
+            if valid_climb_ids is not None and cid not in valid_climb_ids:
+                continue
+            if cid in self.climb_grades and min_g <= self.climb_grades[cid] <= max_g:
+                grades.append(self.climb_grades[cid])
 
         return min(grades) if grades else None
 

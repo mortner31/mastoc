@@ -5,6 +5,8 @@ Interface interactive pour retrouver un bloc à partir des prises.
 """
 
 import sys
+import time
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -12,17 +14,25 @@ import pyqtgraph as pg
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QLabel, QListWidget, QListWidgetItem, QPushButton,
-    QFrame, QStatusBar
+    QFrame, QStatusBar, QSlider
 )
 from PyQt6.QtCore import Qt
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 from mastock.db import Database, HoldRepository
 from mastock.core.hold_index import HoldClimbIndex
 from mastock.gui.widgets.level_slider import LevelRangeSlider
 from mastock.gui.widgets.hold_overlay import HoldOverlay
-from mastock.gui.widgets.climb_detail import ClimbDetailWidget
+from mastock.gui.widgets.climb_renderer import render_climb
 from mastock.api.models import Climb
+
+# Configuration du logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s.%(msecs)03d | %(message)s',
+    datefmt='%H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 
 class ClimbListItem(QListWidgetItem):
@@ -43,29 +53,54 @@ class HoldSelectorApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        t0 = time.perf_counter()
+        logger.info("Démarrage HoldSelectorApp...")
+
+        t1 = time.perf_counter()
         self.db = Database()
+        logger.info(f"  Database: {(time.perf_counter() - t1)*1000:.0f}ms")
+
+        t1 = time.perf_counter()
         self.index = HoldClimbIndex.from_database(self.db)
+        logger.info(f"  HoldClimbIndex: {(time.perf_counter() - t1)*1000:.0f}ms ({len(self.index.climbs)} climbs, {len(self.index.holds)} holds)")
 
         # Charger l'image
-        self.image_path = Path(__file__).parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+        t1 = time.perf_counter()
+        # Remonter jusqu'à la racine du projet (5 niveaux depuis gui/)
+        self.image_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
         self.img = None
         if self.image_path.exists():
             self.img = Image.open(self.image_path).convert('RGB')
+        logger.info(f"  Image: {(time.perf_counter() - t1)*1000:.0f}ms")
 
         # État
         self.filtered_climbs: list[Climb] = []
         self.selected_holds: list[int] = []
-        self.min_ircra = 10.0
-        self.max_ircra = 26.0
+        self.min_ircra = 12.0  # Grade 4 réel
+        self.max_ircra = 26.5
+        self.brightness = 25  # % luminosité fond (0-100)
+
+        # Mode : "exploration" ou "parcours"
+        self.mode = "exploration"
+        self.current_climb_index = -1  # Index du bloc courant en mode parcours
 
         self.setWindowTitle("mastock - Sélection par prises")
         self.setMinimumSize(1400, 900)
 
+        t1 = time.perf_counter()
+        logger.info("  setup_ui: début...")
         self.setup_ui()
+        logger.info(f"  setup_ui: {(time.perf_counter() - t1)*1000:.0f}ms")
+
+        t1 = time.perf_counter()
         self.update_display()
+        logger.info(f"  update_display: {(time.perf_counter() - t1)*1000:.0f}ms")
+
+        logger.info(f"Total démarrage: {(time.perf_counter() - t0)*1000:.0f}ms")
 
     def setup_ui(self):
         """Configure l'interface."""
+        t0 = time.perf_counter()
         central = QWidget()
         self.setCentralWidget(central)
         layout = QHBoxLayout(central)
@@ -88,6 +123,21 @@ class HoldSelectorApp(QMainWindow):
         self.level_slider.range_changed.connect(self.on_level_changed)
         left_layout.addWidget(self.level_slider)
 
+        # Slider de luminosité
+        brightness_row = QWidget()
+        brightness_layout = QHBoxLayout(brightness_row)
+        brightness_layout.setContentsMargins(0, 5, 0, 5)
+        brightness_layout.addWidget(QLabel("Luminosité:"))
+        self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
+        self.brightness_slider.setRange(5, 100)
+        self.brightness_slider.setValue(self.brightness)
+        self.brightness_slider.valueChanged.connect(self.on_brightness_changed)
+        brightness_layout.addWidget(self.brightness_slider)
+        self.brightness_label = QLabel(f"{self.brightness}%")
+        self.brightness_label.setMinimumWidth(40)
+        brightness_layout.addWidget(self.brightness_label)
+        left_layout.addWidget(brightness_row)
+
         # Séparateur
         left_layout.addWidget(self._separator())
 
@@ -100,9 +150,21 @@ class HoldSelectorApp(QMainWindow):
         self.selection_info.setStyleSheet("color: gray;")
         left_layout.addWidget(self.selection_info)
 
-        self.clear_btn = QPushButton("Effacer la sélection")
+        # Boutons de sélection (Undo + Effacer)
+        selection_btns = QWidget()
+        selection_btns_layout = QHBoxLayout(selection_btns)
+        selection_btns_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.undo_btn = QPushButton("↩ Annuler")
+        self.undo_btn.clicked.connect(self.undo_last_selection)
+        self.undo_btn.setEnabled(False)
+        selection_btns_layout.addWidget(self.undo_btn)
+
+        self.clear_btn = QPushButton("Effacer tout")
         self.clear_btn.clicked.connect(self.clear_selection)
-        left_layout.addWidget(self.clear_btn)
+        selection_btns_layout.addWidget(self.clear_btn)
+
+        left_layout.addWidget(selection_btns)
 
         # Séparateur
         left_layout.addWidget(self._separator())
@@ -118,13 +180,34 @@ class HoldSelectorApp(QMainWindow):
 
         # Liste des blocs
         self.climb_list = QListWidget()
-        self.climb_list.itemClicked.connect(self.on_climb_selected)
-        self.climb_list.itemDoubleClicked.connect(self.on_climb_double_clicked)
+        self.climb_list.itemClicked.connect(self.on_climb_clicked)
         left_layout.addWidget(self.climb_list, stretch=1)
 
+        # Contrôles mode parcours (masqués par défaut)
+        self.parcours_widget = QWidget()
+        parcours_layout = QHBoxLayout(self.parcours_widget)
+        parcours_layout.setContentsMargins(0, 5, 0, 0)
+
+        self.prev_btn = QPushButton("◀ Préc")
+        self.prev_btn.clicked.connect(self.prev_climb)
+        parcours_layout.addWidget(self.prev_btn)
+
+        self.back_to_selection_btn = QPushButton("↩ Retour sélection")
+        self.back_to_selection_btn.clicked.connect(self.back_to_exploration)
+        parcours_layout.addWidget(self.back_to_selection_btn)
+
+        self.next_btn = QPushButton("Suiv ▶")
+        self.next_btn.clicked.connect(self.next_climb)
+        parcours_layout.addWidget(self.next_btn)
+
+        left_layout.addWidget(self.parcours_widget)
+        self.parcours_widget.hide()
+
         splitter.addWidget(left_panel)
+        logger.info(f"    left_panel: {(time.perf_counter() - t0)*1000:.0f}ms")
 
         # === Panneau central : vue du mur ===
+        t1 = time.perf_counter()
         center_panel = QWidget()
         center_layout = QVBoxLayout(center_panel)
 
@@ -138,32 +221,23 @@ class HoldSelectorApp(QMainWindow):
         self.plot.hideAxis('bottom')
 
         # Afficher l'image de fond
+        self.img_item = None
         if self.img:
-            arr = np.array(self.img)
-            arr = np.transpose(arr, (1, 0, 2))
-            self.img_item = pg.ImageItem(arr)
+            t2 = time.perf_counter()
+            self.img_item = pg.ImageItem()
             self.plot.addItem(self.img_item)
+            self.update_background_image()
+            logger.info(f"    image fond: {(time.perf_counter() - t2)*1000:.0f}ms")
 
         # Overlay des prises
+        t3 = time.perf_counter()
         self.hold_overlay = HoldOverlay(self.plot, self.index)
         self.hold_overlay.selection_changed.connect(self.on_selection_changed)
+        logger.info(f"    HoldOverlay: {(time.perf_counter() - t3)*1000:.0f}ms")
 
         splitter.addWidget(center_panel)
 
-        # === Panneau droit : détail bloc ===
-        self.detail_widget = ClimbDetailWidget(
-            self.index.holds,
-            self.image_path if self.image_path.exists() else None
-        )
-        self.detail_widget.previous_requested.connect(self.show_previous_climb)
-        self.detail_widget.next_requested.connect(self.show_next_climb)
-        self.detail_widget.close_requested.connect(self.hide_detail)
-        self.detail_widget.setMaximumWidth(500)
-        self.detail_widget.hide()
-
-        splitter.addWidget(self.detail_widget)
-
-        splitter.setSizes([300, 800, 0])
+        splitter.setSizes([300, 1100])
         layout.addWidget(splitter)
 
         # Status bar
@@ -186,14 +260,44 @@ class HoldSelectorApp(QMainWindow):
         self.max_ircra = max_ircra
         self.update_display()
 
+    def on_brightness_changed(self, value: int):
+        """Appelé quand le slider de luminosité change."""
+        self.brightness = value
+        self.brightness_label.setText(f"{value}%")
+        logger.info(f"Brightness changed to {value}%")
+        self.update_background_image()
+
+    def update_background_image(self):
+        """Met à jour l'image de fond avec la luminosité actuelle."""
+        if not self.img or not self.img_item:
+            logger.warning(f"Cannot update background: img={self.img is not None}, img_item={self.img_item is not None}")
+            return
+        # Mélange couleur/gris + luminosité ajustable
+        img_gray = self.img.convert('L').convert('RGB')
+        img_blend = Image.blend(self.img, img_gray, 0.85)  # 85% gris
+        enhancer = ImageEnhance.Brightness(img_blend)
+        img_dark = enhancer.enhance(self.brightness / 100.0)
+        arr = np.array(img_dark)
+        logger.info(f"Background image updated: brightness={self.brightness}%, mean={arr.mean():.1f}")
+        arr = np.transpose(arr, (1, 0, 2))
+        self.img_item.setImage(arr, autoLevels=False)
+        self.img_item.update()
+        self.view.viewport().update()
+
     def on_selection_changed(self, hold_ids: list[int]):
         """Appelé quand la sélection de prises change."""
         self.selected_holds = hold_ids
         if hold_ids:
             self.selection_info.setText(f"{len(hold_ids)} prise(s) sélectionnée(s)")
+            self.undo_btn.setEnabled(True)
         else:
             self.selection_info.setText("Cliquez sur les prises du mur")
+            self.undo_btn.setEnabled(False)
         self.update_results()
+
+    def undo_last_selection(self):
+        """Annule la dernière sélection de prise."""
+        self.hold_overlay.undo_last_selection()
 
     def clear_selection(self):
         """Efface la sélection de prises."""
@@ -220,6 +324,22 @@ class HoldSelectorApp(QMainWindow):
             key=lambda c: self.index.climb_grades.get(c.id, 0)
         )
 
+        # Collecter les prises et IDs des blocs filtrés
+        valid_holds = None
+        valid_climb_ids = None
+        if self.selected_holds:
+            valid_holds = set()
+            valid_climb_ids = set()
+            for climb in self.filtered_climbs:
+                valid_climb_ids.add(climb.id)
+                for ch in climb.get_holds():
+                    valid_holds.add(ch.hold_id)
+
+        # Mettre à jour les couleurs (double filtre : grade + prises sélectionnées)
+        self.hold_overlay.update_colors(
+            self.min_ircra, self.max_ircra, valid_holds, valid_climb_ids
+        )
+
         # Mettre à jour la liste
         self.climb_list.clear()
         for climb in self.filtered_climbs:
@@ -228,51 +348,87 @@ class HoldSelectorApp(QMainWindow):
 
         self.count_label.setText(f"{len(self.filtered_climbs)} bloc(s)")
 
-        # Mettre à jour le détail si visible
-        if self.detail_widget.isVisible():
-            self.detail_widget.set_climb_list(self.filtered_climbs)
-
-    def on_climb_selected(self, item: ClimbListItem):
-        """Appelé quand un bloc est sélectionné."""
+    def on_climb_clicked(self, item: ClimbListItem):
+        """Appelé quand un bloc est cliqué - passe en mode parcours."""
         if hasattr(item, 'climb'):
-            # Mettre en évidence les prises du bloc
-            self.hold_overlay.highlight_climb_holds(item.climb.id)
-            self.status.showMessage(f"Bloc: {item.climb.name}")
+            # Trouver l'index du bloc
+            for i, climb in enumerate(self.filtered_climbs):
+                if climb.id == item.climb.id:
+                    self.current_climb_index = i
+                    break
+            self.enter_parcours_mode()
 
-    def on_climb_double_clicked(self, item: ClimbListItem):
-        """Appelé quand un bloc est double-cliqué."""
-        if hasattr(item, 'climb'):
-            self.show_climb_detail(item.climb)
+    def enter_parcours_mode(self):
+        """Passe en mode parcours de blocs."""
+        self.mode = "parcours"
+        self.parcours_widget.show()
+        self.show_current_climb()
 
-    def show_climb_detail(self, climb: Climb):
-        """Affiche le panneau de détail pour un bloc."""
-        self.detail_widget.set_climb_list(self.filtered_climbs)
-        self.detail_widget.show_climb(climb)
-        self.detail_widget.show()
+    def back_to_exploration(self):
+        """Retourne au mode exploration."""
+        self.mode = "exploration"
+        self.current_climb_index = -1
+        self.parcours_widget.hide()
 
-        # Redimensionner le splitter
-        sizes = self.centralWidget().findChild(QSplitter).sizes()
-        if sizes[2] == 0:
-            sizes[1] -= 400
-            sizes[2] = 400
-            self.centralWidget().findChild(QSplitter).setSizes(sizes)
+        # Restaurer l'image de fond normale
+        self.update_background_image()
 
-    def hide_detail(self):
-        """Masque le panneau de détail."""
-        self.detail_widget.hide()
-        # Restaurer la taille du panneau central
-        sizes = self.centralWidget().findChild(QSplitter).sizes()
-        sizes[1] += sizes[2]
-        sizes[2] = 0
-        self.centralWidget().findChild(QSplitter).setSizes(sizes)
+        # Réafficher l'overlay des prises
+        self.hold_overlay.set_visible(True)
+        self.hold_overlay.clear_climb_highlight()
+        self.hold_overlay.restore_selection_display()
 
-    def show_previous_climb(self):
-        """Affiche le bloc précédent."""
-        self.detail_widget.show_previous()
+        # Réafficher toutes les prises des blocs filtrés
+        self.update_results()
+        self.status.showMessage("Mode sélection")
 
-    def show_next_climb(self):
-        """Affiche le bloc suivant."""
-        self.detail_widget.show_next()
+    def show_current_climb(self):
+        """Affiche le bloc courant en mode parcours (rendu PIL comme app.py)."""
+        if self.current_climb_index < 0 or self.current_climb_index >= len(self.filtered_climbs):
+            return
+
+        climb = self.filtered_climbs[self.current_climb_index]
+
+        # Masquer l'overlay des prises (on passe en rendu PIL)
+        self.hold_overlay.set_visible(False)
+
+        # Générer le rendu du bloc avec le renderer commun
+        if self.img:
+            arr = render_climb(
+                self.img,
+                climb,
+                self.index.holds,
+                gray_level=0.85,
+                brightness=self.brightness / 100.0,
+                contour_width=8
+            )
+            self.img_item.setImage(arr, autoLevels=False)
+
+        # Sélectionner dans la liste
+        self.climb_list.setCurrentRow(self.current_climb_index)
+
+        # Mettre à jour le statut
+        grade = climb.grade.font if climb.grade else "?"
+        self.status.showMessage(
+            f"[{self.current_climb_index + 1}/{len(self.filtered_climbs)}] "
+            f"{climb.name} ({grade})"
+        )
+
+        # Activer/désactiver les boutons
+        self.prev_btn.setEnabled(self.current_climb_index > 0)
+        self.next_btn.setEnabled(self.current_climb_index < len(self.filtered_climbs) - 1)
+
+    def prev_climb(self):
+        """Passe au bloc précédent."""
+        if self.current_climb_index > 0:
+            self.current_climb_index -= 1
+            self.show_current_climb()
+
+    def next_climb(self):
+        """Passe au bloc suivant."""
+        if self.current_climb_index < len(self.filtered_climbs) - 1:
+            self.current_climb_index += 1
+            self.show_current_climb()
 
 
 def main():
