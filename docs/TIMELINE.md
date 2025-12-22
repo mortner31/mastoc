@@ -9,6 +9,12 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-22 (nuit 2)
 
+- **TODO 07 créé** - Interactions avec les Blocs
+  - Objectif : Récupérer ascensions, commentaires, gérer favoris
+  - Réflexion : API officielle vs stockage local vs hybride
+  - Endpoints à investiguer : ascents, comments, bookmarks
+  - Statut : À faire (0%)
+
 - **Marquage prises de départ - vraies données tape**
   - Analyse code décompilé Stokt (lignes 922271-922322)
   - Découverte format tape : `centerTapeStr`, `leftTapeStr`, `rightTapeStr`
