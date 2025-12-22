@@ -7,6 +7,15 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-22 (soir)
+
+- **TODO 08 complété à 100%** - Modes de Coloration et Heatmaps
+  - Trois modes : Min, Max, Fréquence (quantiles)
+  - 7 palettes heatmap (viridis, plasma, inferno, magma, cividis, turbo, coolwarm)
+  - UI : radio buttons + combobox + aperçu palette
+  - 17 nouveaux tests, 128 tests au total
+  - Fichiers : `colormaps.py`, `hold_index.py`, `hold_overlay.py`, `hold_selector.py`
+
 ## 2025-12-22 (après-midi)
 
 - **Refactoring TODO 06** - Architecture deux modes + renderer commun

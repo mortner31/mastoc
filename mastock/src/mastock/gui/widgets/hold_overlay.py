@@ -1,7 +1,13 @@
 """
 Overlay des prises avec coloration par niveau et sélection interactive.
+
+Supporte trois modes de coloration (TODO 08):
+- MIN_GRADE: Niveau du bloc le plus facile (défaut)
+- MAX_GRADE: Niveau du bloc le plus difficile
+- FREQUENCY: Fréquence d'utilisation (quantiles)
 """
 
+from enum import Enum
 from typing import Optional, Callable
 import numpy as np
 import pyqtgraph as pg
@@ -10,6 +16,14 @@ from PyQt6.QtGui import QColor
 
 from mastock.api.models import Hold
 from mastock.core.hold_index import HoldClimbIndex
+from mastock.core.colormaps import Colormap, apply_colormap
+
+
+class ColorMode(Enum):
+    """Mode de coloration des prises."""
+    MIN_GRADE = "min"    # Grade du bloc le plus facile
+    MAX_GRADE = "max"    # Grade du bloc le plus difficile
+    FREQUENCY = "freq"   # Fréquence d'utilisation (quantiles)
 
 
 def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
@@ -88,6 +102,13 @@ class HoldOverlay(QObject):
         self.min_ircra = 0.0
         self.max_ircra = 100.0
 
+        # Mode de coloration et palette (TODO 08)
+        self.color_mode = ColorMode.MIN_GRADE
+        self.colormap = Colormap.VIRIDIS
+
+        # Cache des quantiles pour le mode fréquence
+        self._frequency_cache: dict[int, float] = {}
+
         # Items graphiques
         self.hold_items: dict[int, pg.PlotDataItem] = {}
         self.selection_items: dict[int, pg.PlotDataItem] = {}
@@ -149,6 +170,16 @@ class HoldOverlay(QObject):
             self.center_items[hold_id] = center
             self.plot.addItem(center)
 
+    def set_color_mode(self, mode: ColorMode):
+        """Change le mode de coloration."""
+        self.color_mode = mode
+        # Invalider le cache fréquence si on change de mode
+        self._frequency_cache.clear()
+
+    def set_colormap(self, cmap: Colormap):
+        """Change la palette de couleurs."""
+        self.colormap = cmap
+
     def update_colors(
         self,
         min_ircra: float,
@@ -157,7 +188,7 @@ class HoldOverlay(QObject):
         valid_climb_ids: set[str] = None
     ):
         """
-        Met à jour les couleurs selon la plage de niveau.
+        Met à jour les couleurs selon la plage de niveau et le mode actif.
 
         Args:
             min_ircra: Grade minimum
@@ -167,6 +198,12 @@ class HoldOverlay(QObject):
         """
         self.min_ircra = min_ircra
         self.max_ircra = max_ircra
+
+        # Pré-calculer les quantiles si mode fréquence
+        if self.color_mode == ColorMode.FREQUENCY:
+            self._frequency_cache = self.index.get_holds_usage_quantiles(
+                min_ircra, max_ircra, valid_climb_ids
+            )
 
         for hold_id, item in self.hold_items.items():
             # Si valid_holds est fourni et cette prise n'en fait pas partie → grisée
@@ -179,17 +216,15 @@ class HoldOverlay(QObject):
                 item.setBrush(brush)
                 continue
 
-            # Grade du bloc le plus facile pour cette prise (parmi les blocs filtrés)
-            min_grade = self.index.get_hold_min_grade(
-                hold_id, min_ircra, max_ircra, valid_climb_ids
-            )
+            # Calculer la valeur selon le mode
+            value = self._get_hold_value(hold_id, min_ircra, max_ircra, valid_climb_ids)
 
-            if min_grade is None:
+            if value is None:
                 # Prise hors filtre → grisée
                 color = (128, 128, 128, 50)
             else:
-                # Interpolation vert → rouge
-                color = interpolate_color(min_ircra, max_ircra, min_grade)
+                # Appliquer la colormap
+                color = apply_colormap(value, self.colormap, alpha=180)
 
             pen = pg.mkPen(color=color, width=2)
             brush = pg.mkBrush(color=(*color[:3], 80))
@@ -197,6 +232,47 @@ class HoldOverlay(QObject):
             item.setPen(pen)
             item.setFillLevel(0)
             item.setBrush(brush)
+
+    def _get_hold_value(
+        self,
+        hold_id: int,
+        min_ircra: float,
+        max_ircra: float,
+        valid_climb_ids: set[str] = None
+    ) -> Optional[float]:
+        """
+        Calcule la valeur normalisée [0, 1] d'une prise selon le mode actif.
+
+        Returns:
+            Valeur entre 0 et 1, ou None si prise hors filtre
+        """
+        if self.color_mode == ColorMode.MIN_GRADE:
+            grade = self.index.get_hold_min_grade(
+                hold_id, min_ircra, max_ircra, valid_climb_ids
+            )
+            if grade is None:
+                return None
+            # Normaliser dans la plage
+            if max_ircra <= min_ircra:
+                return 0.5
+            return (grade - min_ircra) / (max_ircra - min_ircra)
+
+        elif self.color_mode == ColorMode.MAX_GRADE:
+            grade = self.index.get_hold_max_grade(
+                hold_id, min_ircra, max_ircra, valid_climb_ids
+            )
+            if grade is None:
+                return None
+            # Normaliser dans la plage
+            if max_ircra <= min_ircra:
+                return 0.5
+            return (grade - min_ircra) / (max_ircra - min_ircra)
+
+        elif self.color_mode == ColorMode.FREQUENCY:
+            # Utiliser le cache des quantiles
+            return self._frequency_cache.get(hold_id)
+
+        return None
 
     def _on_mouse_clicked(self, event):
         """Gère les clicks sur les prises."""

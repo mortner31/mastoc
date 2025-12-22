@@ -14,15 +14,17 @@ import pyqtgraph as pg
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QLabel, QListWidget, QListWidgetItem, QPushButton,
-    QFrame, QStatusBar, QSlider
+    QFrame, QStatusBar, QSlider, QRadioButton, QButtonGroup, QComboBox
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QImage, QPainter
 from PIL import Image, ImageEnhance
 
 from mastock.db import Database, HoldRepository
 from mastock.core.hold_index import HoldClimbIndex
+from mastock.core.colormaps import Colormap, get_colormap_preview, get_colormap_display_name, get_all_colormaps
 from mastock.gui.widgets.level_slider import LevelRangeSlider
-from mastock.gui.widgets.hold_overlay import HoldOverlay
+from mastock.gui.widgets.hold_overlay import HoldOverlay, ColorMode
 from mastock.gui.widgets.climb_renderer import render_climb
 from mastock.api.models import Climb
 
@@ -137,6 +139,56 @@ class HoldSelectorApp(QMainWindow):
         self.brightness_label.setMinimumWidth(40)
         brightness_layout.addWidget(self.brightness_label)
         left_layout.addWidget(brightness_row)
+
+        # Séparateur
+        left_layout.addWidget(self._separator())
+
+        # === Mode de coloration (TODO 08) ===
+        mode_label = QLabel("Mode de coloration")
+        mode_label.setStyleSheet("font-weight: bold;")
+        left_layout.addWidget(mode_label)
+
+        self.mode_group = QButtonGroup(self)
+        mode_widget = QWidget()
+        mode_layout = QVBoxLayout(mode_widget)
+        mode_layout.setContentsMargins(0, 0, 0, 0)
+        mode_layout.setSpacing(2)
+
+        self.radio_min = QRadioButton("Niveau min (accessible dès)")
+        self.radio_min.setChecked(True)
+        self.mode_group.addButton(self.radio_min, 0)
+        mode_layout.addWidget(self.radio_min)
+
+        self.radio_max = QRadioButton("Niveau max (utilisée jusqu'à)")
+        self.mode_group.addButton(self.radio_max, 1)
+        mode_layout.addWidget(self.radio_max)
+
+        self.radio_freq = QRadioButton("Fréquence (popularité)")
+        self.mode_group.addButton(self.radio_freq, 2)
+        mode_layout.addWidget(self.radio_freq)
+
+        left_layout.addWidget(mode_widget)
+        self.mode_group.idClicked.connect(self.on_color_mode_changed)
+
+        # Palette de couleurs
+        palette_row = QWidget()
+        palette_layout = QHBoxLayout(palette_row)
+        palette_layout.setContentsMargins(0, 5, 0, 0)
+        palette_layout.addWidget(QLabel("Palette:"))
+
+        self.palette_combo = QComboBox()
+        for cmap in get_all_colormaps():
+            self.palette_combo.addItem(get_colormap_display_name(cmap), cmap)
+        self.palette_combo.currentIndexChanged.connect(self.on_colormap_changed)
+        palette_layout.addWidget(self.palette_combo, stretch=1)
+        left_layout.addWidget(palette_row)
+
+        # Aperçu de la palette
+        self.palette_preview = QLabel()
+        self.palette_preview.setFixedHeight(20)
+        self.palette_preview.setStyleSheet("border: 1px solid #666;")
+        left_layout.addWidget(self.palette_preview)
+        self._update_palette_preview()
 
         # Séparateur
         left_layout.addWidget(self._separator())
@@ -266,6 +318,43 @@ class HoldSelectorApp(QMainWindow):
         self.brightness_label.setText(f"{value}%")
         logger.info(f"Brightness changed to {value}%")
         self.update_background_image()
+
+    def on_color_mode_changed(self, button_id: int):
+        """Appelé quand le mode de coloration change."""
+        modes = [ColorMode.MIN_GRADE, ColorMode.MAX_GRADE, ColorMode.FREQUENCY]
+        mode = modes[button_id]
+        logger.info(f"Color mode changed to {mode.value}")
+        self.hold_overlay.set_color_mode(mode)
+        self.update_display()
+
+    def on_colormap_changed(self, index: int):
+        """Appelé quand la palette change."""
+        cmap = self.palette_combo.currentData()
+        if cmap:
+            logger.info(f"Colormap changed to {cmap.value}")
+            self.hold_overlay.set_colormap(cmap)
+            self._update_palette_preview()
+            self.update_display()
+
+    def _update_palette_preview(self):
+        """Met à jour l'aperçu de la palette sélectionnée."""
+        cmap = self.palette_combo.currentData()
+        if not cmap:
+            cmap = Colormap.VIRIDIS
+
+        # Générer l'aperçu
+        width = 300
+        height = 16
+        colors = get_colormap_preview(cmap, width)
+
+        # Créer l'image
+        img = QImage(width, height, QImage.Format.Format_RGB32)
+        for x, (r, g, b) in enumerate(colors):
+            for y in range(height):
+                img.setPixelColor(x, y, Qt.GlobalColor.black)
+                img.setPixel(x, y, (255 << 24) | (r << 16) | (g << 8) | b)
+
+        self.palette_preview.setPixmap(QPixmap.fromImage(img))
 
     def update_background_image(self):
         """Met à jour l'image de fond avec la luminosité actuelle."""

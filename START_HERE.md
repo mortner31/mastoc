@@ -52,6 +52,8 @@ python -m mastock.gui.hold_selector
 | 04 | Test extraction Montoboard | 100% - Terminé |
 | 05 | Structure Package Python | 100% - **Archivé** |
 | 06 | Interface Filtrage Blocs | 100% - **Terminé** |
+| 07 | Interactions Blocs | 0% - À faire |
+| 08 | Modes Coloration Heatmaps | 100% - **Terminé** |
 
 ## Données clés
 

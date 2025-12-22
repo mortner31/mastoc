@@ -161,6 +161,42 @@ class HoldClimbIndex:
 
         return min(grades) if grades else None
 
+    def get_hold_max_grade(
+        self,
+        hold_id: int,
+        min_ircra: float = None,
+        max_ircra: float = None,
+        valid_climb_ids: set[str] = None
+    ) -> Optional[float]:
+        """
+        Retourne le grade IRCRA du bloc le plus DIFFICILE contenant cette prise
+        dans la plage spécifiée.
+
+        Args:
+            hold_id: ID de la prise
+            min_ircra: Grade minimum
+            max_ircra: Grade maximum
+            valid_climb_ids: Si fourni, ne considère que ces blocs
+
+        Returns:
+            Grade IRCRA ou None si aucun bloc dans la plage
+        """
+        climb_ids = self.hold_to_climbs.get(hold_id, [])
+        if not climb_ids:
+            return None
+
+        min_g = min_ircra if min_ircra is not None else 0
+        max_g = max_ircra if max_ircra is not None else 100
+
+        grades = []
+        for cid in climb_ids:
+            if valid_climb_ids is not None and cid not in valid_climb_ids:
+                continue
+            if cid in self.climb_grades and min_g <= self.climb_grades[cid] <= max_g:
+                grades.append(self.climb_grades[cid])
+
+        return max(grades) if grades else None
+
     def get_holds_usage(
         self,
         min_ircra: float = None,
@@ -189,3 +225,61 @@ class HoldClimbIndex:
                 usage[hold_id] = count
 
         return usage
+
+    def get_holds_usage_quantiles(
+        self,
+        min_ircra: float = None,
+        max_ircra: float = None,
+        valid_climb_ids: set[str] = None
+    ) -> dict[int, float]:
+        """
+        Retourne le percentile d'usage pour chaque prise (0.0 à 1.0).
+
+        Utilise les quantiles pour étaler la distribution asymétrique
+        (quelques prises très utilisées, la plupart peu).
+
+        Args:
+            min_ircra: Grade minimum
+            max_ircra: Grade maximum
+            valid_climb_ids: Si fourni, ne considère que ces blocs
+
+        Returns:
+            dict[hold_id, percentile] où percentile est entre 0.0 et 1.0
+        """
+        # Calculer l'usage de chaque prise
+        if valid_climb_ids is not None:
+            # Utiliser le set fourni
+            usage = {}
+            for hold_id, climb_ids in self.hold_to_climbs.items():
+                count = sum(1 for cid in climb_ids if cid in valid_climb_ids)
+                if count > 0:
+                    usage[hold_id] = count
+        else:
+            # Utiliser la méthode existante
+            usage = self.get_holds_usage(min_ircra, max_ircra)
+
+        if not usage:
+            return {}
+
+        # Trier les counts pour calculer les percentiles
+        counts = sorted(usage.values())
+        n = len(counts)
+
+        # Créer un mapping count → percentile
+        # Pour les valeurs égales, on prend la position moyenne
+        count_to_percentile = {}
+        i = 0
+        while i < n:
+            count = counts[i]
+            # Trouver toutes les occurrences de cette valeur
+            j = i
+            while j < n and counts[j] == count:
+                j += 1
+            # Position moyenne (0-indexed) → percentile
+            avg_pos = (i + j - 1) / 2
+            percentile = avg_pos / (n - 1) if n > 1 else 0.5
+            count_to_percentile[count] = percentile
+            i = j
+
+        # Appliquer aux prises
+        return {hold_id: count_to_percentile[count] for hold_id, count in usage.items()}

@@ -1,4 +1,4 @@
-"""Tests pour les composants du sélecteur de prises (TODO 06)."""
+"""Tests pour les composants du sélecteur de prises (TODO 06 + TODO 08)."""
 
 import pytest
 import tempfile
@@ -7,6 +7,10 @@ from pathlib import Path
 from mastock.db import Database, ClimbRepository, HoldRepository
 from mastock.api.models import Climb, Hold, Face, Grade, ClimbSetter, FacePicture
 from mastock.core.hold_index import HoldClimbIndex
+from mastock.core.colormaps import (
+    Colormap, apply_colormap, get_colormap_lut, get_colormap_preview,
+    get_all_colormaps, get_colormap_display_name
+)
 from mastock.gui.widgets.level_slider import (
     LevelRangeSlider, FONT_GRADES, grade_to_index, index_to_grade, ircra_to_index
 )
@@ -340,3 +344,189 @@ class TestIrcraFilteringIntegration:
 
         assert min_ircra == 12.0, f"Min IRCRA attendu 12.0, obtenu {min_ircra}"
         assert max_ircra == 15.49, f"Max IRCRA attendu 15.49, obtenu {max_ircra}"
+
+
+# ============================================================
+# Tests TODO 08 - Modes de coloration et heatmaps
+# ============================================================
+
+class TestHoldMaxGrade:
+    """Tests pour get_hold_max_grade() (TODO 08)."""
+
+    def test_get_hold_max_grade(self, populated_db):
+        """Teste le grade maximum d'une prise."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Prise 100 : max grade = 18 (c2 = 6C)
+        max_grade = index.get_hold_max_grade(100)
+        assert max_grade == 18.0
+
+        # Prise 103 : max grade = 22 (c3 = 7B, c4=0, c2=18)
+        max_grade = index.get_hold_max_grade(103)
+        assert max_grade == 22.0
+
+    def test_get_hold_max_grade_with_filter(self, populated_db):
+        """Teste le grade maximum avec filtre de plage."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Prise 103 dans plage 14-20 : max = 18 (c2 = 6C)
+        max_grade = index.get_hold_max_grade(103, min_ircra=14, max_ircra=20)
+        assert max_grade == 18.0
+
+        # Prise 100 dans plage 20-26 : None (aucun bloc)
+        max_grade = index.get_hold_max_grade(100, min_ircra=20, max_ircra=26)
+        assert max_grade is None
+
+    def test_get_hold_max_grade_nonexistent(self, populated_db):
+        """Prise inexistante retourne None."""
+        index = HoldClimbIndex.from_database(populated_db)
+        assert index.get_hold_max_grade(999) is None
+
+
+class TestHoldsUsageQuantiles:
+    """Tests pour get_holds_usage_quantiles() (TODO 08)."""
+
+    def test_basic_quantiles(self, populated_db):
+        """Teste le calcul des quantiles d'usage."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        quantiles = index.get_holds_usage_quantiles()
+
+        # Vérifier que toutes les prises ont un percentile
+        assert 100 in quantiles
+        assert 101 in quantiles
+        assert 102 in quantiles
+        assert 103 in quantiles
+
+        # Les percentiles sont entre 0 et 1
+        for hold_id, percentile in quantiles.items():
+            assert 0 <= percentile <= 1, f"Prise {hold_id}: percentile {percentile} hors bornes"
+
+    def test_quantiles_ordering(self, populated_db):
+        """Les prises plus utilisées ont des percentiles plus élevés."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Usage: 100=2, 101=2, 102=3, 103=3
+        quantiles = index.get_holds_usage_quantiles()
+
+        # Prises avec usage=3 doivent avoir percentile >= prises avec usage=2
+        assert quantiles[102] >= quantiles[100]
+        assert quantiles[103] >= quantiles[101]
+
+    def test_quantiles_with_filter(self, populated_db):
+        """Teste les quantiles avec filtre de grade."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Filtre 14-18 : c1 (14) et c2 (18)
+        # Usage filtré: 100=2, 101=1, 102=1, 103=1
+        quantiles = index.get_holds_usage_quantiles(min_ircra=14, max_ircra=18)
+
+        # Prise 100 (usage=2) doit avoir le percentile le plus élevé
+        assert quantiles[100] > quantiles[101]
+
+    def test_quantiles_empty(self, populated_db):
+        """Filtre qui exclut tout retourne dict vide."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        quantiles = index.get_holds_usage_quantiles(min_ircra=50, max_ircra=60)
+        assert quantiles == {}
+
+
+class TestColormaps:
+    """Tests pour le module colormaps (TODO 08)."""
+
+    def test_all_colormaps_generate_256_colors(self):
+        """Chaque palette génère 256 couleurs."""
+        for cmap in Colormap:
+            lut = get_colormap_lut(cmap)
+            assert len(lut) == 256, f"{cmap.value} n'a pas 256 couleurs"
+
+    def test_colormap_colors_in_range(self):
+        """Les couleurs sont dans la plage 0-255."""
+        for cmap in Colormap:
+            lut = get_colormap_lut(cmap)
+            for r, g, b in lut:
+                assert 0 <= r <= 255, f"{cmap.value}: r={r} hors plage"
+                assert 0 <= g <= 255, f"{cmap.value}: g={g} hors plage"
+                assert 0 <= b <= 255, f"{cmap.value}: b={b} hors plage"
+
+    def test_apply_colormap_extremes(self):
+        """Test des valeurs extrêmes."""
+        for cmap in Colormap:
+            # Valeur 0
+            color = apply_colormap(0.0, cmap)
+            assert len(color) == 4
+            assert color[3] == 180  # Alpha par défaut
+
+            # Valeur 1
+            color = apply_colormap(1.0, cmap)
+            assert len(color) == 4
+
+    def test_apply_colormap_clamping(self):
+        """Les valeurs hors bornes sont clampées."""
+        color_neg = apply_colormap(-0.5, Colormap.VIRIDIS)
+        color_zero = apply_colormap(0.0, Colormap.VIRIDIS)
+        assert color_neg[:3] == color_zero[:3]
+
+        color_over = apply_colormap(1.5, Colormap.VIRIDIS)
+        color_one = apply_colormap(1.0, Colormap.VIRIDIS)
+        assert color_over[:3] == color_one[:3]
+
+    def test_apply_colormap_custom_alpha(self):
+        """Test du paramètre alpha."""
+        color = apply_colormap(0.5, Colormap.PLASMA, alpha=255)
+        assert color[3] == 255
+
+    def test_get_colormap_preview(self):
+        """Test de la génération d'aperçu."""
+        preview = get_colormap_preview(Colormap.INFERNO, width=100)
+        assert len(preview) == 100
+
+        # Aperçu pleine taille
+        full = get_colormap_preview(Colormap.INFERNO, width=256)
+        assert len(full) == 256
+
+    def test_get_all_colormaps(self):
+        """Liste toutes les palettes."""
+        cmaps = get_all_colormaps()
+        assert len(cmaps) == 7
+        assert Colormap.VIRIDIS in cmaps
+        assert Colormap.COOLWARM in cmaps
+
+    def test_get_colormap_display_name(self):
+        """Test des noms d'affichage."""
+        assert "recommandé" in get_colormap_display_name(Colormap.VIRIDIS)
+        assert "daltoniens" in get_colormap_display_name(Colormap.CIVIDIS)
+
+    def test_viridis_gradient(self):
+        """Viridis va du violet sombre au jaune-vert."""
+        lut = get_colormap_lut(Colormap.VIRIDIS)
+
+        # Début: teinte sombre (violet/bleu)
+        r0, g0, b0 = lut[0]
+        assert r0 < 100  # Pas trop rouge
+        assert b0 > r0   # Plus bleu que rouge
+
+        # Fin: jaune-vert (viridis finit en jaune-vert, pas jaune pur)
+        r255, g255, b255 = lut[255]
+        assert g255 > 200  # Beaucoup de vert
+        assert b255 < 100  # Peu de bleu
+        # Le rouge peut être modéré dans viridis (approximation polynomiale)
+
+    def test_coolwarm_is_divergent(self):
+        """Coolwarm est bleu → blanc → rouge."""
+        lut = get_colormap_lut(Colormap.COOLWARM)
+
+        # Début: bleu
+        r0, g0, b0 = lut[0]
+        assert b0 > r0  # Plus bleu que rouge
+
+        # Milieu: blanc/gris clair
+        r128, g128, b128 = lut[128]
+        assert r128 > 200
+        assert g128 > 200
+        assert b128 > 200
+
+        # Fin: rouge
+        r255, g255, b255 = lut[255]
+        assert r255 > b255  # Plus rouge que bleu
