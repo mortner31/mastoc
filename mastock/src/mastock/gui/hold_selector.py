@@ -158,6 +158,7 @@ class HoldSelectorApp(QMainWindow):
         self.color_mode_combo.addItem("Niveau min", ColorMode.MIN_GRADE)
         self.color_mode_combo.addItem("Niveau max", ColorMode.MAX_GRADE)
         self.color_mode_combo.addItem("Fréquence", ColorMode.FREQUENCY)
+        self.color_mode_combo.addItem("Rareté", ColorMode.RARE)
         self.color_mode_combo.currentIndexChanged.connect(self.on_color_mode_changed)
         mode_layout.addWidget(self.color_mode_combo, stretch=1)
         left_layout.addWidget(mode_row)
@@ -185,32 +186,32 @@ class HoldSelectorApp(QMainWindow):
         # Séparateur
         left_layout.addWidget(self._separator())
 
-        # === Filtre par ouvreur (TODO 08) ===
-        setter_label = QLabel("Filtre ouvreurs")
-        setter_label.setStyleSheet("font-weight: bold;")
-        left_layout.addWidget(setter_label)
+        # === Filtre par ouvreur (TODO 08) - Compact/dépliable ===
+        setter_header = QWidget()
+        setter_header_layout = QHBoxLayout(setter_header)
+        setter_header_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Mode du filtre
-        setter_mode_widget = QWidget()
-        setter_mode_layout = QHBoxLayout(setter_mode_widget)
-        setter_mode_layout.setContentsMargins(0, 0, 0, 0)
+        self.setter_toggle_btn = QPushButton("▶ Ouvreurs")
+        self.setter_toggle_btn.setStyleSheet("font-weight: bold; text-align: left; border: none;")
+        self.setter_toggle_btn.clicked.connect(self.toggle_setter_panel)
+        setter_header_layout.addWidget(self.setter_toggle_btn)
 
-        self.setter_mode_group = QButtonGroup(self)
-        self.radio_setter_none = QRadioButton("Tous")
-        self.radio_setter_none.setChecked(True)
-        self.setter_mode_group.addButton(self.radio_setter_none, 0)
-        setter_mode_layout.addWidget(self.radio_setter_none)
+        # Mode du filtre (compact)
+        self.setter_mode_combo = QComboBox()
+        self.setter_mode_combo.addItem("Tous", "none")
+        self.setter_mode_combo.addItem("Inclure", "include")
+        self.setter_mode_combo.addItem("Exclure", "exclude")
+        self.setter_mode_combo.currentIndexChanged.connect(self.on_setter_mode_changed)
+        self.setter_mode_combo.setMaximumWidth(90)
+        setter_header_layout.addWidget(self.setter_mode_combo)
 
-        self.radio_setter_include = QRadioButton("Inclure")
-        self.setter_mode_group.addButton(self.radio_setter_include, 1)
-        setter_mode_layout.addWidget(self.radio_setter_include)
+        left_layout.addWidget(setter_header)
 
-        self.radio_setter_exclude = QRadioButton("Exclure")
-        self.setter_mode_group.addButton(self.radio_setter_exclude, 2)
-        setter_mode_layout.addWidget(self.radio_setter_exclude)
-
-        left_layout.addWidget(setter_mode_widget)
-        self.setter_mode_group.idClicked.connect(self.on_setter_mode_changed)
+        # Panel dépliable (masqué par défaut)
+        self.setter_panel = QWidget()
+        setter_panel_layout = QVBoxLayout(self.setter_panel)
+        setter_panel_layout.setContentsMargins(0, 0, 0, 0)
+        setter_panel_layout.setSpacing(2)
 
         # Liste des ouvreurs avec checkboxes
         self.setter_scroll = QScrollArea()
@@ -232,7 +233,7 @@ class HoldSelectorApp(QMainWindow):
 
         self.setter_layout.addStretch()
         self.setter_scroll.setWidget(setter_container)
-        left_layout.addWidget(self.setter_scroll)
+        setter_panel_layout.addWidget(self.setter_scroll)
 
         # Boutons Tout/Rien
         setter_btns = QWidget()
@@ -247,7 +248,10 @@ class HoldSelectorApp(QMainWindow):
         self.setter_none_btn.clicked.connect(self.select_no_setters)
         setter_btns_layout.addWidget(self.setter_none_btn)
 
-        left_layout.addWidget(setter_btns)
+        setter_panel_layout.addWidget(setter_btns)
+
+        left_layout.addWidget(self.setter_panel)
+        self.setter_panel.hide()  # Masqué par défaut
 
         # Séparateur
         left_layout.addWidget(self._separator())
@@ -415,10 +419,18 @@ class HoldSelectorApp(QMainWindow):
 
         self.palette_preview.setPixmap(QPixmap.fromImage(img))
 
-    def on_setter_mode_changed(self, button_id: int):
+    def toggle_setter_panel(self):
+        """Affiche/masque le panel des setters."""
+        if self.setter_panel.isVisible():
+            self.setter_panel.hide()
+            self.setter_toggle_btn.setText("▶ Ouvreurs")
+        else:
+            self.setter_panel.show()
+            self.setter_toggle_btn.setText("▼ Ouvreurs")
+
+    def on_setter_mode_changed(self, index: int):
         """Appelé quand le mode de filtre setter change."""
-        modes = ["none", "include", "exclude"]
-        self.setter_filter_mode = modes[button_id]
+        self.setter_filter_mode = self.setter_mode_combo.currentData()
         logger.info(f"Setter filter mode: {self.setter_filter_mode}")
         self.update_display()
 

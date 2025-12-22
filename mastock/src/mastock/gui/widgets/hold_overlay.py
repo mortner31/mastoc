@@ -24,6 +24,7 @@ class ColorMode(Enum):
     MIN_GRADE = "min"    # Grade du bloc le plus facile
     MAX_GRADE = "max"    # Grade du bloc le plus difficile
     FREQUENCY = "freq"   # Fréquence d'utilisation (quantiles)
+    RARE = "rare"        # Prises rares (0, 1, 2, 3+ utilisations)
 
 
 def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
@@ -108,6 +109,9 @@ class HoldOverlay(QObject):
 
         # Cache des quantiles pour le mode fréquence
         self._frequency_cache: dict[int, float] = {}
+
+        # Cache du comptage pour le mode rare
+        self._usage_count_cache: dict[int, int] = {}
 
         # Items graphiques
         self.hold_items: dict[int, pg.PlotDataItem] = {}
@@ -205,6 +209,18 @@ class HoldOverlay(QObject):
                 min_ircra, max_ircra, valid_climb_ids
             )
 
+        # Pré-calculer le comptage si mode rare
+        if self.color_mode == ColorMode.RARE:
+            if valid_climb_ids is not None:
+                # Compter manuellement avec le filtre
+                self._usage_count_cache = {}
+                for hold_id, climb_ids in self.index.hold_to_climbs.items():
+                    count = sum(1 for cid in climb_ids if cid in valid_climb_ids)
+                    self._usage_count_cache[hold_id] = count
+            else:
+                # Utiliser get_holds_usage()
+                self._usage_count_cache = self.index.get_holds_usage(min_ircra, max_ircra)
+
         for hold_id, item in self.hold_items.items():
             # Si valid_holds est fourni et cette prise n'en fait pas partie → grisée
             if valid_holds is not None and hold_id not in valid_holds:
@@ -271,6 +287,21 @@ class HoldOverlay(QObject):
         elif self.color_mode == ColorMode.FREQUENCY:
             # Utiliser le cache des quantiles
             return self._frequency_cache.get(hold_id)
+
+        elif self.color_mode == ColorMode.RARE:
+            # Mode rare: prises rares en valeur (couleur chaude), communes neutres
+            # 0=1.0 (max), 1=0.75, 2=0.5, 3=0.25, 4+=0.0 (min)
+            count = self._usage_count_cache.get(hold_id, 0)
+            if count == 0:
+                return 1.0   # Jamais utilisée → très visible
+            elif count == 1:
+                return 0.75  # 1 fois → visible
+            elif count == 2:
+                return 0.50  # 2 fois → modéré
+            elif count == 3:
+                return 0.25  # 3 fois → peu visible
+            else:
+                return 0.0   # 4+ fois → neutre
 
         return None
 

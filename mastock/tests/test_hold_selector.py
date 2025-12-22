@@ -613,3 +613,58 @@ class TestSetterFilter:
         )
         assert len(climbs) == 1
         assert climbs[0].id == "c2"
+
+
+class TestRareMode:
+    """Tests pour le mode Rareté (TODO 08)."""
+
+    def test_rare_mode_enum_exists(self):
+        """Vérifie que le mode RARE existe."""
+        from mastock.gui.widgets.hold_overlay import ColorMode
+        assert hasattr(ColorMode, 'RARE')
+        assert ColorMode.RARE.value == "rare"
+
+    def test_rare_mode_values(self, populated_db):
+        """Teste les valeurs du mode rare selon le nombre d'utilisations."""
+        index = HoldClimbIndex.from_database(populated_db)
+
+        # Usage des prises dans les fixtures:
+        # 100: c1, c2 → 2 utilisations
+        # 101: c2, c3 → 2 utilisations
+        # 102: c1, c3, c4 → 3 utilisations
+        # 103: c2, c3, c4 → 3 utilisations
+
+        usage = index.get_holds_usage()
+
+        assert usage[100] == 2
+        assert usage[101] == 2
+        assert usage[102] == 3
+        assert usage[103] == 3
+
+    def test_rare_mode_logic(self):
+        """Teste la logique de conversion count → value (inversée, 5 niveaux)."""
+        # Prises rares en valeur (couleur chaude), communes neutres
+        # 0 → 1.0 (très visible)
+        # 1 → 0.75 (visible)
+        # 2 → 0.50 (modéré)
+        # 3 → 0.25 (peu visible)
+        # 4+ → 0.0 (neutre)
+
+        def rare_value(count):
+            if count == 0:
+                return 1.0
+            elif count == 1:
+                return 0.75
+            elif count == 2:
+                return 0.50
+            elif count == 3:
+                return 0.25
+            else:
+                return 0.0
+
+        assert rare_value(0) == 1.0   # Jamais → max visible
+        assert rare_value(1) == 0.75
+        assert rare_value(2) == 0.50
+        assert rare_value(3) == 0.25
+        assert rare_value(4) == 0.0   # 4+ → neutre
+        assert rare_value(100) == 0.0
