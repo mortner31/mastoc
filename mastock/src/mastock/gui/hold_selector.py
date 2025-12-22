@@ -24,9 +24,12 @@ from PIL import Image, ImageEnhance
 from mastock.db import Database, HoldRepository
 from mastock.core.hold_index import HoldClimbIndex
 from mastock.core.colormaps import Colormap, get_colormap_preview, get_colormap_display_name, get_all_colormaps
+from mastock.core.social_loader import SocialLoader, SocialData
 from mastock.gui.widgets.level_slider import LevelRangeSlider
 from mastock.gui.widgets.hold_overlay import HoldOverlay, ColorMode
 from mastock.gui.widgets.climb_renderer import render_climb
+from mastock.gui.widgets.social_panel import SocialPanel
+from mastock.api.client import StoktAPI, MONTOBOARD_GYM_ID
 from mastock.api.models import Climb
 
 # Configuration du logging
@@ -91,6 +94,11 @@ class HoldSelectorApp(QMainWindow):
         self.mode = "exploration"
         self.current_climb_index = -1  # Index du bloc courant en mode parcours
 
+        # API et social loader (TODO 07)
+        self.api: StoktAPI | None = None
+        self.social_loader: SocialLoader | None = None
+        self._init_api()
+
         self.setWindowTitle("mastock - Sélection par prises")
         self.setMinimumSize(1400, 900)
 
@@ -104,6 +112,23 @@ class HoldSelectorApp(QMainWindow):
         logger.info(f"  update_display: {(time.perf_counter() - t1)*1000:.0f}ms")
 
         logger.info(f"Total démarrage: {(time.perf_counter() - t0)*1000:.0f}ms")
+
+    def _init_api(self):
+        """Initialise l'API avec le token stocké."""
+        # Token stocké dans la documentation (TODO: dialog de login)
+        TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
+        try:
+            self.api = StoktAPI()
+            self.api.set_token(TOKEN)
+            # Vérifier que le token est valide
+            self.api.get_user_profile()
+            self.social_loader = SocialLoader(self.api)
+            self.social_loader.on_data_loaded = self._on_social_data_loaded
+            logger.info("API initialisée avec succès")
+        except Exception as e:
+            logger.warning(f"API non disponible: {e}")
+            self.api = None
+            self.social_loader = None
 
     def setup_ui(self):
         """Configure l'interface."""
@@ -317,6 +342,12 @@ class HoldSelectorApp(QMainWindow):
 
         left_layout.addWidget(self.parcours_widget)
         self.parcours_widget.hide()
+
+        # Panel social (TODO 07) - visible en mode parcours
+        self.social_panel = SocialPanel()
+        self.social_panel.setMaximumHeight(180)
+        self.social_panel.hide()
+        left_layout.addWidget(self.social_panel)
 
         splitter.addWidget(left_panel)
         logger.info(f"    left_panel: {(time.perf_counter() - t0)*1000:.0f}ms")
@@ -562,6 +593,9 @@ class HoldSelectorApp(QMainWindow):
         """Passe en mode parcours de blocs."""
         self.mode = "parcours"
         self.parcours_widget.show()
+        # Afficher le panel social si l'API est disponible
+        if self.social_loader:
+            self.social_panel.show()
         self.show_current_climb()
 
     def back_to_exploration(self):
@@ -569,6 +603,7 @@ class HoldSelectorApp(QMainWindow):
         self.mode = "exploration"
         self.current_climb_index = -1
         self.parcours_widget.hide()
+        self.social_panel.hide()
 
         # Restaurer l'image de fond normale
         self.update_background_image()
@@ -618,6 +653,11 @@ class HoldSelectorApp(QMainWindow):
         self.prev_btn.setEnabled(self.current_climb_index > 0)
         self.next_btn.setEnabled(self.current_climb_index < len(self.filtered_climbs) - 1)
 
+        # Charger les données sociales (async)
+        if self.social_loader:
+            self.social_panel.set_loading(True)
+            self.social_loader.load(climb.id)
+
     def prev_climb(self):
         """Passe au bloc précédent."""
         if self.current_climb_index > 0:
@@ -629,6 +669,15 @@ class HoldSelectorApp(QMainWindow):
         if self.current_climb_index < len(self.filtered_climbs) - 1:
             self.current_climb_index += 1
             self.show_current_climb()
+
+    def _on_social_data_loaded(self, data: SocialData):
+        """Callback appelé quand les données sociales sont chargées."""
+        # Vérifier qu'on est toujours en mode parcours sur le bon climb
+        if self.mode != "parcours" or self.current_climb_index < 0:
+            return
+        current_climb = self.filtered_climbs[self.current_climb_index]
+        if data.climb_id == current_climb.id:
+            self.social_panel.set_data(data)
 
 
 def main():

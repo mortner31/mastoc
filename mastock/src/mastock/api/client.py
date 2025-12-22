@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from mastock.api.models import Climb, Face, Wall, GymSummary
+from mastock.api.models import Climb, Face, Wall, GymSummary, Effort, Comment, Like
 
 
 @dataclass
@@ -242,3 +242,187 @@ class StoktAPI:
         save_path.parent.mkdir(parents=True, exist_ok=True)
         save_path.write_bytes(response.content)
         return True
+
+    # =========================================================================
+    # Interactions sociales (TODO 07)
+    # =========================================================================
+
+    def get_climb_sends(self, climb_id: str, limit: int = 20) -> list[Effort]:
+        """
+        GET api/climbs/{climbId}/latest-sends
+
+        Récupère les dernières ascensions d'un climb.
+
+        Args:
+            climb_id: ID du climb
+            limit: Nombre max de résultats
+
+        Returns:
+            Liste des ascensions récentes
+        """
+        response = self._request("get", f"api/climbs/{climb_id}/latest-sends", params={"limit": limit})
+        return [Effort.from_api(e) for e in response.json()]
+
+    def get_climb_comments(self, climb_id: str, limit: int = 20) -> list[Comment]:
+        """
+        GET api/climbs/{climbId}/comments
+
+        Récupère les commentaires d'un climb.
+
+        Args:
+            climb_id: ID du climb
+            limit: Nombre max de résultats
+
+        Returns:
+            Liste des commentaires
+        """
+        response = self._request("get", f"api/climbs/{climb_id}/comments", params={"limit": limit})
+        return [Comment.from_api(c) for c in response.json()]
+
+    def get_climb_likes(self, climb_id: str) -> list[Like]:
+        """
+        GET api/climbs/{climbId}/likes
+
+        Récupère les likes d'un climb.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            Liste des likes
+        """
+        response = self._request("get", f"api/climbs/{climb_id}/likes")
+        return [Like.from_api(lk) for lk in response.json()]
+
+    def like_climb(self, climb_id: str) -> bool:
+        """
+        POST api/climbs/{climbId}/likes
+
+        Ajoute un like à un climb.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            True si succès
+        """
+        self._request("post", f"api/climbs/{climb_id}/likes")
+        return True
+
+    def unlike_climb(self, climb_id: str) -> bool:
+        """
+        DELETE api/climbs/{climbId}/likes
+
+        Retire un like d'un climb.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            True si succès
+        """
+        self._request("delete", f"api/climbs/{climb_id}/likes")
+        return True
+
+    def post_comment(self, climb_id: str, text: str, replied_to_id: Optional[str] = None) -> Comment:
+        """
+        POST api/climbs/{climbId}/comments
+
+        Poste un commentaire sur un climb.
+
+        Args:
+            climb_id: ID du climb
+            text: Texte du commentaire
+            replied_to_id: ID du commentaire auquel on répond (optionnel)
+
+        Returns:
+            Commentaire créé
+        """
+        data = {"text": text}
+        if replied_to_id:
+            data["replied_to_id"] = replied_to_id
+
+        response = self._request(
+            "post",
+            f"api/climbs/{climb_id}/comments",
+            data=data
+        )
+        return Comment.from_api(response.json())
+
+    def delete_comment(self, climb_id: str, comment_id: str) -> bool:
+        """
+        DELETE api/climbs/{climbId}/comments/{commentId}
+
+        Supprime un commentaire.
+
+        Args:
+            climb_id: ID du climb
+            comment_id: ID du commentaire
+
+        Returns:
+            True si succès
+        """
+        self._request("delete", f"api/climbs/{climb_id}/comments/{comment_id}")
+        return True
+
+    def bookmark_climb(self, climb_id: str, add: bool = True) -> bool:
+        """
+        PATCH api/climbs/{climbId}/bookmarked
+
+        Ajoute ou retire un climb des favoris.
+
+        Args:
+            climb_id: ID du climb
+            add: True pour ajouter, False pour retirer
+
+        Returns:
+            True si succès
+        """
+        data = {"added": add, "removed": not add}
+        self._request("patch", f"api/climbs/{climb_id}/bookmarked", data=data)
+        return True
+
+    def get_my_bookmarked_climbs(self, gym_id: str) -> list[Climb]:
+        """
+        GET api/gyms/{gymId}/my-bookmarked-climbs
+
+        Récupère les climbs favoris de l'utilisateur.
+
+        Args:
+            gym_id: ID du gym
+
+        Returns:
+            Liste des climbs favoris
+        """
+        response = self._request("get", f"api/gyms/{gym_id}/my-bookmarked-climbs")
+        return [Climb.from_api(c) for c in response.json()]
+
+    def get_my_liked_climbs(self, gym_id: str) -> list[Climb]:
+        """
+        GET api/gyms/{gymId}/my-liked-climbs
+
+        Récupère les climbs likés par l'utilisateur.
+
+        Args:
+            gym_id: ID du gym
+
+        Returns:
+            Liste des climbs likés
+        """
+        response = self._request("get", f"api/gyms/{gym_id}/my-liked-climbs")
+        return [Climb.from_api(c) for c in response.json()]
+
+    def get_crowd_grades(self, climb_id: str) -> dict:
+        """
+        GET api/climbs/{climbId}/crowd-grades
+
+        Récupère les notes de difficulté de la communauté.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            Dict avec les notes (ircra, hueco, font, dankyu)
+        """
+        response = self._request("get", f"api/climbs/{climb_id}/crowd-grades")
+        return response.json()

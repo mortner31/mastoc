@@ -7,6 +7,67 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-22 (nuit 5)
+
+- **TODO 07 archivé** - Interactions avec les Blocs (100%)
+  - 10 méthodes API sociales (sends, comments, likes, bookmarks)
+  - Modèles : `UserRef`, `Effort`, `Comment`, `Like`
+  - `SocialLoader` : chargement async avec cache TTL 5min
+  - `SocialPanel` intégré dans hold_selector.py (mode parcours)
+  - **Bug fix** : API utilise `effortBy`/`effortDate` (pas `user`/`date`)
+  - 33 tests unitaires, 170 tests totaux
+  - Rapport : `docs/reports/SESSION_2025-12-22_todo07_social.md`
+
+## 2025-12-22 (nuit 4)
+
+- **TODO 11 cree** - Principes d'Ergonomie UI/UX
+  - Document de reference Material Design 3 mobile-first
+  - 6 modes principaux : Connexion, Sync, Recherche Simple, Recherche Avancee, Creer, Moi
+  - Navigation par gestes : swipe haut/bas (blocs), swipe droite (like)
+  - Aspects sociaux caches par defaut (tap pour reveler)
+  - Options depliables (Progressive Disclosure)
+  - Wireframes ASCII pour tous les modes
+  - Heuristiques Nielsen, Loi de Fitts, norme ISO 9241
+  - Statut : Documentation complete (100%)
+
+## 2025-12-22 (nuit 3)
+
+- **TODO 10 révisé** - Analyse critique et restructuration
+  - Analyse multi-agents : code décompilé + architecture mastock
+  - **Risques identifiés** :
+    - GAP Architectural : UI splitter incompatible avec wizard multi-écrans
+    - API Client incomplet : manquent POST/PATCH/DELETE
+    - HoldSelectorApp : standalone, pas réutilisable comme widget
+  - **Décisions** :
+    - Phase 0.5 ajoutée : Infrastructure Navigation (prérequis)
+    - Extension API intégrée à Phase 2
+    - Phases 4-5 (Édition/Circuit) → reportées TODO 11/12
+  - Progression corrigée : 17% (5/29 tâches)
+
+- **TODO 10 créé** - Interface de Création de Blocs
+  - Analyse complète par 5 agents parallèles
+  - Endpoints : POST/PATCH/DELETE climbs documentés
+  - Structure données : holdsList, grade, isPrivate, etc.
+  - Validations : min 2 prises START, nom min 3 caractères
+  - Workflow UI : SelectHolds → ClimbInfo → POST
+  - Permissions : canEditHolds, canSetPrivate, canSetPublic
+  - Lignes code : 415263-467019 (endpoints), 903059-960320 (UI)
+  - Statut : Investigation (10%)
+
+- **TODO 09 créé** - Listes Personnalisées (Collections)
+  - 25 endpoints découverts par analyse code décompilé
+  - CRUD listes utilisateur et gym
+  - Gestion items (ajout/retrait/réordonnancement)
+  - Système de suivi/followers
+  - Endpoints "my-*" non documentés dans TODO 07
+  - Statut : Investigation (5%)
+
+- **Vérification conformité TODO 07** - Analyse agents parallèles
+  - 15/15 endpoints confirmés dans le code décompilé
+  - Likes (4/4), Comments (3/3), Bookmarks (2/2), Efforts (4/4), Ratings (2/2)
+  - Bodies POST/PATCH validés (structure exacte)
+  - Endpoints bonus découverts : feed likes, user bookmarks
+
 ## 2025-12-22 (soir)
 
 - **TODO 08 complété à 100%** - Modes de Coloration et Heatmaps

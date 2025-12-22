@@ -7,13 +7,16 @@ from collections import Counter
 
 import numpy as np
 import pyqtgraph as pg
+from typing import Optional
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSplitter
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PIL import Image, ImageDraw
 
 from mastock.api.models import Climb, Hold, HoldType
+from mastock.core.social_loader import SocialLoader, SocialData
+from mastock.gui.widgets.social_panel import SocialPanel
 
 
 # Couleurs pour les types de prises (comme dans l'app Stokt)
@@ -80,14 +83,22 @@ class ClimbDetailWidget(QWidget):
     previous_requested = pyqtSignal()
     next_requested = pyqtSignal()
     close_requested = pyqtSignal()
+    like_toggled = pyqtSignal(str, bool)  # climb_id, is_liked
+    bookmark_toggled = pyqtSignal(str, bool)  # climb_id, is_bookmarked
 
-    def __init__(self, holds_map: dict[int, Hold], image_path: Path = None, parent=None):
+    def __init__(self, holds_map: dict[int, Hold], image_path: Path = None,
+                 social_loader: Optional[SocialLoader] = None, parent=None):
         super().__init__(parent)
         self.holds_map = holds_map
         self.image_path = image_path
         self.climb = None
         self.climb_list: list[Climb] = []
         self.current_index = 0
+
+        # Social loader (optionnel)
+        self.social_loader = social_loader
+        if self.social_loader:
+            self.social_loader.on_data_loaded = self._on_social_data_loaded
 
         self.img_color = None
         if image_path and image_path.exists():
@@ -133,9 +144,23 @@ class ClimbDetailWidget(QWidget):
         self.date_label.setStyleSheet("font-size: 12px; color: gray;")
         stats_layout.addWidget(self.date_label)
 
-        self.ascensions_label = QLabel("0 ascensions")
-        self.ascensions_label.setStyleSheet("font-size: 12px; color: gray;")
+        stats_layout.addStretch()
+
+        # Compteurs sociaux (TODO 07)
+        self.ascensions_label = QLabel("👤 0")
+        self.ascensions_label.setStyleSheet("font-size: 12px;")
+        self.ascensions_label.setToolTip("Ascensions")
         stats_layout.addWidget(self.ascensions_label)
+
+        self.likes_label = QLabel("❤ 0")
+        self.likes_label.setStyleSheet("font-size: 12px;")
+        self.likes_label.setToolTip("Likes")
+        stats_layout.addWidget(self.likes_label)
+
+        self.comments_label = QLabel("💬 0")
+        self.comments_label.setStyleSheet("font-size: 12px;")
+        self.comments_label.setToolTip("Commentaires")
+        stats_layout.addWidget(self.comments_label)
 
         info_layout.addLayout(stats_layout)
 
@@ -180,6 +205,15 @@ class ClimbDetailWidget(QWidget):
 
         layout.addLayout(nav_layout)
 
+        # Panel social (si loader disponible)
+        self.social_panel: Optional[SocialPanel] = None
+        if self.social_loader:
+            self.social_panel = SocialPanel()
+            self.social_panel.like_clicked.connect(self._on_like_clicked)
+            self.social_panel.bookmark_clicked.connect(self._on_bookmark_clicked)
+            self.social_panel.setMaximumHeight(200)
+            layout.addWidget(self.social_panel)
+
     def set_climb_list(self, climbs: list[Climb]):
         """Définit la liste des blocs pour la navigation."""
         self.climb_list = climbs
@@ -202,10 +236,17 @@ class ClimbDetailWidget(QWidget):
         self.setter_label.setText(f"Setter: {climb.setter.full_name if climb.setter else '?'}")
         self.feet_label.setText(f"Pieds: {climb.feet_rule}")
         self.date_label.setText(f"Créé le: {climb.date_created[:10] if climb.date_created else '?'}")
-        self.ascensions_label.setText(f"{climb.climbed_by} ascensions")
+
+        # Compteurs sociaux
+        self.ascensions_label.setText(f"👤 {climb.climbed_by}")
+        self.likes_label.setText(f"❤ {climb.total_likes}")
+        self.comments_label.setText(f"💬 {climb.total_comments}")
 
         # Navigation
         self.update_navigation()
+
+        # Charger les données sociales (async)
+        self._load_social_data()
 
         # Afficher le bloc
         if self.img_color:
@@ -379,3 +420,53 @@ class ClimbDetailWidget(QWidget):
         if self.current_index < len(self.climb_list) - 1:
             self.current_index += 1
             self.show_climb(self.climb_list[self.current_index])
+
+    # =========================================================================
+    # Données sociales (TODO 07)
+    # =========================================================================
+
+    def _load_social_data(self):
+        """Charge les données sociales pour le climb actuel."""
+        if not self.social_loader or not self.climb:
+            return
+
+        if self.social_panel:
+            self.social_panel.set_loading(True)
+
+        self.social_loader.load(self.climb.id)
+
+    def _on_social_data_loaded(self, data: SocialData):
+        """Callback quand les données sociales sont chargées."""
+        if not self.climb or data.climb_id != self.climb.id:
+            return
+
+        if self.social_panel:
+            self.social_panel.set_data(data)
+
+    def _on_like_clicked(self):
+        """Toggle le like sur le climb actuel."""
+        if not self.climb:
+            return
+        # TODO: implémenter l'appel API
+        # Pour l'instant, émettre le signal
+        self.like_toggled.emit(self.climb.id, True)
+
+    def _on_bookmark_clicked(self):
+        """Toggle le bookmark sur le climb actuel."""
+        if not self.climb:
+            return
+        # TODO: implémenter l'appel API
+        self.bookmark_toggled.emit(self.climb.id, True)
+
+    def set_social_loader(self, loader: SocialLoader):
+        """Configure le loader social après construction."""
+        self.social_loader = loader
+        self.social_loader.on_data_loaded = self._on_social_data_loaded
+
+        # Ajouter le panel si pas déjà fait
+        if not self.social_panel:
+            self.social_panel = SocialPanel()
+            self.social_panel.like_clicked.connect(self._on_like_clicked)
+            self.social_panel.bookmark_clicked.connect(self._on_bookmark_clicked)
+            self.social_panel.setMaximumHeight(200)
+            self.layout().addWidget(self.social_panel)

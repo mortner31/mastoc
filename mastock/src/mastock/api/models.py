@@ -17,6 +17,99 @@ class HoldType(Enum):
     TOP = "T"    # Prise finale
 
 
+# =============================================================================
+# Modèles pour les interactions sociales (TODO 07)
+# =============================================================================
+
+@dataclass
+class UserRef:
+    """Référence à un utilisateur (pour likes, comments, sends)."""
+    id: str
+    full_name: str
+    avatar: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "UserRef":
+        """Crée un UserRef depuis la réponse API."""
+        return cls(
+            id=data.get("id", ""),
+            full_name=data.get("fullName", data.get("full_name", "")),
+            avatar=data.get("avatar")
+        )
+
+
+@dataclass
+class Effort:
+    """Ascension d'un climb par un utilisateur."""
+    id: str
+    climb_id: str
+    user: UserRef
+    date: str
+    is_flash: bool = False
+    attempts: Optional[int] = None
+    grade_feel: int = 0  # -1 (soft), 0 (ok), +1 (hard)
+
+    @classmethod
+    def from_api(cls, data: dict) -> "Effort":
+        """Crée un Effort depuis la réponse API."""
+        # L'API utilise "effortBy" pour l'utilisateur, pas "user"
+        user_data = data.get("effortBy", data.get("user", {}))
+        return cls(
+            id=data.get("id", ""),
+            climb_id=data.get("climbId", data.get("climb_id", "")),
+            user=UserRef.from_api(user_data),
+            # L'API utilise "effortDate" pas "date"
+            date=data.get("effortDate", data.get("date", data.get("dateCreated", ""))),
+            is_flash=data.get("isFlash", data.get("is_flash", False)),
+            attempts=data.get("attemptsNumber", data.get("attempts")),
+            grade_feel=data.get("gradeFeel", data.get("grade_feel", 0)),
+        )
+
+
+@dataclass
+class Comment:
+    """Commentaire sur un climb."""
+    id: str
+    climb_id: str
+    user: UserRef
+    text: str
+    date: str
+    replied_to_id: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "Comment":
+        """Crée un Comment depuis la réponse API."""
+        user_data = data.get("user", {})
+        return cls(
+            id=data.get("id", ""),
+            climb_id=data.get("climbId", data.get("climb_id", "")),
+            user=UserRef.from_api(user_data),
+            text=data.get("text", ""),
+            date=data.get("date", data.get("dateCreated", "")),
+            replied_to_id=data.get("repliedToId", data.get("replied_to_id")),
+        )
+
+
+@dataclass
+class Like:
+    """Like sur un climb."""
+    user: UserRef
+    date: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "Like":
+        """Crée un Like depuis la réponse API."""
+        # L'API peut retourner directement les infos user ou un objet user
+        if "user" in data:
+            user = UserRef.from_api(data["user"])
+        else:
+            user = UserRef.from_api(data)
+        return cls(
+            user=user,
+            date=data.get("date", data.get("dateCreated")),
+        )
+
+
 @dataclass
 class ClimbSetter:
     """Créateur d'un climb."""

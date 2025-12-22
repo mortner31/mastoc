@@ -46,14 +46,17 @@ python -m mastock.gui.hold_selector
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| 01 | Analyse de l'app Stokt | 80% - Terminé |
-| 02 | Conception schéma SQLite | Fusionné dans TODO 05 |
-| 03 | Analyse Hermes via agents | 95% - Terminé |
-| 04 | Test extraction Montoboard | 100% - Terminé |
-| 05 | Structure Package Python | 100% - **Archivé** |
-| 06 | Interface Filtrage Blocs | 100% - **Terminé** |
-| 07 | Interactions Blocs | 0% - À faire |
-| 08 | Modes Coloration Heatmaps | 100% - **Terminé** |
+| 01 | Analyse de l'app Stokt | 80% - Termine |
+| 02 | Conception schema SQLite | Fusionne dans TODO 05 |
+| 03 | Analyse Hermes via agents | 95% - Termine |
+| 04 | Test extraction Montoboard | 100% - Termine |
+| 05 | Structure Package Python | 100% - **Archive** |
+| 06 | Interface Filtrage Blocs | 100% - **Termine** |
+| 07 | Interactions Blocs | 45% - En cours |
+| 08 | Modes Coloration Heatmaps | 100% - **Termine** |
+| 09 | Listes Personnalisees | 5% - Investigation |
+| 10 | Creation de Blocs | 17% - Investigation |
+| 11 | Principes Ergonomie UI/UX | 100% - **Termine** |
 
 ## Données clés
 
