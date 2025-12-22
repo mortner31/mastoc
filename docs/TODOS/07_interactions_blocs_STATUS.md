@@ -31,6 +31,9 @@
 
 ## Notes
 
+**Contrainte architecturale** : Chargement async obligatoire.
+Les données sociales ne doivent jamais bloquer la navigation des blocs.
+
 Endpoints confirmés par analyse du code décompilé (lignes 466084-467380) :
 - Likes : `api/climbs/{id}/likes` (GET/POST/DELETE)
 - Comments : `api/climbs/{id}/comments` (GET/POST), `/comments/{id}` (DELETE)

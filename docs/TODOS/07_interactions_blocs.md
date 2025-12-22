@@ -32,11 +32,38 @@ Permettre de consulter et gérer les interactions sociales d'un bloc :
   - Pas de synchronisation avec l'app officielle
   - Duplication de données
 
-**Option C : Hybride (cache intelligent)**
+**Option C : Hybride (cache intelligent)** ✅ RECOMMANDÉ
 - Données récupérées via API puis cachées localement
 - TTL (Time To Live) configurable
 - Refresh manuel ou automatique en arrière-plan
 - Fallback sur cache si offline
+
+### Contrainte architecturale : Chargement asynchrone obligatoire
+
+**IMPORTANT** : Les données sociales (likes, comments, sends) sont secondaires par rapport à la navigation des blocs. Elles doivent **toujours** être chargées de manière asynchrone pour ne jamais bloquer le parcours.
+
+**Principe** :
+```
+┌─────────────────────────────────────────────────┐
+│  Climb sélectionné                              │
+│  ↓                                              │
+│  Affichage immédiat : nom, grade, prises       │
+│  (données locales SQLite)                       │
+│  ↓                                              │
+│  Chargement async en arrière-plan :            │
+│  - Compteurs (climbedBy, totalLikes, etc.)     │
+│  - Liste des sends (si demandée)               │
+│  - Commentaires (si demandés)                  │
+│  ↓                                              │
+│  UI mise à jour quand données disponibles      │
+└─────────────────────────────────────────────────┘
+```
+
+**Implications** :
+- Les widgets sociaux affichent un état "chargement" ou vide initialement
+- L'utilisateur peut naviguer sans attendre les données sociales
+- Les requêtes réseau sont annulées si l'utilisateur change de climb
+- Cache local pour éviter les requêtes répétées
 
 ### 2. Endpoints API (confirmés par analyse code décompilé)
 
