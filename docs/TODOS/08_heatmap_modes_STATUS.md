@@ -13,20 +13,21 @@
 
 ### Phase 2 : Overlay (widgets) ✅
 - [x] Ajouter `ColorMode` enum dans `hold_overlay.py`
-- [x] Refactorer `update_colors()` pour supporter les 3 modes
+- [x] Refactorer `update_colors()` pour supporter les 4 modes
 - [x] Intégrer `colormaps.py` dans l'interpolation
 - [x] Méthodes `set_color_mode()` et `set_colormap()`
 
 ### Phase 3 : UI (hold_selector) ✅
-- [x] Combobox mode de coloration (Niveau min/max/Fréquence)
+- [x] Combobox mode de coloration (Niveau min/max/Fréquence/Rareté)
 - [x] Combobox palette (7 palettes)
 - [x] Aperçu visuel de la palette
 - [x] Filtre par ouvreur (Tous/Inclure/Exclure)
 - [x] Checkboxes pour top 20 setters
 - [x] Boutons Tout/Rien
+- [x] Panel ouvreurs rétractable (caché par défaut)
 
 ### Phase 4 : Validation ✅
-- [x] 134 tests passent
+- [x] 137 tests passent
 - [x] Quantiles recalculés à chaque filtrage
 
 ## Fichiers créés/modifiés
@@ -41,10 +42,11 @@
 
 ## Fonctionnalités
 
-### Trois modes de coloration
+### Quatre modes de coloration
 - **Niveau min** : Grade du bloc le plus facile utilisant la prise
 - **Niveau max** : Grade du bloc le plus difficile utilisant la prise
 - **Fréquence** : Popularité de la prise (quantiles recalculés selon filtres)
+- **Rareté** : 5 niveaux (0, 1, 2, 3, 4+ utilisations) - prises rares très visibles
 
 ### Sept palettes
 1. Viridis (recommandé, perceptuellement uniforme)

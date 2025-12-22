@@ -10,12 +10,13 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 ## 2025-12-22 (soir)
 
 - **TODO 08 complété à 100%** - Modes de Coloration et Heatmaps
-  - Trois modes : Min, Max, Fréquence (quantiles)
+  - Quatre modes : Min, Max, Fréquence (quantiles), Rareté (5 niveaux)
   - 7 palettes heatmap (viridis, plasma, inferno, magma, cividis, turbo, coolwarm)
   - Filtre par ouvreur (Tous/Inclure/Exclure) avec top 20 setters
+  - Panel ouvreurs rétractable (caché par défaut)
   - UI : comboboxes mode/palette + checkboxes setters
   - Quantiles recalculés à chaque filtrage
-  - 23 nouveaux tests, 134 tests au total
+  - 137 tests au total
 
 ## 2025-12-22 (après-midi)
 
