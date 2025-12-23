@@ -378,6 +378,80 @@ class GymSummary:
         )
 
 
+# =============================================================================
+# Modèles pour les listes personnalisées (TODO 09)
+# =============================================================================
+
+@dataclass
+class ClimbList:
+    """Liste personnalisée de climbs."""
+    id: str
+    name: str
+    list_type: str
+    climbs_count: int
+    is_following: bool = False
+    gym_id: Optional[str] = None
+    gym_name: Optional[str] = None
+    owner_id: str = ""
+    owner_name: str = ""
+    owner_avatar: Optional[str] = None
+    image: Optional[str] = None
+    image_thumbnail: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "ClimbList":
+        """Crée une ClimbList depuis la réponse API."""
+        # Extraction du gym
+        gym = data.get("gym")
+        gym_id = gym.get("id") if isinstance(gym, dict) else None
+        gym_name = gym.get("name") if isinstance(gym, dict) else gym
+
+        # Extraction du user (owner)
+        user = data.get("user", {})
+        if isinstance(user, dict):
+            owner_id = user.get("id", "")
+            owner_name = user.get("fullName", user.get("full_name", ""))
+            owner_avatar = user.get("avatar")
+        else:
+            owner_id = ""
+            owner_name = ""
+            owner_avatar = None
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            list_type=data.get("listType", data.get("list_type", "")),
+            climbs_count=data.get("climbsCount", data.get("climbs_count", 0)),
+            is_following=data.get("isFollowing", data.get("is_following", False)),
+            gym_id=gym_id,
+            gym_name=gym_name,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            owner_avatar=owner_avatar,
+            image=data.get("image"),
+            image_thumbnail=data.get("imageThumbnail", data.get("image_thumbnail")),
+        )
+
+
+@dataclass
+class ListItem:
+    """Item dans une liste (référence à un climb)."""
+    id: str
+    climb: Climb
+    order: int = 0
+
+    @classmethod
+    def from_api(cls, data: dict) -> "ListItem":
+        """Crée un ListItem depuis la réponse API."""
+        # L'API peut retourner le climb directement ou imbriqué
+        climb_data = data.get("climb", data)
+        return cls(
+            id=data.get("id", ""),
+            climb=Climb.from_api(climb_data),
+            order=data.get("order", 0),
+        )
+
+
 def parse_holds_list(holds_str: str) -> list[ClimbHold]:
     """
     Parse le format holdsList d'un climb.

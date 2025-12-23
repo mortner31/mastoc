@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from mastoc.api.models import Climb, Face, Wall, GymSummary, Effort, Comment, Like
+from mastoc.api.models import Climb, Face, Wall, GymSummary, Effort, Comment, Like, ClimbList, ListItem
 
 
 @dataclass
@@ -562,3 +562,291 @@ class StoktAPI:
         """
         response = self._request("get", f"api/climbs/{climb_id}/permissions-to-modify")
         return response.json()
+
+    # =========================================================================
+    # Listes personnalisées (TODO 09)
+    # =========================================================================
+
+    def get_user_lists(self, user_id: str, ordering: str = "-dateModified") -> list[ClimbList]:
+        """
+        GET api/users/lists/{userId}/personal
+
+        Récupère les listes personnelles d'un utilisateur.
+
+        Args:
+            user_id: ID de l'utilisateur
+            ordering: Tri des résultats (défaut: -dateModified)
+
+        Returns:
+            Liste des listes de l'utilisateur
+        """
+        response = self._request(
+            "get",
+            f"api/users/lists/{user_id}/personal",
+            params={"ordering": ordering}
+        )
+        return [ClimbList.from_api(lst) for lst in response.json()]
+
+    def get_lists(
+        self,
+        filter_for: str,
+        owner_id: Optional[str] = None,
+        gym_id: Optional[str] = None,
+        climbs_count_gte: Optional[int] = None
+    ) -> list[ClimbList]:
+        """
+        GET api/lists
+
+        Récupère des listes avec filtres.
+
+        Args:
+            filter_for: Type de filtre ('user', 'gym', 'style', 'from_others')
+            owner_id: ID du propriétaire (pour filter_for='user')
+            gym_id: ID du gym (pour filter_for='gym', 'style', 'from_others')
+            climbs_count_gte: Nombre minimum de climbs
+
+        Returns:
+            Liste des listes correspondantes
+        """
+        params = {"filter_for": filter_for}
+        if owner_id:
+            params["owner_id"] = owner_id
+        if gym_id:
+            params["gym_id"] = gym_id
+        if climbs_count_gte is not None:
+            params["climbs_count_gte"] = climbs_count_gte
+
+        response = self._request("get", "api/lists", params=params)
+        return [ClimbList.from_api(lst) for lst in response.json()]
+
+    def get_list(self, list_id: str) -> ClimbList:
+        """
+        GET api/lists/{listId}
+
+        Récupère le détail d'une liste.
+
+        Args:
+            list_id: ID de la liste
+
+        Returns:
+            Détail de la liste
+        """
+        response = self._request("get", f"api/lists/{list_id}")
+        return ClimbList.from_api(response.json())
+
+    def get_list_items(
+        self,
+        list_id: str,
+        page_size: int = 1000,
+        exclude_mine: bool = False,
+        grade_from: Optional[str] = None,
+        grade_to: Optional[str] = None,
+        ordering: Optional[str] = None,
+        tags: Optional[str] = None,
+        search: Optional[str] = None,
+        show_circuit_only: bool = False
+    ) -> list[ListItem]:
+        """
+        GET api/lists/{listId}/items
+
+        Récupère les items (climbs) d'une liste.
+
+        Args:
+            list_id: ID de la liste
+            page_size: Nombre d'items par page
+            exclude_mine: Exclure mes climbs
+            grade_from: Grade minimum
+            grade_to: Grade maximum
+            ordering: Tri
+            tags: Tags à filtrer
+            search: Recherche texte
+            show_circuit_only: Uniquement les circuits
+
+        Returns:
+            Liste des items
+        """
+        params = {"page_size": page_size}
+        if exclude_mine:
+            params["exclude_mine"] = "true"
+        if grade_from:
+            params["grade_from"] = grade_from
+        if grade_to:
+            params["grade_to"] = grade_to
+        if ordering:
+            params["ordering"] = ordering
+        if tags:
+            params["tags"] = tags
+        if search:
+            params["search"] = search
+        if show_circuit_only:
+            params["show_circuit_only"] = "true"
+
+        response = self._request("get", f"api/lists/{list_id}/items", params=params)
+        data = response.json()
+        # L'API retourne {results: [...]} ou directement [...]
+        items = data.get("results", data) if isinstance(data, dict) else data
+        return [ListItem.from_api(item) for item in items]
+
+    def get_my_set_climbs(self, gym_id: str) -> list[Climb]:
+        """
+        GET api/gyms/{gymId}/my-set-climbs
+
+        Récupère les climbs créés par l'utilisateur (ouvreur).
+
+        Args:
+            gym_id: ID du gym
+
+        Returns:
+            Liste des climbs créés par l'utilisateur
+        """
+        response = self._request("get", f"api/gyms/{gym_id}/my-set-climbs")
+        return [Climb.from_api(c) for c in response.json()]
+
+    def create_list(self, user_id: str, name: str, data: Optional[dict] = None) -> ClimbList:
+        """
+        POST api/users/{userId}/lists
+
+        Crée une nouvelle liste.
+
+        Args:
+            user_id: ID de l'utilisateur
+            name: Nom de la liste
+            data: Données supplémentaires optionnelles
+
+        Returns:
+            Liste créée
+        """
+        payload = {"name": name}
+        if data:
+            payload.update(data)
+
+        response = self._request(
+            "post",
+            f"api/users/{user_id}/lists",
+            json=payload,
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return ClimbList.from_api(response.json())
+
+    def update_list(self, list_id: str, data: dict) -> ClimbList:
+        """
+        PATCH api/lists/{listId}
+
+        Modifie une liste.
+
+        Args:
+            list_id: ID de la liste
+            data: Données à modifier
+
+        Returns:
+            Liste modifiée
+        """
+        response = self._request(
+            "patch",
+            f"api/lists/{list_id}",
+            json=data,
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return ClimbList.from_api(response.json())
+
+    def delete_list(self, list_id: str) -> bool:
+        """
+        DELETE api/lists/{listId}
+
+        Supprime une liste.
+
+        Args:
+            list_id: ID de la liste
+
+        Returns:
+            True si succès
+        """
+        self._request("delete", f"api/lists/{list_id}")
+        return True
+
+    def add_climb_to_list(self, list_id: str, climb_id: str) -> bool:
+        """
+        POST api/lists/{listId}/items
+
+        Ajoute un climb à une liste.
+
+        Args:
+            list_id: ID de la liste
+            climb_id: ID du climb à ajouter
+
+        Returns:
+            True si succès
+        """
+        self._request(
+            "post",
+            f"api/lists/{list_id}/items",
+            json={"climbId": climb_id},
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return True
+
+    def remove_climb_from_list(self, list_id: str, item_id: str) -> bool:
+        """
+        DELETE api/lists/{listId}/items/{itemId}
+
+        Retire un climb d'une liste.
+
+        Args:
+            list_id: ID de la liste
+            item_id: ID de l'item à retirer
+
+        Returns:
+            True si succès
+        """
+        self._request("delete", f"api/lists/{list_id}/items/{item_id}")
+        return True
+
+    def follow_list(self, list_id: str) -> bool:
+        """
+        POST api/lists/{listId}/follow
+
+        Suit une liste.
+
+        Args:
+            list_id: ID de la liste
+
+        Returns:
+            True si succès
+        """
+        self._request("post", f"api/lists/{list_id}/follow")
+        return True
+
+    def unfollow_list(self, list_id: str) -> bool:
+        """
+        DELETE api/lists/{listId}/follow
+
+        Ne plus suivre une liste.
+
+        Args:
+            list_id: ID de la liste
+
+        Returns:
+            True si succès
+        """
+        self._request("delete", f"api/lists/{list_id}/follow")
+        return True
+
+    def get_gym_lists(self, gym_id: str, page_size: int = 20) -> list[ClimbList]:
+        """
+        GET api/gyms/{gymId}/lists
+
+        Récupère les listes populaires d'un gym.
+
+        Args:
+            gym_id: ID du gym
+            page_size: Nombre de résultats
+
+        Returns:
+            Liste des listes populaires
+        """
+        response = self._request(
+            "get",
+            f"api/gyms/{gym_id}/lists",
+            params={"page_size": page_size}
+        )
+        return [ClimbList.from_api(lst) for lst in response.json()]

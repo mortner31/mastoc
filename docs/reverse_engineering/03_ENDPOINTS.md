@@ -378,6 +378,83 @@ holds.forEach(hold => {
 | `api/ratings` | POST | Soumettre une note de difficulté |
 | `api/climbs/{climbId}/crowd-grades` | GET | Notes de la communauté |
 
+## ENDPOINTS LISTES PERSONNALISÉES (découverts, non testés)
+
+Documentation complète dans `/docs/TODOS/09_listes_personnalisees.md`
+
+### Données utilisateur
+
+| Endpoint | Méthode | Description | Ligne code |
+|----------|---------|-------------|------------|
+| `api/gyms/{gymId}/my-sent-climbs` | GET | Mes ascensions validées | 442409 |
+| `api/gyms/{gymId}/my-liked-climbs` | GET | Mes climbs likés | 442480 |
+| `api/gyms/{gymId}/my-bookmarked-climbs` | GET | Mes climbs favoris | 442551 |
+| `api/gyms/{gymId}/my-set-climbs` | GET | Mes climbs créés (ouvreur) | 442622 |
+
+### Récupération de listes
+
+| Endpoint | Méthode | Paramètres | Description |
+|----------|---------|------------|-------------|
+| `api/users/lists/{userId}/personal` | GET | `ordering` | Listes personnelles |
+| `api/lists` | GET | `filter_for`, `owner_id`, `gym_id` | Listes avec filtres |
+| `api/lists/{listId}` | GET | - | Détail d'une liste |
+| `api/lists/{listId}/items` | GET | `page_size`, `exclude_mine`, `grade_from`, `grade_to`, `ordering`, `tags`, `search` | Items d'une liste |
+| `api/lists/{listId}/suggestions` | GET | `face_id`, `page_size` | Suggestions de climbs |
+| `api/users/lists/{userId}/expo-share-list-url` | GET | - | URL de partage |
+
+**Valeurs `filter_for`** : `user`, `gym`, `style`, `from_others`
+
+### CRUD Listes
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/users/{userId}/lists` | POST | Créer liste utilisateur |
+| `api/gyms/{gymId}/lists` | POST | Créer liste gym |
+| `api/lists/{listId}` | PATCH | Modifier liste |
+| `api/gyms/{gymId}/lists/{listId}` | PATCH | Modifier liste gym |
+| `api/lists/{listId}/image` | PATCH | Modifier image liste |
+| `api/lists/{listId}` | DELETE | Supprimer liste |
+| `api/gyms/{gymId}/lists/{listId}` | DELETE | Supprimer liste gym |
+
+### Gestion des items
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/lists/{listId}/items` | POST | Ajouter climb à liste |
+| `api/lists/{listId}/items/{itemId}` | DELETE | Retirer climb de liste |
+| `api/gyms/{gymId}/lists/control` | POST | Réordonner items |
+
+### Suivi de listes
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/lists/{listId}/follow` | POST | Suivre une liste |
+| `api/lists/{listId}/follow` | DELETE | Ne plus suivre |
+
+### Listes Gym
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `api/gyms/{gymId}/lists` | GET | Listes populaires |
+| `api/gyms/{gymId}/style-lists` | GET | Listes par style |
+| `api/climb-lists/{id}/shuffle` | GET | Thumbnail liste |
+
+### Structure ClimbList (confirmée)
+
+```python
+{
+    "id": str,
+    "name": str,
+    "listType": str,
+    "gym": {"id": str, "name": str} | None,
+    "user": {"id": str, "fullName": str, "avatar": str},
+    "climbsCount": int,
+    "isFollowing": bool,
+    "image": str | None,
+    "imageThumbnail": str | None
+}
+```
+
 ## ENDPOINTS DÉCOUVERTS (NON TESTÉS)
 
 ### Autres endpoints depuis le code décompilé
@@ -391,7 +468,6 @@ holds.forEach(hold => {
 | `api/social-auth/google/login` | POST | Login Google |
 | `api/favorite-gyms` | GET | Gyms favoris |
 | `api/climbs/` | GET/POST | Climbs |
-| `api/lists/` | GET | Listes |
 | `api/follow/` | POST | Suivre |
 | `api/feeds/` | GET | Flux social |
 | `api/led-kit/` | GET | LED Kit |
@@ -461,5 +537,5 @@ https://www.sostokt.com/media/CACHE/images/walls/1ab81c9a.../ref_pic_small.jpg
 
 ---
 
-**Dernière mise à jour** : 2025-12-22
+**Dernière mise à jour** : 2025-12-23
 **Testé avec** : API v1.3.0, App v6.1.13

@@ -9,6 +9,17 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-23
 
+- **Plan de développement créé** - `/docs/devplan/`
+  - Analyse complète du projet (10 000 lignes code, 225 tests)
+  - 6 documents structurés :
+    - `00_OVERVIEW.md` : Vision et synthèse
+    - `01_CURRENT_STATE.md` : État actuel détaillé
+    - `02_SHORT_TERM.md` : Plan 1-3 mois (Railway, Hold Annotations)
+    - `03_MEDIUM_TERM.md` : Plan 3-6 mois (Android MVP, Sync)
+    - `04_LONG_TERM.md` : Plan 6-12 mois (Multi-users, Stats, V1.0)
+    - `05_ARCHITECTURE.md` : 11 décisions architecturales (ADR)
+  - Jalons définis : Android MVP (Mai 2026), V1.0 (Déc 2026)
+
 - **TODO 12 créé** - Hold Annotations (Annotations de prises)
   - Système de tags crowd-sourcés pour les prises (type, état, difficulté)
   - Multi-utilisateurs avec serveur personnel Railway + PostgreSQL

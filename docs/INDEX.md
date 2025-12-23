@@ -27,6 +27,20 @@ Voir `/docs/TODOS/` pour les details.
 
 Voir `/docs/reports/` pour les rapports de sessions et d'analyses.
 
+## 📅 Plan de Développement
+
+Le plan de développement complet est disponible dans `/docs/devplan/`.
+
+| Document | Description |
+|----------|-------------|
+| `devplan/INDEX.md` | Index du plan de développement |
+| `devplan/00_OVERVIEW.md` | Vue d'ensemble et synthèse |
+| `devplan/01_CURRENT_STATE.md` | État actuel du projet |
+| `devplan/02_SHORT_TERM.md` | Plan court terme (1-3 mois) |
+| `devplan/03_MEDIUM_TERM.md` | Plan moyen terme (3-6 mois) |
+| `devplan/04_LONG_TERM.md` | Plan long terme (6-12 mois) |
+| `devplan/05_ARCHITECTURE.md` | Décisions architecturales (ADR) |
+
 ## 📚 Documentation Technique
 
 | Fichier | Description |

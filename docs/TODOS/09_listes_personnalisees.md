@@ -87,23 +87,47 @@ Permettre de gérer des collections de climbs personnalisées :
 |----------|---------|-------------|-------|
 | `api/climb-lists/{id}/shuffle` | GET | Thumbnail liste | 460238 |
 
-## Modèles de données (à confirmer)
+## Fonctions JavaScript décompilées
+
+| Fonction | Description | Ligne |
+|----------|-------------|-------|
+| `fetchUserLists` | GET listes personnelles utilisateur | 458846 |
+| `fetchLists` | GET listes avec filtres | 458970 |
+| `postFollowList` | POST suivre une liste | 459124 |
+| `deleteFollowList` | DELETE ne plus suivre | 459195 |
+| `fetchList` | GET détail d'une liste | 459267 |
+| `fetchClimbsForList` | GET suggestions de climbs | 459268 |
+| `postClimbToList` | POST ajouter climb à liste | 459419 |
+| `postListItemsOrder` | POST réordonner items | 459493 |
+| `fetchListItems` | GET items d'une liste | 459631 |
+| `fetchListUrl` | GET URL de partage | 459702 |
+| `postList` | POST créer liste utilisateur | 459776 |
+| `patchList` | PATCH modifier liste | 459848 |
+| `patchGymList` | PATCH modifier liste gym | 459924 |
+| `patchListImage` | PATCH modifier image | 459997 |
+| `deleteList` | DELETE supprimer liste | 460067 |
+| `deleteGymList` | DELETE supprimer liste gym | 460141 |
+| `deleteListItem` | DELETE retirer climb | 460218 |
+| `getImage` | GET thumbnail liste | 460292 |
+
+## Modèles de données (confirmés par analyse code)
+
+### Structure ClimbList (réponse API)
+
+Champs découverts dans le code (ligne 786490-786507) :
 
 ```python
 @dataclass
 class ClimbList:
     id: str
     name: str
-    description: str | None
-    owner_id: str
-    owner_name: str
-    gym_id: str | None
-    image: str | None
+    list_type: str              # Type de liste
+    gym: dict | None            # {id, name} ou None
+    user: dict                  # {id, fullName, avatar} - propriétaire
     climbs_count: int
-    followers_count: int
     is_following: bool
-    created_at: datetime
-    updated_at: datetime
+    image: str | None           # Image de couverture
+    image_thumbnail: str | None # Thumbnail
 
 @dataclass
 class ListItem:
@@ -112,8 +136,20 @@ class ListItem:
     climb_id: str
     climb: Climb  # Objet climb complet
     order: int
-    added_at: datetime
 ```
+
+### Paramètres fetchListItems (filtres confirmés ligne 459522-459564)
+
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `page_size` | int | Taille page (défaut 1000) |
+| `exclude_mine` | bool | Exclure mes climbs |
+| `grade_from` | str | Grade minimum |
+| `grade_to` | str | Grade maximum |
+| `ordering` | str | Tri |
+| `tags` | str | Tags |
+| `search` | str | Recherche texte |
+| `show_circuit_only` | bool | Circuits uniquement |
 
 ## Tâches
 
