@@ -41,7 +41,8 @@ class StoktAPI:
         self.token: Optional[str] = None
         self.session = requests.Session()
         self.session.headers.update({
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Stokt/6.1.13 (Android)",
         })
 
     def _url(self, endpoint: str) -> str:
@@ -425,4 +426,139 @@ class StoktAPI:
             Dict avec les notes (ircra, hueco, font, dankyu)
         """
         response = self._request("get", f"api/climbs/{climb_id}/crowd-grades")
+        return response.json()
+
+    # =========================================================================
+    # Création et modification de climbs (TODO 10)
+    # =========================================================================
+
+    def create_climb(self, face_id: str, payload: dict) -> Climb:
+        """
+        POST api/faces/{faceId}/climbs
+
+        Crée un nouveau climb.
+
+        Args:
+            face_id: ID de la face
+            payload: Données du climb avec structure:
+                {
+                    "name": str,                    # Nom (min 3 caractères)
+                    "holdsList": {
+                        "start": List[str],         # IDs prises de départ (min 2)
+                        "others": List[str],        # IDs prises intermédiaires
+                        "top": List[str],           # IDs prises de finition
+                        "feetOnly": List[str]       # IDs prises pieds uniquement
+                    },
+                    "grade": {
+                        "gradingSystem": str,       # "V-Scale", "Font", "Dankyu"
+                        "value": str                # "V0", "6a+", etc.
+                    },
+                    "description": str | None,      # Optionnel
+                    "isPrivate": bool,              # Défaut: False
+                    "feetRule": str | None,         # Règle des pieds
+                }
+
+        Returns:
+            Climb créé
+
+        Raises:
+            StoktAPIError: Si la création échoue
+        """
+        # L'API attend du JSON pour les structures complexes
+        response = self._request(
+            "post",
+            f"api/faces/{face_id}/climbs",
+            json=payload,
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return Climb.from_api(response.json())
+
+    def update_climb(self, face_id: str, climb_id: str, payload: dict) -> Climb:
+        """
+        PATCH api/faces/{faceId}/climbs/{climbId}
+
+        Modifie un climb existant.
+
+        Args:
+            face_id: ID de la face
+            climb_id: ID du climb
+            payload: Données à modifier (même structure que create_climb)
+
+        Returns:
+            Climb modifié
+
+        Raises:
+            StoktAPIError: Si la modification échoue
+        """
+        response = self._request(
+            "patch",
+            f"api/faces/{face_id}/climbs/{climb_id}",
+            json=payload,
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return Climb.from_api(response.json())
+
+    def delete_climb(self, climb_id: str) -> bool:
+        """
+        DELETE api/climbs/{climbId}
+
+        Supprime un climb.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            True si succès
+
+        Raises:
+            StoktAPIError: Si la suppression échoue
+        """
+        self._request("delete", f"api/climbs/{climb_id}")
+        return True
+
+    def set_climb_privacy(self, climb_id: str, is_private: bool) -> bool:
+        """
+        PATCH api/climbs/{climbId}/privacy-status
+
+        Change la visibilité d'un climb (public/privé).
+
+        Args:
+            climb_id: ID du climb
+            is_private: True pour privé, False pour public
+
+        Returns:
+            True si succès
+
+        Raises:
+            StoktAPIError: Si la modification échoue
+        """
+        self._request(
+            "patch",
+            f"api/climbs/{climb_id}/privacy-status",
+            json={"is_private": is_private},
+            headers={**self._auth_headers(), "Content-Type": "application/json"}
+        )
+        return True
+
+    def get_climb_permissions(self, climb_id: str) -> dict:
+        """
+        GET api/climbs/{climbId}/permissions-to-modify
+
+        Récupère les permissions de modification pour un climb.
+
+        Args:
+            climb_id: ID du climb
+
+        Returns:
+            Dict avec les permissions:
+                {
+                    "canDelete": bool,
+                    "canEditHolds": bool,
+                    "canEditNameAndGrade": bool,
+                    "canHide": bool,
+                    "canSetPrivate": bool,
+                    "canSetPublic": bool
+                }
+        """
+        response = self._request("get", f"api/climbs/{climb_id}/permissions-to-modify")
         return response.json()

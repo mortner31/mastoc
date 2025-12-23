@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QLabel, QListWidget, QListWidgetItem, QPushButton,
     QFrame, QStatusBar, QSlider, QRadioButton, QButtonGroup, QComboBox,
-    QCheckBox, QScrollArea, QGroupBox
+    QCheckBox, QScrollArea, QGroupBox, QDialog, QMessageBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QImage, QPainter
@@ -31,6 +31,7 @@ from mastock.gui.widgets.climb_renderer import render_climb
 from mastock.gui.widgets.social_panel import SocialPanel
 from mastock.api.client import StoktAPI, MONTOBOARD_GYM_ID
 from mastock.api.models import Climb
+from mastock.gui.creation import CreationWizard
 
 # Configuration du logging
 logging.basicConfig(
@@ -322,6 +323,27 @@ class HoldSelectorApp(QMainWindow):
         self.climb_list = QListWidget()
         self.climb_list.itemClicked.connect(self.on_climb_clicked)
         left_layout.addWidget(self.climb_list, stretch=1)
+
+        # Bouton créer un bloc (TODO 10)
+        self.create_btn = QPushButton("+ Créer un bloc")
+        self.create_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                font-weight: bold;
+                padding: 8px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:disabled {
+                background-color: #ccc;
+            }
+        """)
+        self.create_btn.clicked.connect(self.open_creation_wizard)
+        self.create_btn.setEnabled(self.api is not None)
+        left_layout.addWidget(self.create_btn)
 
         # Contrôles mode parcours (masqués par défaut)
         self.parcours_widget = QWidget()
@@ -678,6 +700,68 @@ class HoldSelectorApp(QMainWindow):
         current_climb = self.filtered_climbs[self.current_climb_index]
         if data.climb_id == current_climb.id:
             self.social_panel.set_data(data)
+
+    def open_creation_wizard(self):
+        """Ouvre le wizard de création de bloc (TODO 10)."""
+        if not self.api:
+            QMessageBox.warning(
+                self,
+                "API non disponible",
+                "Vous devez être connecté pour créer un bloc."
+            )
+            return
+
+        # Récupérer le face_id depuis la base de données
+        face_id = self._get_face_id()
+        if not face_id:
+            QMessageBox.warning(
+                self,
+                "Erreur",
+                "Impossible de trouver la face ID."
+            )
+            return
+
+        # Créer un dialog modal avec le wizard
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Créer un bloc")
+        dialog.setMinimumSize(1200, 800)
+        dialog.setModal(True)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Créer le wizard
+        wizard = CreationWizard(
+            index=self.index,
+            api=self.api,
+            face_id=face_id
+        )
+        wizard.climb_created.connect(lambda id: self._on_climb_created(id, dialog))
+        wizard.cancelled.connect(dialog.close)
+        layout.addWidget(wizard)
+
+        dialog.exec()
+
+    def _get_face_id(self) -> str:
+        """Récupère le face_id depuis la base de données."""
+        # Utiliser le premier climb pour trouver la face_id
+        if self.index.climbs:
+            first_climb = next(iter(self.index.climbs.values()))
+            return first_climb.face_id
+        return ""
+
+    def _on_climb_created(self, climb_id: str, dialog: QDialog):
+        """Appelé quand un bloc a été créé avec succès."""
+        logger.info(f"Bloc créé: {climb_id}")
+        dialog.close()
+
+        # Rafraîchir la liste des blocs
+        QMessageBox.information(
+            self,
+            "Succès",
+            f"Bloc créé avec succès!\n\nID: {climb_id}\n\n"
+            "Rafraîchissez l'application pour voir le nouveau bloc."
+        )
 
 
 def main():

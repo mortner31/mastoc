@@ -7,6 +7,54 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-23
+
+- **TODO 10 avancé à 97%** - Interface de Création de Blocs **FONCTIONNEL**
+  - **Premier bloc créé via mastock** : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
+  - **Bugs critiques corrigés** :
+    - Boucle infinie signaux (`_load_state()` freeze)
+    - Bouton "Suivant" jamais activé
+    - Style CSS désactivé invisible
+    - Face ID incorrect
+  - **Corrections API découvertes** (analyse code décompilé) :
+    - `gradingSystem` : minuscule (`"font"`, `"hueco"`, `"dankyu"`)
+    - Grades Font : majuscule (`"6A+"`, pas `"6a+"`)
+    - `attemptsNumber` : champ requis (peut être `null`)
+  - User-Agent "Stokt/6.1.13 (Android)" ajouté
+  - **Tests** : 43 tests création passent
+
+- **Documentation stratégique créée** - Indépendance Stokt
+  - `docs/backend_spec.md` : Spécification API backend indépendant (780 lignes)
+    - Schéma PostgreSQL complet (12 tables)
+    - 20+ endpoints documentés (format requête/réponse)
+    - Gestion images, authentification, interactions sociales
+  - `docs/04_strategie_independance.md` : Stratégie de migration
+    - Architecture multi-murs (Montoboard Stokt + pan personnel)
+    - Mode hybride recommandé (Stokt + serveur Railway)
+    - Plan de sync silencieuse
+    - Coûts estimés (~$5-10/mois)
+
+## 2025-12-22 (nuit 6)
+
+- **TODO 10 avancé à 55%** - Interface de Création de Blocs
+  - **Phase 0.5 complète** : Infrastructure Navigation
+    - `QStackedWidget` pour navigation wizard multi-écrans
+    - `WizardController` : gère état et transitions
+    - `ClimbCreationState` dataclass partagée entre écrans
+  - **Phase 1 complète** : Sélection de Prises
+    - `SelectHoldsScreen` avec overlay spécialisé
+    - Boutons radio pour type (START, OTHER, FEET, TOP)
+    - Couleurs distinctes par type de prise
+    - Validation temps réel (min 2 START, 1 TOP)
+  - **Phase 2 partielle** : Formulaire (6/9 tâches)
+    - `ClimbInfoScreen` avec formulaire complet
+    - Champs : nom, grade, description, règle pieds, privé/public
+    - Reste : méthodes API (create/update/delete)
+  - **Fichiers créés** :
+    - `gui/creation/` - Module complet (6 fichiers)
+    - `tests/test_creation.py` - 43 nouveaux tests
+  - **Tests** : 213 passent (170 + 43 nouveaux)
+
 ## 2025-12-22 (nuit 5)
 
 - **TODO 07 archivé** - Interactions avec les Blocs (100%)
