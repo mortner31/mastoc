@@ -11,9 +11,13 @@ Ce fichier recense toute la documentation du projet mastock.
 
 | ID | Nom | Statut |
 |----|-----|--------|
-| 06 | Interface filtrage blocs | En cours |
+| 07 | Interactions Blocs | 100% |
+| 09 | Listes Personnalisees | 5% |
+| 10 | Creation de Blocs | 97% |
+| 11 | Principes Ergonomie UI/UX | 100% |
+| 12 | Hold Annotations | 0% |
 
-Voir `/docs/TODOS/` pour les détails.
+Voir `/docs/TODOS/` pour les details.
 
 ## 📊 Rapports
 
@@ -28,7 +32,10 @@ Voir `/docs/reports/` pour les rapports de sessions et d'analyses.
 | Fichier | Description |
 |---------|-------------|
 | `01_architecture.md` | Architecture du projet mastock |
-| `02_design_decisions.md` | Décisions de design (UI, pictos, couleurs) |
+| `02_design_decisions.md` | Decisions de design (UI, pictos, couleurs) |
+| `03_ergonomie_ui_ux.md` | **Guide d'ergonomie Android** (Material Design 3, wireframes) |
+| `04_strategie_independance.md` | **Stratégie d'indépendance Stokt** (migration, multi-murs) |
+| `backend_spec.md` | Spécification API backend indépendant |
 
 ## 🗃️ Archive
 
@@ -36,4 +43,4 @@ Les TODOs complétés et documents obsolètes sont déplacés dans `/archive/`.
 
 ---
 
-**Dernière mise à jour** : 2025-12-22
+**Dernière mise à jour** : 2025-12-23

@@ -9,6 +9,15 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-23
 
+- **TODO 12 créé** - Hold Annotations (Annotations de prises)
+  - Système de tags crowd-sourcés pour les prises (type, état, difficulté)
+  - Multi-utilisateurs avec serveur personnel Railway + PostgreSQL
+  - Tags : grip_type (12 types), condition (6 états), difficulty (3 niveaux)
+  - Consensus communautaire (mode statistique + seuil de votes)
+  - Intégration prévue : filtres, ColorModes, panel d'annotation
+  - Prérequis : déploiement serveur Railway
+  - Statut : Documentation (0%)
+
 - **TODO 10 avancé à 97%** - Interface de Création de Blocs **FONCTIONNEL**
   - **Premier bloc créé via mastock** : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
   - **Bugs critiques corrigés** :
