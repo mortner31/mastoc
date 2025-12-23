@@ -35,6 +35,7 @@ Voir `/docs/reports/` pour les rapports de sessions et d'analyses.
 | `02_design_decisions.md` | Decisions de design (UI, pictos, couleurs) |
 | `03_ergonomie_ui_ux.md` | **Guide d'ergonomie Android** (Material Design 3, wireframes) |
 | `04_strategie_independance.md` | **Stratégie d'indépendance Stokt** (migration, multi-murs) |
+| `05_theme_design_system.md` | **Theme et Design System** (palette, tokens, dark mode) |
 | `backend_spec.md` | Spécification API backend indépendant |
 
 ## 🗃️ Archive
