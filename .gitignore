@@ -2,7 +2,7 @@
 /extracted/
 
 # Base de données SQLite locale
-/mastock/data/
+/mastoc/data/
 
 # Configuration locale Claude
 .claude/

@@ -1,4 +1,4 @@
-# TODO 05 - Structure Package Python mastock
+# TODO 05 - Structure Package Python mastoc
 
 ## Objectif
 
@@ -20,10 +20,10 @@ Restructurer le code Python existant en un package installable (`pip install -e 
 ## Architecture cible
 
 ```
-mastock/
+mastoc/
 ├── pyproject.toml          # Configuration package (pip install -e .)
 ├── src/
-│   └── mastock/
+│   └── mastoc/
 │       ├── __init__.py
 │       ├── api/            # Client API Stokt
 │       │   ├── __init__.py
@@ -50,7 +50,7 @@ mastock/
 │   ├── test_db.py
 │   └── test_filters.py
 └── data/                   # Données locales (gitignored)
-    ├── mastock.db          # Base SQLite
+    ├── mastoc.db          # Base SQLite
     └── images/             # Images téléchargées
 ```
 
@@ -92,7 +92,7 @@ mastock/
 
 ## Références
 
-- API client existant : `/mastock/src/stokt_api.py`
+- API client existant : `/mastoc/src/stokt_api.py`
 - Structure de données : `/docs/reverse_engineering/04_STRUCTURES.md`
 - Endpoints : `/docs/reverse_engineering/03_ENDPOINTS.md`
 - Données extraites : `/extracted/data/montoboard_ALL_climbs.json`

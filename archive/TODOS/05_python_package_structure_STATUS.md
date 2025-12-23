@@ -1,11 +1,11 @@
-# STATUS - TODO 05 : Structure Package Python mastock
+# STATUS - TODO 05 : Structure Package Python mastoc
 
 **Progression** : 100%
 
 ## Phase 1 : Structure du package (100%)
 
 - [x] Créer `pyproject.toml` avec metadata et dépendances
-- [x] Réorganiser le code en `src/mastock/`
+- [x] Réorganiser le code en `src/mastoc/`
 - [x] Refactorer `stokt_api.py` → `api/client.py`
 - [x] Créer les dataclasses dans `api/models.py`
 - [x] Vérifier installation avec `pip install -e .`
@@ -51,15 +51,15 @@
 
 | Fichier | Contenu |
 |---------|---------|
-| `/mastock/pyproject.toml` | Configuration package Python |
-| `/mastock/src/mastock/api/client.py` | API client refactoré |
-| `/mastock/src/mastock/api/models.py` | Dataclasses Climb, Hold, Face, etc. |
-| `/mastock/src/mastock/db/database.py` | Schéma SQLite et connexion |
-| `/mastock/src/mastock/db/repository.py` | ClimbRepository, HoldRepository |
-| `/mastock/src/mastock/core/import_data.py` | Import JSON → SQLite |
-| `/mastock/src/mastock/gui/climb_viewer.py` | Visualisation climb avec sliders |
-| `/mastock/tests/test_models.py` | Tests modèles API |
-| `/mastock/tests/test_database.py` | Tests base de données |
+| `/mastoc/pyproject.toml` | Configuration package Python |
+| `/mastoc/src/mastoc/api/client.py` | API client refactoré |
+| `/mastoc/src/mastoc/api/models.py` | Dataclasses Climb, Hold, Face, etc. |
+| `/mastoc/src/mastoc/db/database.py` | Schéma SQLite et connexion |
+| `/mastoc/src/mastoc/db/repository.py` | ClimbRepository, HoldRepository |
+| `/mastoc/src/mastoc/core/import_data.py` | Import JSON → SQLite |
+| `/mastoc/src/mastoc/gui/climb_viewer.py` | Visualisation climb avec sliders |
+| `/mastoc/tests/test_models.py` | Tests modèles API |
+| `/mastoc/tests/test_database.py` | Tests base de données |
 
 ## Données de référence
 

@@ -48,7 +48,7 @@ Ce document capture la réflexion stratégique pour :
 ### Option A : Dépendance totale (statu quo)
 
 ```
-mastock ←→ Stokt API
+mastoc ←→ Stokt API
 ```
 
 **Avantages :** Aucun effort, fonctionnel aujourd'hui
@@ -57,7 +57,7 @@ mastock ←→ Stokt API
 ### Option B : Mode hybride (recommandé court terme)
 
 ```
-mastock ←→ Stokt API (blocs, prises, grades)
+mastoc ←→ Stokt API (blocs, prises, grades)
     └────→ Serveur perso (features custom)
 ```
 
@@ -75,7 +75,7 @@ mastock ←→ Stokt API (blocs, prises, grades)
 ### Option C : Indépendance partielle (recommandé moyen terme)
 
 ```
-mastock ←→ Serveur perso (principal)
+mastoc ←→ Serveur perso (principal)
     └────→ Stokt API (sync silencieuse, lecture seule)
 ```
 
@@ -91,7 +91,7 @@ mastock ←→ Serveur perso (principal)
 ### Option D : Indépendance totale
 
 ```
-mastock ←→ Serveur perso uniquement
+mastoc ←→ Serveur perso uniquement
 ```
 
 **Avantages :** Contrôle total
@@ -105,7 +105,7 @@ mastock ←→ Serveur perso uniquement
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                          mastock                                │
+│                          mastoc                                │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │   ┌─────────────┐                    ┌─────────────┐            │
@@ -139,9 +139,9 @@ mastock ←→ Serveur perso uniquement
 |--------|-------------|-----------|---------|
 | Stokt | Serveur perso | Horaire | Nouveaux blocs Montoboard |
 | Stokt | Serveur perso | Initiale | Prises, image mur |
-| Serveur perso | mastock | Temps réel | Tous les murs |
-| mastock | Serveur perso | Temps réel | Blocs pan perso, brossage |
-| mastock | Stokt | Optionnel | Blocs Montoboard (dual-write) |
+| Serveur perso | mastoc | Temps réel | Tous les murs |
+| mastoc | Serveur perso | Temps réel | Blocs pan perso, brossage |
+| mastoc | Stokt | Optionnel | Blocs Montoboard (dual-write) |
 
 ---
 
@@ -386,18 +386,18 @@ def sync_incremental(gym_id: str):
 ### Phase 2 : Mode hybride
 
 - [ ] Déployer le serveur avec features custom (brossage)
-- [ ] Adapter mastock pour lire depuis les deux sources
+- [ ] Adapter mastoc pour lire depuis les deux sources
 - [ ] Tester la sync incrémentale
 
 ### Phase 3 : Pan personnel
 
 - [ ] Créer l'outil de mapping de prises
 - [ ] Mapper le pan personnel
-- [ ] Intégrer dans mastock
+- [ ] Intégrer dans mastoc
 
 ### Phase 4 : Indépendance (si nécessaire)
 
-- [ ] Basculer mastock vers serveur perso uniquement
+- [ ] Basculer mastoc vers serveur perso uniquement
 - [ ] Désactiver la sync Stokt
 - [ ] Migrer les interactions sociales (optionnel)
 
@@ -421,8 +421,8 @@ def sync_incremental(gym_id: str):
 |----------|---------|
 | `docs/backend_spec.md` | Spécification API complète |
 | `docs/reverse_engineering/03_ENDPOINTS.md` | Endpoints Stokt documentés |
-| `mastock/src/mastock/api/client.py` | Client API actuel |
-| `mastock/src/mastock/api/models.py` | Modèles de données |
+| `mastoc/src/mastoc/api/client.py` | Client API actuel |
+| `mastoc/src/mastoc/api/models.py` | Modèles de données |
 
 ---
 

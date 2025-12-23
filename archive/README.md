@@ -1,6 +1,6 @@
-# Archive - mastock
+# Archive - mastoc
 
-Ce dossier contient les documents et tâches archivés du projet mastock.
+Ce dossier contient les documents et tâches archivés du projet mastoc.
 
 ## 🗂️ Structure
 

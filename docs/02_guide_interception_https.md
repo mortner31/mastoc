@@ -28,7 +28,7 @@ keytool -help
 ### Option A : Utiliser apk-mitm (recommandé)
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/extracted/stockt_apk
+cd /media/veracrypt1/Repositories/mastoc/extracted/stockt_apk
 
 # Patcher l'APK principal
 npx apk-mitm base.apk
@@ -217,7 +217,7 @@ mitmproxy -r captures/stokt.flow "~d getstokt.com"
 # === SETUP COMPLET ===
 
 # 1. Patcher
-cd /media/veracrypt1/Repositories/mastock/extracted/stockt_apk
+cd /media/veracrypt1/Repositories/mastoc/extracted/stockt_apk
 npx apk-mitm base.apk
 
 # 2. Re-signer les splits

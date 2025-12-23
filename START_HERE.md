@@ -1,14 +1,14 @@
-# Start Here - mastock
+# Start Here - mastoc
 
 **Point d'entrée rapide pour comprendre le projet et commencer à travailler.**
 
-## Qu'est-ce que mastock ?
+## Qu'est-ce que mastoc ?
 
-mastock est un projet visant à créer une application personnelle pour visualiser et gérer des blocs d'escalade. Le projet part de l'analyse d'une application existante (Stokt) qui présente des problèmes en mode hors ligne, avec pour objectif de créer une version simplifiée et optimisée pour un usage offline-first, spécialisée sur la salle **Montoboard** (Caraman, France).
+mastoc est un projet visant à créer une application personnelle pour visualiser et gérer des blocs d'escalade. Le projet part de l'analyse d'une application existante (Stokt) qui présente des problèmes en mode hors ligne, avec pour objectif de créer une version simplifiée et optimisée pour un usage offline-first, spécialisée sur la salle **Montoboard** (Caraman, France).
 
 ## Objectif Actuel
 
-**Prototype Python mastock** : COMPLET
+**Prototype Python mastoc** : COMPLET
 
 Le package Python est fonctionnel avec deux applications :
 
@@ -18,8 +18,8 @@ Le package Python est fonctionnel avec deux applications :
 - Synchronisation API
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/mastock
-python -m mastock.gui.app
+cd /media/veracrypt1/Repositories/mastoc/mastoc
+python -m mastoc.gui.app
 ```
 
 ### 2. Sélecteur par prises (`gui/hold_selector.py`)
@@ -38,8 +38,8 @@ python -m mastock.gui.app
    - Navigation Préc/Suiv
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/mastock
-python -m mastock.gui.hold_selector
+cd /media/veracrypt1/Repositories/mastoc/mastoc
+python -m mastoc.gui.hold_selector
 ```
 
 ### 3. Création de bloc (`gui/creation_app.py`) - TODO 10
@@ -51,8 +51,8 @@ Wizard multi-écrans pour créer de nouveaux blocs :
 3. **Soumission** : POST vers l'API Stokt
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/mastock
-python -m mastock.gui.creation_app
+cd /media/veracrypt1/Repositories/mastoc/mastoc
+python -m mastoc.gui.creation_app
 ```
 
 ## TODOs
@@ -85,9 +85,9 @@ python -m mastock.gui.creation_app
 ## Architecture du Package
 
 ```
-mastock/
+mastoc/
 ├── pyproject.toml          # Configuration package
-├── src/mastock/
+├── src/mastoc/
 │   ├── api/
 │   │   ├── client.py       # API Stokt
 │   │   └── models.py       # Dataclasses Climb, Hold, etc.
@@ -113,7 +113,7 @@ mastock/
 ## Tests
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/mastock
+cd /media/veracrypt1/Repositories/mastoc/mastoc
 python -m pytest tests/ -v
 # 111 tests passent
 ```
@@ -133,7 +133,7 @@ python -m pytest tests/ -v
 
 ### Session 2025-12-21 (nuit)
 - TODO 05 complété et archivé (100%)
-- Package Python mastock fonctionnel
+- Package Python mastoc fonctionnel
 - 90 tests passent
 
 ### Session 2025-12-21 (soir)

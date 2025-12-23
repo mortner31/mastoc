@@ -1,8 +1,8 @@
-# Spécification : Backend mastock indépendant
+# Spécification : Backend mastoc indépendant
 
 ## Résumé
 
-Créer un backend REST compatible avec mastock pour remplacer l'API Stokt, avec :
+Créer un backend REST compatible avec mastoc pour remplacer l'API Stokt, avec :
 - **Multi-utilisateur** : Chaque grimpeur a ses propres blocs et ascensions
 - **Images locales** : Photos de mur hébergées sur votre serveur
 - **Compatibilité lecture** : Import initial des données Stokt
@@ -13,7 +13,7 @@ Créer un backend REST compatible avec mastock pour remplacer l'API Stokt, avec 
 
 ```
 ┌─────────────────┐      HTTPS/REST       ┌──────────────────────────┐
-│   mastock       │ ◄───────────────────► │  Votre Backend           │
+│   mastoc       │ ◄───────────────────► │  Votre Backend           │
 │   (PyQt6)       │                       │  (Django/FastAPI/autre)  │
 └─────────────────┘                       ├──────────────────────────┤
                                           │  PostgreSQL/SQLite       │
@@ -689,9 +689,9 @@ curl -o /media/walls/{face-id}.jpg \
 
 ---
 
-## Modification requise côté mastock
+## Modification requise côté mastoc
 
-### Fichier : `mastock/src/mastock/api/client.py`
+### Fichier : `mastoc/src/mastoc/api/client.py`
 
 Modifier `StoktConfig` pour accepter une URL configurable :
 
@@ -763,7 +763,7 @@ Options simples :
    - Télécharger images
    - Insérer en BDD locale
 
-6. **Configuration mastock**
+6. **Configuration mastoc**
    - Variable d'environnement URL
    - Test connexion
 
@@ -773,7 +773,7 @@ Options simples :
 
 | Fichier | Contenu |
 |---------|---------|
-| `mastock/src/mastock/api/client.py` | Client API actuel (à adapter) |
-| `mastock/src/mastock/api/models.py` | Modèles de données Python |
-| `mastock/src/mastock/db/database.py` | Schéma SQLite existant |
+| `mastoc/src/mastoc/api/client.py` | Client API actuel (à adapter) |
+| `mastoc/src/mastoc/api/models.py` | Modèles de données Python |
+| `mastoc/src/mastoc/db/database.py` | Schéma SQLite existant |
 | `docs/reverse_engineering/03_ENDPOINTS.md` | Documentation complète API Stokt |

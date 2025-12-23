@@ -1,4 +1,4 @@
-# Rapport de Session - Package Python mastock
+# Rapport de Session - Package Python mastoc
 
 **Date** : 2025-12-21
 
@@ -15,7 +15,7 @@
 
 Création d'un package Python moderne avec :
 - `pyproject.toml` avec dépendances (PyQt6, pyqtgraph, Pillow, requests)
-- Architecture `src/mastock/` avec modules séparés :
+- Architecture `src/mastoc/` avec modules séparés :
   - `api/` : Client API Stokt avec dataclasses typées
   - `db/` : Base SQLite avec repositories
   - `gui/` : Interface PyQtGraph
@@ -72,16 +72,16 @@ Visualisation de la popularité des prises :
 
 ```bash
 # Installation
-cd mastock && pip install -e .
+cd mastoc && pip install -e .
 
 # Import des données
-python3 -m mastock.core.import_data
+python3 -m mastoc.core.import_data
 
 # Visualiser un climb
-python3 -m mastock.gui.climb_viewer --name "Nia" --setter "Mathias" --image
+python3 -m mastoc.gui.climb_viewer --name "Nia" --setter "Mathias" --image
 
 # Lister les climbs d'un setter
-python3 -m mastock.gui.climb_viewer --list --setter "Thomas"
+python3 -m mastoc.gui.climb_viewer --list --setter "Thomas"
 
 # Lancer les tests
 python3 -m pytest tests/ -v

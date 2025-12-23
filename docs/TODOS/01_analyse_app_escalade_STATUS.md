@@ -72,7 +72,7 @@
 ### Phase 4 : Documentation et Conception
 - [ ] Créer un diagramme de flux de données
 - [ ] Lister les fonctionnalités critiques à reproduire
-- [ ] Concevoir le schéma SQLite pour mastock
+- [ ] Concevoir le schéma SQLite pour mastoc
 - [ ] Proposer une architecture offline-first
 
 ## 📝 Notes

@@ -18,7 +18,7 @@
 
 ---
 
-## Client (mastock)
+## Client (mastoc)
 
 ### Modèles et API
 - [ ] Ajouter enums (HoldGripType, HoldCondition, HoldRelativeDifficulty)

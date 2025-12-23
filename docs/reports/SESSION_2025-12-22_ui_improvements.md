@@ -1,4 +1,4 @@
-# Rapport de Session - Améliorations UI mastock
+# Rapport de Session - Améliorations UI mastoc
 
 **Date** : 2025-12-22
 
@@ -15,7 +15,7 @@
 ## Détails des Modifications
 
 ### 1. Filtrage par Grade Min/Max
-**Fichier** : `mastock/src/mastock/gui/widgets/climb_list.py`
+**Fichier** : `mastoc/src/mastoc/gui/widgets/climb_list.py`
 
 - Remplacement du combo "Grade unique" par deux sliders
 - Grades : 4 à 8A (17 niveaux Fontainebleau)
@@ -23,7 +23,7 @@
 - Affichage de la plage sélectionnée
 
 ### 2. Contrôle Luminosité Fond
-**Fichier** : `mastock/src/mastock/gui/app.py`
+**Fichier** : `mastoc/src/mastoc/gui/app.py`
 
 Valeurs par défaut optimisées :
 - Fond gris : 70%
@@ -32,15 +32,15 @@ Valeurs par défaut optimisées :
 - Épaisseur : 12px
 
 ### 3. Navigation Clavier
-**Fichier** : `mastock/src/mastock/gui/widgets/climb_list.py`
+**Fichier** : `mastoc/src/mastoc/gui/widgets/climb_list.py`
 
 - Signal `currentItemChanged` connecté
 - Mise à jour automatique du viewer avec flèches haut/bas
 
 ### 4. Système de Pictos
 **Fichiers** :
-- `mastock/src/mastock/core/picto.py` : génération
-- `mastock/src/mastock/core/picto_cache.py` : cache persistant
+- `mastoc/src/mastoc/core/picto.py` : génération
+- `mastoc/src/mastoc/core/picto_cache.py` : cache persistant
 
 Caractéristiques des pictos :
 - Cercles proportionnels à la taille des prises
@@ -50,15 +50,15 @@ Caractéristiques des pictos :
 - TOP : double cercle
 
 ### 5. Marqueurs START/TOP dans Viewer
-**Fichier** : `mastock/src/mastock/gui/app.py`
+**Fichier** : `mastoc/src/mastoc/gui/app.py`
 
 - START : trait 45° depuis milieu du côté bas-droit du polygone
 - TOP : double polygone écarté (135% du centroïde)
 
 ### 6. Cache Persistant Pictos
-**Fichier** : `mastock/src/mastock/core/picto_cache.py`
+**Fichier** : `mastoc/src/mastoc/core/picto_cache.py`
 
-- Stockage : `~/.mastock/pictos/`
+- Stockage : `~/.mastoc/pictos/`
 - Noms fichiers : hash MD5 du climb_id
 - Menu "Outils > Régénérer pictos"
 - Proposition après synchronisation

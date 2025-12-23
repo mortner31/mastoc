@@ -216,7 +216,7 @@ L'application ne peut pas fonctionner sans connexion internet car :
 2. Les données des blocs ne sont pas mises en cache
 3. Les coordonnées des prises ne sont pas stockées localement
 
-### Solution pour mastock
+### Solution pour mastoc
 Créer une architecture **offline-first** avec :
 - Base SQLite locale pour stocker les blocs, murs, coordonnées
 - Cache d'images local
@@ -247,7 +247,7 @@ Créer une architecture **offline-first** avec :
    - Structure JSON des coordonnées de prises
    - Structure d'une image de mur (face)
 
-3. **Concevoir le schéma SQLite pour mastock**
+3. **Concevoir le schéma SQLite pour mastoc**
    - Tables : gyms, walls, faces, climbs, holds, attempts
    - Relations et index
 

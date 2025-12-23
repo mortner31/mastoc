@@ -21,7 +21,7 @@ pip install mitmproxy
 ### 2. Patch avec apk-mitm
 ```bash
 # Création d'un bundle APKS avec tous les splits
-cd /media/veracrypt1/Repositories/mastock/extracted/stockt_apk
+cd /media/veracrypt1/Repositories/mastoc/extracted/stockt_apk
 zip stokt_bundle.apks base.apk split_config.arm64_v8a.apk split_config.fr.apk split_config.xxhdpi.apk
 
 # Patch du bundle complet
@@ -128,7 +128,7 @@ frida -U -f com.getstokt.stokt -l ssl_bypass.js
 
 1. **Court terme** : Tester avec un émulateur Android 30 (Google APIs) rootable
 2. **Moyen terme** : Concevoir le schéma SQLite basé sur l'analyse statique
-3. **Alternative** : Utiliser les données mock pour commencer le développement de mastock
+3. **Alternative** : Utiliser les données mock pour commencer le développement de mastoc
 
 ---
 

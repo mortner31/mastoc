@@ -64,7 +64,7 @@
 ## Usage
 
 ```bash
-python -m mastock.gui.hold_selector
+python -m mastoc.gui.hold_selector
 ```
 
 **Mode Exploration** :

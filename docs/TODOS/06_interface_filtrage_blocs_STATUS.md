@@ -86,8 +86,8 @@ L'application fonctionne en **deux modes distincts** :
 ## Usage
 
 ```bash
-cd /media/veracrypt1/Repositories/mastock/mastock
-python -m mastock.gui.hold_selector
+cd /media/veracrypt1/Repositories/mastoc/mastoc
+python -m mastoc.gui.hold_selector
 ```
 
 ## Fonctionnalités

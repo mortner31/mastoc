@@ -74,8 +74,8 @@ Format découvert : `S829279 S829528 O828906 O828964 O828985 O829120 O829377 O82
 
 ### Phase 4 : Outil Python
 - [x] Image de face téléchargée (`/extracted/images/face_small.jpg`)
-- [x] Créer script Python d'extraction (`mastock/src/stokt_api.py`)
-- [x] Créer script d'extraction complète (`mastock/src/extract_all_climbs.py`)
+- [x] Créer script Python d'extraction (`mastoc/src/stokt_api.py`)
+- [x] Créer script d'extraction complète (`mastoc/src/extract_all_climbs.py`)
 - [x] Récupérer tous les climbs avec pagination (459 climbs extraits)
 - [x] Exporter en JSON (`extracted/data/montoboard_20251220.json`)
 
@@ -93,8 +93,8 @@ Format découvert : `S829279 S829528 O828906 O828964 O828985 O829120 O829377 O82
 - Code décompilé : `/extracted/stockt_decompiled/decompiled/stokt_decompiled.js`
 - Image face small : `/extracted/images/face_small.jpg` (339x450)
 - Image face full HR : `/extracted/images/face_full_hires.jpg` (2263x3000) ✅ NEW
-- API Client : `/mastock/src/stokt_api.py`
-- Script extraction : `/mastock/src/extract_all_climbs.py`
+- API Client : `/mastoc/src/stokt_api.py`
+- Script extraction : `/mastoc/src/extract_all_climbs.py`
 - Données (1017 climbs/ALL) : `/extracted/data/montoboard_ALL_climbs.json`
 - **Setup avec polygones** : `/extracted/data/montoboard_setup.json` (776 prises) ✅ NEW
 

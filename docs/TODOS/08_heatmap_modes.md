@@ -74,7 +74,7 @@ Palettes matplotlib à proposer (256 couleurs chacune) :
 ### Modifications
 
 ```
-mastock/src/mastock/
+mastoc/src/mastoc/
 ├── core/
 │   ├── hold_index.py          # Ajouter get_hold_max_grade()
 │   └── colormaps.py           # [NOUVEAU] Gestion des palettes
@@ -226,8 +226,8 @@ Dans le panneau gauche de `hold_selector.py` :
 ## Références
 
 - Matplotlib colormaps : https://matplotlib.org/stable/users/explain/colors/colormaps.html
-- `hold_overlay.py` : `/mastock/src/mastock/gui/widgets/hold_overlay.py`
-- `hold_index.py` : `/mastock/src/mastock/core/hold_index.py`
+- `hold_overlay.py` : `/mastoc/src/mastoc/gui/widgets/hold_overlay.py`
+- `hold_index.py` : `/mastoc/src/mastoc/core/hold_index.py`
 - TODO 06 : `/docs/TODOS/06_interface_filtrage_blocs.md`
 
 ## Notes

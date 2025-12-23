@@ -1,4 +1,4 @@
-# Architecture mastock - Application d'Escalade Offline-First
+# Architecture mastoc - Application d'Escalade Offline-First
 
 **Version** : 1.0
 **Date** : 2025-11-10
@@ -54,7 +54,7 @@ L'application Stōkt actuelle présente des limitations en mode offline :
 - Images non mises en cache
 - Interface inutilisable sans connexion
 
-**mastock** résout ces problèmes en inversant la logique :
+**mastoc** résout ces problèmes en inversant la logique :
 - **Base locale d'abord** (offline-first)
 - Synchronisation optionnelle (bonus)
 - Tout fonctionne localement
@@ -836,7 +836,7 @@ fun SyncSettingsScreen(viewModel: SyncViewModel) {
         )
 
         Text(
-            "mastock fonctionne 100% sans connexion. Cette fonctionnalité " +
+            "mastoc fonctionne 100% sans connexion. Cette fonctionnalité " +
             "permet d'importer vos données depuis Stōkt si vous le souhaitez.",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
@@ -1271,7 +1271,7 @@ fun handleSyncResult(result: SyncResult) {
 ### Ce qui Fonctionne Bien
 
 1. **Système de coordonnées relatives** (0.0 - 1.0)
-   - ✅ À reproduire dans mastock
+   - ✅ À reproduire dans mastoc
 
 2. **Structure modulaire Redux**
    - ✅ S'inspirer pour l'architecture ViewModels
@@ -1282,10 +1282,10 @@ fun handleSyncResult(result: SyncResult) {
 ### Ce qui Pose Problème
 
 1. **Dépendance forte au réseau**
-   - ❌ À éviter absolument dans mastock
+   - ❌ À éviter absolument dans mastoc
 
 2. **Pas de persistance locale**
-   - ❌ mastock sera 100% local
+   - ❌ mastoc sera 100% local
 
 3. **API non documentée**
    - ⚠️ Risque pour le module de sync (acceptable car optionnel)

@@ -75,7 +75,7 @@ Fenêtre/panneau séparé affichant :
 ## Architecture
 
 ```
-mastock/src/mastock/gui/
+mastoc/src/mastoc/gui/
 ├── widgets/
 │   ├── board_view.py        # Vue du mur (existant TODO 05)
 │   ├── hold_overlay.py      # [NOUVEAU] Overlay des prises colorées

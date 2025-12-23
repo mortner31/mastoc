@@ -22,7 +22,7 @@ Permettre de consulter et gérer les interactions sociales d'un bloc :
   - Risque de changement d'API
   - Authentification requise
 
-**Option B : Stockage local mastock**
+**Option B : Stockage local mastoc**
 - Avantages :
   - Fonctionne offline
   - Rapide

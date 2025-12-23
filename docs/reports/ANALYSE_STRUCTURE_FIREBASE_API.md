@@ -332,7 +332,7 @@ Utilisateur → Action Redux → API REST / Firebase → Mise à jour État → 
                               Nécessite réseau
 ```
 
-### Solution Proposée pour mastock
+### Solution Proposée pour mastoc
 ```
 Utilisateur → Action Redux → SQLite Local → Mise à jour État → UI
                                     ↓
@@ -375,7 +375,7 @@ Probablement dans **AsyncStorage** (React Native) ou **SecureStore** (Expo)
 3. **Pas de stratégie de cache claire**
 4. **Images non stockées localement**
 
-### Recommandations pour mastock
+### Recommandations pour mastoc
 1. **Base SQLite locale** avec schéma complet
 2. **Cache agressif des images** (file system local)
 3. **Synchronisation optionnelle** en arrière-plan
@@ -387,7 +387,7 @@ Probablement dans **AsyncStorage** (React Native) ou **SecureStore** (Expo)
 1. **Capture réseau** : Utiliser mitmproxy pour observer les requêtes réelles
 2. **Extraction d'exemples de données** : Capturer des JSON réels de l'API
 3. **Test du système de coordonnées** : Créer un problème et analyser le format exact
-4. **Conception du schéma SQLite** : Modéliser les tables pour mastock
+4. **Conception du schéma SQLite** : Modéliser les tables pour mastoc
 5. **POC du système d'images** : Reproduire le système de marquage des prises
 
 ## 📝 Notes Techniques
@@ -408,4 +408,4 @@ Probablement dans **AsyncStorage** (React Native) ou **SecureStore** (Expo)
 ---
 
 **Document généré par l'analyse du bundle JavaScript décompilé**
-**Source** : `/media/veracrypt1/Repositories/mastock/extracted/stockt_decompiled/assets/index.android.bundle`
+**Source** : `/media/veracrypt1/Repositories/mastoc/extracted/stockt_decompiled/assets/index.android.bundle`

@@ -1,6 +1,6 @@
-# Guide d'Ergonomie UI/UX - mastock Android
+# Guide d'Ergonomie UI/UX - mastoc Android
 
-**Document de reference pour le developpement de l'application Android mastock.**
+**Document de reference pour le developpement de l'application Android mastoc.**
 
 Design System : **Material Design 3**
 Approche : **Mobile-first, Offline-first**
@@ -20,7 +20,7 @@ Stack technique : **Jetpack Compose** (recommande)
 
 ### 1.1 Les 10 Heuristiques de Nielsen
 
-| # | Heuristique | Application mastock |
+| # | Heuristique | Application mastoc |
 |---|-------------|---------------------|
 | 1 | **Visibilite du statut** | Feedback sync API, loading states, progression wizard, badge offline |
 | 2 | **Correspondance systeme/monde reel** | Terminologie escalade (grade, setter, TOP, FEET, START) |
@@ -35,7 +35,7 @@ Stack technique : **Jetpack Compose** (recommande)
 
 ### 1.2 Norme ISO 9241 (Utilisabilite)
 
-| Critere | Definition | Objectif mastock |
+| Critere | Definition | Objectif mastoc |
 |---------|------------|------------------|
 | **Efficacite** | L'utilisateur atteint son but | Trouver un bloc en < 3 taps |
 | **Efficience** | Chemin optimise | Filtrer -> Selectionner -> Voir en 10 secondes |
@@ -103,7 +103,7 @@ Stack technique : **Jetpack Compose** (recommande)
 
 ### 3.1 Palette de Composants
 
-| Composant M3 | Usage mastock | Notes |
+| Composant M3 | Usage mastoc | Notes |
 |--------------|---------------|-------|
 | **Navigation Bar** | 5 destinations | Sync, Simple, Avance, Creer, Profil |
 | **FAB** | Action principale contextuelle | Creer bloc (modes recherche) |
@@ -146,7 +146,7 @@ Stack technique : **Jetpack Compose** (recommande)
 
 - Palette adaptative selon theme systeme
 - Couleurs primaires derivees du wallpaper (Android 12+)
-- Fallback : palette mastock definie (bleu escalade)
+- Fallback : palette mastoc definie (bleu escalade)
 - Mode sombre : inversions automatiques
 
 ---
@@ -333,7 +333,7 @@ Selection prises   Informations       Confirmation
 
 **Principe : preparer l'ajout de modes supplementaires sans casser la bottom nav**
 
-Material Design 3 limite la bottom navigation a **5 destinations maximum**. Pour ajouter des fonctionnalites futures (jeux, defis, classements, etc.), mastock utilise un **Navigation Drawer** accessible via un menu hamburger.
+Material Design 3 limite la bottom navigation a **5 destinations maximum**. Pour ajouter des fonctionnalites futures (jeux, defis, classements, etc.), mastoc utilise un **Navigation Drawer** accessible via un menu hamburger.
 
 #### Architecture hybride
 
@@ -948,7 +948,7 @@ Depuis n'importe quel mode avec visualisation du mur :
 
 ### 9.1 Principe : Offline-First
 
-> mastock est concu pour fonctionner **sans connexion** dans la salle d'escalade.
+> mastoc est concu pour fonctionner **sans connexion** dans la salle d'escalade.
 
 **Donnees disponibles offline :**
 - Tous les blocs synchronises
@@ -1054,7 +1054,7 @@ Depuis n'importe quel mode avec visualisation du mur :
 
 ### 11.1 Concept
 
-> mastock peut gérer **plusieurs murs** (salles d'escalade différentes ou faces distinctes d'une même salle).
+> mastoc peut gérer **plusieurs murs** (salles d'escalade différentes ou faces distinctes d'une même salle).
 
 **Terminologie :**
 - **Mur** : Une face d'escalade avec son image, ses prises et ses blocs

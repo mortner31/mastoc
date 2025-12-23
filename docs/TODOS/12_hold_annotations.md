@@ -132,11 +132,11 @@ EXECUTE FUNCTION refresh_hold_consensus();
 
 ---
 
-## Tâches Client (mastock)
+## Tâches Client (mastoc)
 
 ### 1. Modèles Python
 
-**Fichier** : `mastock/src/mastock/api/models.py`
+**Fichier** : `mastoc/src/mastoc/api/models.py`
 
 ```python
 class HoldGripType(Enum):
@@ -188,7 +188,7 @@ class HoldConsensus:
 
 ### 2. Extension API Client
 
-**Fichier** : `mastock/src/mastock/api/client.py`
+**Fichier** : `mastoc/src/mastoc/api/client.py`
 
 - `get_hold_annotations(hold_id)` → `(HoldConsensus, Optional[HoldAnnotation])`
 - `get_holds_annotations_batch(hold_ids)` → `dict[int, (HoldConsensus, Optional[HoldAnnotation])]`
@@ -197,7 +197,7 @@ class HoldConsensus:
 
 ### 3. Loader Asynchrone
 
-**Nouveau fichier** : `mastock/src/mastock/core/annotation_loader.py`
+**Nouveau fichier** : `mastoc/src/mastoc/core/annotation_loader.py`
 
 Pattern identique à `social_loader.py` :
 - Thread worker en arrière-plan
@@ -207,7 +207,7 @@ Pattern identique à `social_loader.py` :
 
 ### 4. Modes de Coloration
 
-**Fichier** : `mastock/src/mastock/gui/widgets/hold_overlay.py`
+**Fichier** : `mastoc/src/mastoc/gui/widgets/hold_overlay.py`
 
 Nouveaux `ColorMode` :
 
@@ -219,7 +219,7 @@ Nouveaux `ColorMode` :
 
 ### 5. Panel d'Annotation
 
-**Nouveau fichier** : `mastock/src/mastock/gui/widgets/annotation_panel.py`
+**Nouveau fichier** : `mastoc/src/mastoc/gui/widgets/annotation_panel.py`
 
 Widget avec :
 - Section "Consensus communautaire" (lecture seule, votes affichés)
@@ -231,7 +231,7 @@ Widget avec :
 
 ### 6. Filtrage par Tags
 
-**Fichier** : `mastock/src/mastock/core/hold_index.py`
+**Fichier** : `mastoc/src/mastoc/core/hold_index.py`
 
 Étendre `get_filtered_climbs()` avec :
 
@@ -242,7 +242,7 @@ exclude_conditions: set[HoldCondition]  # Exclure blocs avec prises dans cet ét
 
 ### 7. Intégration UI
 
-**Fichier** : `mastock/src/mastock/gui/hold_selector.py`
+**Fichier** : `mastoc/src/mastoc/gui/hold_selector.py`
 
 - Ajouter les 3 nouveaux ColorModes au combo
 - Intégrer `AnnotationPanel` dans le panneau gauche
@@ -255,18 +255,18 @@ exclude_conditions: set[HoldCondition]  # Exclure blocs avec prises dans cet ét
 
 | Fichier | Description |
 |---------|-------------|
-| `mastock/src/mastock/core/annotation_loader.py` | Loader async (~150 lignes) |
-| `mastock/src/mastock/gui/widgets/annotation_panel.py` | Panel UI (~200 lignes) |
+| `mastoc/src/mastoc/core/annotation_loader.py` | Loader async (~150 lignes) |
+| `mastoc/src/mastoc/gui/widgets/annotation_panel.py` | Panel UI (~200 lignes) |
 
 ## Fichiers à modifier
 
 | Fichier | Modifications |
 |---------|---------------|
-| `mastock/src/mastock/api/models.py` | +3 enums, +2 dataclasses |
-| `mastock/src/mastock/api/client.py` | +4 méthodes API |
-| `mastock/src/mastock/gui/widgets/hold_overlay.py` | +3 ColorModes, cache |
-| `mastock/src/mastock/core/hold_index.py` | +filtres par tags |
-| `mastock/src/mastock/gui/hold_selector.py` | Intégration complète |
+| `mastoc/src/mastoc/api/models.py` | +3 enums, +2 dataclasses |
+| `mastoc/src/mastoc/api/client.py` | +4 méthodes API |
+| `mastoc/src/mastoc/gui/widgets/hold_overlay.py` | +3 ColorModes, cache |
+| `mastoc/src/mastoc/core/hold_index.py` | +filtres par tags |
+| `mastoc/src/mastoc/gui/hold_selector.py` | Intégration complète |
 
 ---
 
@@ -296,5 +296,5 @@ Le consensus n'est "officiel" que si :
 
 - `/docs/04_strategie_independance.md` - Architecture serveur personnel
 - `/docs/backend_spec.md` - Spécifications API existantes
-- `/mastock/src/mastock/core/social_loader.py` - Pattern loader async
-- `/mastock/src/mastock/gui/widgets/hold_overlay.py` - Modes coloration existants
+- `/mastoc/src/mastoc/core/social_loader.py` - Pattern loader async
+- `/mastoc/src/mastoc/gui/widgets/hold_overlay.py` - Modes coloration existants

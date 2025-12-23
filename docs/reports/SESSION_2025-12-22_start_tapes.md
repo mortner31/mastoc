@@ -75,7 +75,7 @@ Dans chaque fichier :
 
 Pour voir les nouveaux pictos avec les vraies lignes tape :
 ```bash
-rm -rf ~/.mastock/pictos/*.png
+rm -rf ~/.mastoc/pictos/*.png
 # Puis relancer l'app et menu Outils > Régénérer pictos
 ```
 

@@ -73,7 +73,7 @@
 
 **CREATION API FONCTIONNELLE !**
 
-Premier bloc créé via mastock : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
+Premier bloc créé via mastoc : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
 
 **Bugs corrigés** :
 - Fix boucle infinie de signaux dans `ClimbInfoScreen._load_state()` (freeze au clic "Suivant")
@@ -118,10 +118,10 @@ Premier bloc créé via mastock : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
 
 ```bash
 # Application principale avec bouton "Créer"
-python -m mastock.gui.hold_selector
+python -m mastoc.gui.hold_selector
 
 # Application de test standalone
-python -m mastock.gui.creation_app
+python -m mastoc.gui.creation_app
 ```
 
 ### Payload curl pour test API (FONCTIONNEL)

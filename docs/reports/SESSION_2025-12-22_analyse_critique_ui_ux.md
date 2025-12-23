@@ -6,7 +6,7 @@
 
 ## Résumé Exécutif
 
-Analyse critique approfondie du document `/docs/03_ergonomie_ui_ux.md` (754 lignes) destiné à guider le développement Android de mastock.
+Analyse critique approfondie du document `/docs/03_ergonomie_ui_ux.md` (754 lignes) destiné à guider le développement Android de mastoc.
 
 **Verdict global :** Document bien structuré avec des bases solides, mais **4 problèmes critiques** à corriger avant implémentation.
 
@@ -152,14 +152,14 @@ Analyse critique approfondie du document `/docs/03_ergonomie_ui_ux.md` (754 lign
 
 ## Comparaison Apps Concurrentes
 
-| Feature | mastock | TopLogger | Stōkt | Vertical-Life |
+| Feature | mastoc | TopLogger | Stōkt | Vertical-Life |
 |---------|---------|-----------|-------|---------------|
 | Offline | ❓ | ✅ | ❌ | ✅ |
 | Social visible | ❌ | ✅ | ✅ | ✅ |
 | Bottom nav | 6 ❌ | 4 ✅ | 5 ✅ | 4 ✅ |
 | Heatmaps | ❓ | ❌ | ❌ | ❌ |
 
-**Note :** Les heatmaps sont un différenciateur potentiel unique à mastock.
+**Note :** Les heatmaps sont un différenciateur potentiel unique à mastoc.
 
 ---
 

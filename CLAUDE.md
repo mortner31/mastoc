@@ -9,7 +9,7 @@ Ce document définit les règles à suivre pour maintenir la structure et l'orga
 ### Dossiers Principaux
 
 - **`/docs`** : Documentation de référence (stratégie, protocoles) du projet global
-- **`/mastock`** : Code et documentation spécifiques à l'application mastock
+- **`/mastoc`** : Code et documentation spécifiques à l'application mastoc
 - **`/tools`** : Scripts d'analyse et de validation (si nécessaire)
 - **`/docs/reports`** : Rapports générés par les outils et sessions de travail
 - **`/docs/TODOS`** : Fiches de tâches **actives uniquement**
@@ -95,14 +95,14 @@ echo "YYYY-MM-DD | TODO XX archivé (complété/obsolète)" >> /docs/TIMELINE.md
 **IMPÉRATIF** : Les tests doivent **TOUJOURS** utiliser le code de production, jamais des copies ou des mocks du code métier.
 
 ### Vérifications obligatoires :
-- [ ] Les tests importent depuis les modules de production (`/mastock/src/`)
+- [ ] Les tests importent depuis les modules de production (`/mastoc/src/`)
 - [ ] Aucune duplication de logique métier dans les tests
 - [ ] Les fixtures utilisent les vraies classes/fonctions de production
 - [ ] Les tests échouent si le code de production change
 
 **Exemple CORRECT** :
 ```python
-from mastock.module import fonction  # Import depuis production
+from mastoc.module import fonction  # Import depuis production
 ```
 
 **Exemple INCORRECT** :
@@ -149,7 +149,7 @@ def fonction(...):  # Copie dans le fichier de test ❌
 
 ❌ **Interdit** :
 - Rapports de session (→ `/reports/`)
-- Documentation permanente (→ `/docs` ou `/mastock/docs`)
+- Documentation permanente (→ `/docs` ou `/mastoc/docs`)
 - Documents obsolètes (→ `/archive/`)
 
 ### Ce qui va dans `/reports/`
@@ -337,5 +337,5 @@ def fonction(...):  # Copie dans le fichier de test ❌
 
 **Respectez impérativement ce cycle pour toute modification.**
 
-**Version** : 3.1 (adaptée pour mastock)
+**Version** : 3.1 (adaptée pour mastoc)
 **Dernière mise à jour** : 2025-11-10

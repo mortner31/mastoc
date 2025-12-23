@@ -1,12 +1,12 @@
-# Architecture de mastock
+# Architecture de mastoc
 
 ## Vue d'Ensemble
 
-mastock est une application PyQt6 pour visualiser et explorer les blocs d'escalade du gym Montoboard, synchronisés depuis l'API Stokt.
+mastoc est une application PyQt6 pour visualiser et explorer les blocs d'escalade du gym Montoboard, synchronisés depuis l'API Stokt.
 
 ```
-mastock/
-├── src/mastock/
+mastoc/
+├── src/mastoc/
 │   ├── api/           # Client API Stokt
 │   ├── core/          # Logique métier
 │   ├── db/            # Base de données SQLite
@@ -29,7 +29,7 @@ mastock/
 
 ### db/
 - `database.py` : Connexion SQLite, repositories
-- Stockage : `~/.mastock/mastock.db`
+- Stockage : `~/.mastoc/mastoc.db`
 
 ### gui/
 - `app.py` : Fenêtre principale (MastockApp)
@@ -54,8 +54,8 @@ API Stokt → SyncManager → SQLite
 
 | Chemin | Contenu |
 |--------|---------|
-| `~/.mastock/mastock.db` | Base SQLite (blocs, prises) |
-| `~/.mastock/pictos/` | Cache des miniatures PNG |
+| `~/.mastoc/mastoc.db` | Base SQLite (blocs, prises) |
+| `~/.mastoc/pictos/` | Cache des miniatures PNG |
 | `extracted/images/face_full_hires.jpg` | Image du mur |
 
 ## Interface Utilisateur

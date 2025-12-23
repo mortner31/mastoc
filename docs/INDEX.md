@@ -1,6 +1,6 @@
-# Index de la Documentation - mastock
+# Index de la Documentation - mastoc
 
-Ce fichier recense toute la documentation du projet mastock.
+Ce fichier recense toute la documentation du projet mastoc.
 
 ## 📋 Fichiers Système
 
@@ -31,7 +31,7 @@ Voir `/docs/reports/` pour les rapports de sessions et d'analyses.
 
 | Fichier | Description |
 |---------|-------------|
-| `01_architecture.md` | Architecture du projet mastock |
+| `01_architecture.md` | Architecture du projet mastoc |
 | `02_design_decisions.md` | Decisions de design (UI, pictos, couleurs) |
 | `03_ergonomie_ui_ux.md` | **Guide d'ergonomie Android** (Material Design 3, wireframes) |
 | `04_strategie_independance.md` | **Stratégie d'indépendance Stokt** (migration, multi-murs) |

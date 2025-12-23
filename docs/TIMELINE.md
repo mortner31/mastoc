@@ -1,4 +1,4 @@
-# Timeline du Projet mastock
+# Timeline du Projet mastoc
 
 Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
@@ -19,7 +19,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - Statut : Documentation (0%)
 
 - **TODO 10 avancé à 97%** - Interface de Création de Blocs **FONCTIONNEL**
-  - **Premier bloc créé via mastock** : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
+  - **Premier bloc créé via mastoc** : `509345cb-8c01-477d-bfba-dd4d55ee4ddd`
   - **Bugs critiques corrigés** :
     - Boucle infinie signaux (`_load_state()` freeze)
     - Bouton "Suivant" jamais activé
@@ -90,7 +90,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 ## 2025-12-22 (nuit 3)
 
 - **TODO 10 révisé** - Analyse critique et restructuration
-  - Analyse multi-agents : code décompilé + architecture mastock
+  - Analyse multi-agents : code décompilé + architecture mastoc
   - **Risques identifiés** :
     - GAP Architectural : UI splitter incompatible avec wizard multi-écrans
     - API Client incomplet : manquent POST/PATCH/DELETE
@@ -183,7 +183,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-22 (soir)
 
-- **Améliorations UI mastock**
+- **Améliorations UI mastoc**
   - Filtrage par grade min/max (deux sliders Fontainebleau)
   - Contrôle luminosité fond (slider 10-100%)
   - Navigation clavier avec mise à jour auto du viewer
@@ -192,7 +192,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
     - Cercles colorés proportionnels aux prises
     - Top 20 prises en gris (contexte)
     - Marqueurs START et TOP (double cercle)
-  - Cache persistant des pictos sur disque (`~/.mastock/pictos/`)
+  - Cache persistant des pictos sur disque (`~/.mastoc/pictos/`)
   - Menu "Outils > Régénérer pictos"
   - Marqueurs dans viewer : START (lignes tape), TOP (double polygone écarté 135%)
   - Documentation créée : `01_architecture.md`, `02_design_decisions.md`
@@ -207,11 +207,11 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - Liste des blocs filtrés avec vue détaillée
   - Navigation Previous/Next
   - 108 tests passent au total
-  - Usage : `python -m mastock.gui.hold_selector`
+  - Usage : `python -m mastoc.gui.hold_selector`
 
 ## 2025-12-21 (nuit)
 
-- **TODO 05 archivé** - Package Python mastock (100%)
+- **TODO 05 archivé** - Package Python mastoc (100%)
   - Phase 1-5 toutes complétées
   - 90 tests unitaires et d'intégration passent
   - Modules créés : `core/sync.py`, `core/filters.py`, `gui/app.py`, `gui/widgets/climb_list.py`, `gui/dialogs/login.py`
@@ -230,7 +230,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - Complète le TODO 05
   - Statut : À faire (0%)
 
-- **TODO 05 avancé à 50%** - Package Python mastock fonctionnel
+- **TODO 05 avancé à 50%** - Package Python mastoc fonctionnel
   - Phase 1 (100%) : Structure package avec `pyproject.toml`
   - Phase 2 (100%) : Base SQLite avec 1017 climbs et 776 prises importés
   - Phase 4 (50%) : Viewer PyQtGraph avec rendu avancé
@@ -238,11 +238,11 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
     - Détection automatique couleur des prises
     - 3 sliders interactifs (fond, contour, épaisseur)
   - 39 tests unitaires passent
-  - Usage : `python3 -m mastock.gui.climb_viewer --name "Nia" --setter "Mathias" --image`
+  - Usage : `python3 -m mastoc.gui.climb_viewer --name "Nia" --setter "Mathias" --image`
 
 ## 2025-12-21
 
-- **TODO 05 créé** - Structure Package Python mastock
+- **TODO 05 créé** - Structure Package Python mastoc
   - Objectif : Restructurer le code en package installable (`pip install -e .`)
   - Stack : PyQtGraph + PyQt6 pour GUI, SQLite pour stockage local
   - Fonctionnalités : stockage BD, sync, filtres climbs, visualisation prises
@@ -325,7 +325,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - Rapport : `/docs/reports/SESSION_2025-12-20_patch_apk_mitm.md`
   - Statut : Bloqué - alternatives à explorer
 
-- **TODO 02 créé** - Conception du schéma SQLite pour mastock
+- **TODO 02 créé** - Conception du schéma SQLite pour mastoc
   - Basé sur l'analyse statique de Stōkt
   - Architecture offline-first
   - Statut : À faire (0%)

@@ -1,8 +1,8 @@
-# TODO 02 - Conception du Schéma SQLite pour mastock
+# TODO 02 - Conception du Schéma SQLite pour mastoc
 
 ## 🎯 Objectif
 
-Concevoir une base de données SQLite offline-first pour l'application mastock, basée sur l'analyse de l'application Stōkt.
+Concevoir une base de données SQLite offline-first pour l'application mastoc, basée sur l'analyse de l'application Stōkt.
 
 ---
 
@@ -70,6 +70,6 @@ Concevoir une base de données SQLite offline-first pour l'application mastock, 
 
 ## 📁 Fichiers à créer
 
-- `/mastock/database/schema.sql` - Script de création
-- `/mastock/database/migrations/` - Migrations futures
+- `/mastoc/database/schema.sql` - Script de création
+- `/mastoc/database/migrations/` - Migrations futures
 - `/docs/03_schema_database.md` - Documentation du schéma

@@ -1,6 +1,6 @@
-# Theme et Design System - mastock
+# Theme et Design System - mastoc
 
-**Document de reference pour le look & feel de l'application mastock Android.**
+**Document de reference pour le look & feel de l'application mastoc Android.**
 
 Base : **Material Design 3**
 Approche : **Minimaliste/Tech**
@@ -126,7 +126,7 @@ Multiples de 4dp (conforme M3).
 ### 3.1 Structure des Fichiers
 
 ```
-mastock-android/
+mastoc-android/
 └── app/src/main/java/.../ui/theme/
     ├── Color.kt          # Definitions couleurs
     ├── Type.kt           # Typographie
@@ -138,7 +138,7 @@ mastock-android/
 ### 3.2 Color.kt
 
 ```kotlin
-package com.mastock.ui.theme
+package com.mastoc.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -177,7 +177,7 @@ val DarkOnSurface = Color(0xFFBDBDBD)
 ### 3.3 Theme.kt
 
 ```kotlin
-package com.mastock.ui.theme
+package com.mastoc.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

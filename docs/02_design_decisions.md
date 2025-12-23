@@ -1,4 +1,4 @@
-# Décisions de Design - mastock
+# Décisions de Design - mastoc
 
 ## Visualisation des Blocs
 
@@ -40,7 +40,7 @@
 - TOP : double cercle (cercle extérieur +3px)
 
 ### Cache
-- Stockage : `~/.mastock/pictos/`
+- Stockage : `~/.mastoc/pictos/`
 - Format : PNG
 - Noms : hash MD5 du climb_id (12 chars)
 - Taille : 48×48 pour la liste

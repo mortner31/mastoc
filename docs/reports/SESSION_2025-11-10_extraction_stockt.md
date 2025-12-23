@@ -57,7 +57,7 @@
 
 Les fichiers APK sont situés dans :
 ```
-/media/veracrypt1/Repositories/mastock/extracted/stockt_apk/
+/media/veracrypt1/Repositories/mastoc/extracted/stockt_apk/
 ├── base.apk
 ├── split_config.arm64_v8a.apk
 ├── split_config.fr.apk
@@ -211,7 +211,7 @@ L'application utilise Firebase Realtime Database qui nécessite une connexion r�
    - Observer les appels réseau (mitmproxy)
    - Capturer la structure des requêtes API
 
-5. **Conception de la solution mastock**
+5. **Conception de la solution mastoc**
    - Base de données locale SQLite offline-first
    - Système de synchronisation optionnelle
    - Cache agressif des images

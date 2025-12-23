@@ -1,4 +1,4 @@
-# mastock
+# mastoc
 
 Application personnelle pour la visualisation et la gestion de blocs d'escalade en mode offline-first.
 
@@ -25,14 +25,14 @@ Pour commencer à travailler sur ce projet :
 ## 📂 Structure du Projet
 
 ```
-/mastock
+/mastoc
 ├── README.md           # Ce fichier
 ├── START_HERE.md       # Point d'entrée rapide
 ├── CLAUDE.md          # Guide pour Claude
 ├── /docs              # Documentation du projet
 │   ├── /TODOS         # Tâches actives
 │   └── /reports       # Rapports de session
-├── /mastock           # Code source de l'application
+├── /mastoc           # Code source de l'application
 ├── /tools             # Scripts d'analyse
 └── /archive           # Documents archivés
 ```

@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Definir les regles d'ergonomie Material Design 3 mobile-first pour guider le developpement de l'application mastock Android.
+Definir les regles d'ergonomie Material Design 3 mobile-first pour guider le developpement de l'application mastoc Android.
 
 ## Document de Reference
 

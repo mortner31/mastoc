@@ -121,12 +121,12 @@ La différence de 157 climbs s'explique par :
 
 ### Scripts Python créés
 
-1. **`mastock/src/stokt_api.py`**
+1. **`mastoc/src/stokt_api.py`**
    - Client API complet
    - Méthodes : `login()`, `get_gym_summary()`, `get_gym_walls()`, `get_gym_climbs()`, `get_all_gym_climbs()`, `get_my_sent_climbs()`
    - Helper : `parse_holds_list()`
 
-2. **`mastock/src/extract_all_climbs.py`**
+2. **`mastoc/src/extract_all_climbs.py`**
    - Script d'extraction complète
    - Pagination automatique
    - Export JSON
