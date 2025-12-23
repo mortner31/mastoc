@@ -3,7 +3,8 @@
 **Document de reference pour le developpement de l'application Android mastock.**
 
 Design System : **Material Design 3**
-Approche : **Mobile-first**
+Approche : **Mobile-first, Offline-first**
+Stack technique : **Jetpack Compose** (recommande)
 
 ## References externes
 
@@ -21,15 +22,15 @@ Approche : **Mobile-first**
 
 | # | Heuristique | Application mastock |
 |---|-------------|---------------------|
-| 1 | **Visibilite du statut** | Feedback sync API, loading states, progression wizard |
+| 1 | **Visibilite du statut** | Feedback sync API, loading states, progression wizard, badge offline |
 | 2 | **Correspondance systeme/monde reel** | Terminologie escalade (grade, setter, TOP, FEET, START) |
-| 3 | **Controle utilisateur** | Undo, navigation back, annuler creation, swipe dismiss |
+| 3 | **Controle utilisateur** | Undo, navigation back, annuler creation, dialog confirmation |
 | 4 | **Coherence et standards** | Material Design 3 partout, patterns familiers |
-| 5 | **Prevention des erreurs** | Validation avant POST, confirmations actions destructives |
-| 6 | **Reconnaissance > Rappel** | Chips filtres visibles, options affichees, pictos |
-| 7 | **Flexibilite et efficacite** | Gestes rapides, FAB action principale, raccourcis |
+| 5 | **Prevention des erreurs** | Validation avant POST, confirmations actions destructives, autosave brouillon |
+| 6 | **Reconnaissance > Rappel** | Chips filtres visibles, options affichees, pictos, stats sociales visibles |
+| 7 | **Flexibilite et efficacite** | Boutons d'action rapides, FAB action principale, raccourcis |
 | 8 | **Design minimaliste** | Focus sur le mur et les prises, pas de surcharge |
-| 9 | **Aide a la recuperation d'erreurs** | Messages clairs, solutions proposees, retry auto |
+| 9 | **Aide a la recuperation d'erreurs** | Messages clairs, solutions proposees, retry auto, queue offline |
 | 10 | **Aide et documentation** | Onboarding, tooltips, aide contextuelle |
 
 ### 1.2 Norme ISO 9241 (Utilisabilite)
@@ -83,7 +84,18 @@ Approche : **Mobile-first**
 | FAB standard | **56 dp** | Action principale |
 | FAB small | **40 dp** | Actions secondaires |
 | Bottom nav height | **80 dp** | Avec labels |
+| Bottom nav item width | **80-168 dp** | Min 80dp par item |
 | Chips | **32 dp** hauteur | Filtres |
+
+### 2.4 Consideration Doigts Magnesie
+
+> Les grimpeurs ont souvent les doigts pleins de magnesie, ce qui peut causer des taps imprecis.
+
+**Regles specifiques escalade :**
+- Eviter les swipes horizontaux pour actions critiques (like)
+- Preferer les boutons explicites aux gestes
+- Touch targets genereux (56dp+ pour actions importantes)
+- Double-tap pour actions irreversibles
 
 ---
 
@@ -93,15 +105,16 @@ Approche : **Mobile-first**
 
 | Composant M3 | Usage mastock | Notes |
 |--------------|---------------|-------|
-| **Navigation Bar** | 6 destinations | Compte, Sync, Simple, Avance, Creer, Moi |
-| **FAB** | Action principale | Creer bloc, Sync |
+| **Navigation Bar** | 5 destinations | Sync, Simple, Avance, Creer, Profil |
+| **FAB** | Action principale contextuelle | Creer bloc (modes recherche) |
 | **Cards** | Liste des blocs | Elevation, picto, infos |
 | **Chips** | Filtres | Grade, setter, selection |
-| **Bottom Sheet** | Detail bloc | Drag handle, expandable |
+| **Bottom Sheet** | Detail bloc, controles apparence | Drag handle, expandable |
 | **Snackbar** | Feedback actions | Like, bookmark, erreurs |
 | **Progress Indicator** | Sync, wizard | Linear ou circular |
-| **Dialogs** | Confirmations | Actions destructives |
+| **Dialogs** | Confirmations | Actions destructives, interruption wizard |
 | **Text Fields** | Formulaires | Nom bloc, commentaires |
+| **Badges** | Indicateurs | Mode offline, notifications |
 
 ### 3.2 Typographie M3
 
@@ -140,9 +153,9 @@ Approche : **Mobile-first**
 
 ## 4. Navigation
 
-### 4.1 Les 6 Modes Principaux
+### 4.1 Les 5 Modes Principaux
 
-L'application s'organise autour de **6 modes distincts** :
+L'application s'organise autour de **5 modes distincts** (conforme M3 : 3-5 destinations max) :
 
 ```
 +---------------------------------------+
@@ -150,89 +163,91 @@ L'application s'organise autour de **6 modes distincts** :
 |            [Ecran actif]              |
 |                                       |
 +---------------------------------------+
-|  U+1F510  U+1F504  U+1F4CA  U+1F50D  +  U+1F464       |
-| Compte Sync Simple Avance Creer Moi   |
+|   Sync   Simple  Avance  Creer Profil |
 +---------------------------------------+
 ```
 
 | Mode | Icone | Description |
 |------|-------|-------------|
-| **Connexion** | U+1F510 | Gestion du compte (login, logout, profil) |
-| **Synchronisation** | U+1F504 | Recuperation donnees API + generation pictos |
-| **Recherche Simple** | U+1F4CA | Parcours des blocs par niveau (scroll vertical) |
-| **Recherche Avancee** | U+1F50D | Recherche par prises (selection sur mur) |
-| **Creer** | + | Creation d'un nouveau bloc (wizard) |
-| **Moi** | U+1F464 | Mes blocs crees, mes likes, mes favoris |
+| **Synchronisation** | sync | Recuperation donnees API + generation pictos |
+| **Recherche Simple** | list | Parcours des blocs par niveau (scroll vertical) |
+| **Recherche Avancee** | search | Recherche par prises (selection sur mur) |
+| **Creer** | add | Creation d'un nouveau bloc (wizard) |
+| **Profil** | person | Compte, mes blocs, mes likes, mes favoris, parametres |
 
 ### 4.2 Comportement par Mode
-
-#### Mode Connexion
-- Login / Logout
-- Affichage profil utilisateur
-- Parametres compte
 
 #### Mode Synchronisation
 - Telechargement donnees depuis API
 - Generation/regeneration des pictos
 - Indicateur progression
 - Statut derniere sync
+- **Badge offline** si pas de connexion
+- Queue des actions en attente
 
 #### Mode Recherche Simple
 - **Scroll vertical** pour parcourir les blocs
 - Filtrage par niveau (chips ou slider) - **visible par defaut**
-- Affichage : Picto + Nom + Grade + Setter
-- **Swipe lateral** ou tap pour liker
-- **Aspects sociaux caches** par defaut (tap pour reveler)
-- **Filtres avances depliables** (voir section 4.6)
+- Affichage : Picto + Nom + Grade + Setter + Stats sociales
+- **Boutons explicites** pour liker/bookmark (pas de swipe)
+- **Stats sociales visibles** par defaut (configurable)
+- **Filtres avances depliables** (voir section 4.5)
 
 #### Mode Recherche Avancee
 - Affichage mur complet avec prises
 - Selection de prises (tap)
 - Filtrage resultats par prises selectionnees
 - Double slider niveau - **visible par defaut**
-- **Filtres avances depliables** (voir section 4.6)
+- **Modes de coloration** : Min, Max, Frequence, Rarete
+- **Filtres avances depliables** (voir section 4.5)
 - Basculement vers visualisation bloc
+- Bouton **Undo** pour annuler derniere selection
 
 #### Mode Creer
-- Wizard 3 etapes (voir section 4.7)
+- Wizard 3 etapes (voir section 4.6)
 - Etape 1 : Selection des prises
 - Etape 2 : Informations bloc (nom, grade, regle pieds)
 - Etape 3 : Confirmation et publication
+- **Autosave brouillon** entre etapes
+- **Dialog confirmation** si interruption
 
-#### Mode Moi
-- Mes blocs crees
-- Mes blocs likes
-- Mes favoris (bookmarks)
-- Mes ascensions
-- Statistiques personnelles
+#### Mode Profil
+- **Section Compte** : Login/Logout, email, avatar
+- **Section Mes donnees** : Mes blocs crees, mes likes, mes favoris, mes ascensions
+- **Section Statistiques** : Stats personnelles
+- **Section Parametres** : Apparence (social visible/cache), notifications
 
 ### 4.3 Navigation dans les Blocs
 
-**Principe : simplicite et fluidite**
+**Principe : simplicite et precision (doigts magnesie)**
 
-| Geste | Action |
-|-------|--------|
-| Swipe haut | Bloc suivant |
-| Swipe bas | Bloc precedent |
-| Swipe droite | Like (avec animation coeur) |
-| Swipe gauche | Passer / Ignorer |
-| Tap image | Zoom/details |
-| Tap icone social | Reveler infos sociales |
+| Geste/Action | Resultat |
+|--------------|----------|
+| Scroll vertical | Parcourir la liste |
+| Tap card | Ouvrir detail bloc |
+| Tap bouton coeur | Like/Unlike |
+| Tap bouton bookmark | Ajouter/Retirer favoris |
+| Tap bouton stats | Afficher panel social complet |
+| Bouton Undo (detail) | Annuler derniere action |
 
-### 4.4 Aspects Sociaux (Caches par Defaut)
+**Note :** Les swipes horizontaux sont **evites** pour prevenir les conflits avec la navigation systeme Android et les erreurs de tap avec doigts magnesie.
 
-**Principe : focus sur l'escalade, pas le social**
+### 4.4 Aspects Sociaux (Configurable)
 
-Les informations sociales sont **cachees par defaut** :
-- Nombre de likes
-- Nombre de commentaires
+**Principe : equilibre entre information et focus**
+
+Par defaut, les stats de base sont **visibles** :
+- Nombre de likes (icone + compteur)
+- Nombre de commentaires (icone + compteur)
+
+**Panel social complet** (tap sur bouton stats) :
 - Ascensions recentes
+- Liste des commentaires
 - Notes communaute
+- Ajouter un commentaire
 
-**Pour les reveler :**
-- Tap sur une icone discrete (i)
-- Le panel social apparait en overlay ou bottom sheet
-- Se ferme automatiquement ou par swipe down
+**Option dans Parametres :**
+- "Mode Focus" : cache les stats sociales par defaut
 
 ### 4.5 Options Depliables (Progressive Disclosure)
 
@@ -257,8 +272,8 @@ Les options sont organisees en deux niveaux :
 | Mode | Niveau 1 (visible) | Niveau 2 (depliable) |
 |------|-------------------|----------------------|
 | Recherche Simple | Filtrage niveau | Ouvreur, periode, tri |
-| Recherche Avancee | Slider niveau, selection prises | Ouvreur, couleur prises |
-| Moi | Tabs (blocs/likes/favoris) | Tri, periode |
+| Recherche Avancee | Slider niveau, selection prises, mode coloration | Ouvreur, colormap, luminosite |
+| Profil | Tabs (blocs/likes/favoris) | Tri, periode |
 
 ### 4.6 Wizard Pattern (Creation bloc)
 
@@ -270,48 +285,165 @@ Selection prises   Informations       Confirmation
      <-------           <-------
 ```
 
-**Regles wizard :**
-- Indicateur progression visible
-- Retour arriere possible
-- Validation par etape
-- Bouton "Annuler" toujours accessible
-- Sauvegarde brouillon optionnelle
+#### Regles fondamentales
+
+| Regle | Implementation |
+|-------|----------------|
+| Indicateur progression | Barre + etape X/3 toujours visible |
+| Retour arriere | Bouton "<- Retour" preserve l'etat |
+| Annuler | Dialog "Sauvegarder brouillon ?" |
+| Autosave | Brouillon sauvegarde apres chaque etape |
+| Validation | Par etape, avant passage suivant |
+
+#### Gestion des interruptions
+
+| Scenario | Comportement |
+|----------|--------------|
+| **Tap "Annuler"** | Dialog : "Sauvegarder comme brouillon ?" [Oui] [Non] [Annuler] |
+| **Back systeme** | Meme dialog que "Annuler" |
+| **Home / App switch** | Autosave silencieux du brouillon |
+| **Rotation ecran** | Etat preserve via SavedStateHandle |
+| **Kill process** | Brouillon recuperable au retour |
+
+#### Validation par etape
+
+| Etape | Validations | Erreur si... |
+|-------|-------------|--------------|
+| **1 - Prises** | Min 2 START, Min 1 TOP | "Selectionnez au moins 2 prises START" |
+| **2 - Infos** | Nom 3-50 chars, Grade selectionne | "Le nom doit contenir 3-50 caracteres" |
+| **3 - Confirm** | Aucune (recapitulatif) | - |
+
+#### Gestion des erreurs reseau (etape 3)
+
+| Scenario | Comportement |
+|----------|--------------|
+| **Erreur POST** | Snackbar "Erreur de publication. [Reessayer]" |
+| **Timeout** | Retry automatique (3 tentatives, backoff exponentiel) |
+| **Offline** | "Vous etes hors ligne. Le bloc sera publie a la reconnexion." |
+| **Succes** | Snackbar "Bloc publie !" + navigation vers detail |
+
+#### Brouillons
+
+- Stockes localement (Room)
+- Visibles dans Profil > Mes brouillons
+- Expiration : 30 jours
+- Suppression : swipe ou bouton
+
+### 4.7 Extensibilite : Navigation Drawer
+
+**Principe : preparer l'ajout de modes supplementaires sans casser la bottom nav**
+
+Material Design 3 limite la bottom navigation a **5 destinations maximum**. Pour ajouter des fonctionnalites futures (jeux, defis, classements, etc.), mastock utilise un **Navigation Drawer** accessible via un menu hamburger.
+
+#### Architecture hybride
+
+```
++---------------------------------------+
+| [=] Recherche Simple            [cog] |  <- Hamburger menu
++---------------------------------------+
+|                                       |
+|            [Contenu principal]        |
+|                                       |
++---------------------------------------+
+|  Sync  Simple  Avance  Creer  Profil  |  <- 5 modes principaux (bottom nav)
++---------------------------------------+
+```
+
+#### Navigation Drawer (modes secondaires)
+
+```
++--------------------+------------------+
+| [X] Menu           |                  |
+|                    |                  |
+| --- PRINCIPAL ---  |                  |
+| [sync] Sync        |   [Contenu       |
+| [list] Simple      |    principal     |
+| [search] Avance    |    grise]        |
+| [add] Creer        |                  |
+| [person] Profil    |                  |
+|                    |                  |
+| --- EXTRAS ---     |                  |
+| [brush] Brossage   |  <- Modes        |
+| [trophy] Defis     |     additionnels |
+| [leaderboard] Classement |            |
+|                    |                  |
+| --- SYSTEME ---    |                  |
+| [settings] Parametres |               |
+| [help] Aide        |                  |
+| [info] A propos    |                  |
++--------------------+------------------+
+```
+
+#### Regles de conception
+
+| Regle | Implementation |
+|-------|----------------|
+| **Acces** | Hamburger [=] en haut a gauche (toutes les pages) |
+| **Geste** | Swipe depuis bord gauche (optionnel, peut confliter) |
+| **Fermeture** | Tap hors drawer, tap [X], ou back systeme |
+| **Largeur** | 80% de l'ecran (max 320dp) |
+| **Overlay** | Fond grise a 50% opacite |
+
+#### Hierarchie des destinations
+
+| Niveau | Emplacement | Exemples |
+|--------|-------------|----------|
+| **Principal** | Bottom Nav (5 max) | Sync, Simple, Avance, Creer, Profil |
+| **Secondaire** | Drawer > Extras | Jeux, Defis, Classements |
+| **Systeme** | Drawer > Systeme | Parametres, Aide, A propos |
+
+#### Exemple : Mode "Brossage de Prises"
+
+**Concept :** Jeu de gamification ou l'utilisateur gagne des points en brossant les prises sales dans la salle.
+
+**Acces :**
+1. Drawer > Extras > Brossage
+2. Notification push "Nouvelles prises a brosser !"
+3. Badge sur hamburger menu si points a reclamer
+
+**Ecran Brossage :**
+
+```
++---------------------------------------+
+| <- Retour       Brossage        [?]   |
++---------------------------------------+
+|                                       |
+|     [Trophy] Niveau 12                |
+|     1250 points                       |
+|                                       |
+| +-----------------------------------+ |
+| | Prises a brosser aujourd'hui : 5  | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| |      [Image mur]                  | |
+| |      Prises sales highlighted     | |
+| |      Tap = marquer comme brosse   | |
+| +-----------------------------------+ |
+|                                       |
+| Historique                            |
+| - Prise #234 brossee il y a 2h (+10)  |
+| - Prise #567 brossee hier (+10)       |
+|                                       |
++---------------------------------------+
+```
+
+#### Quand promouvoir un mode secondaire ?
+
+| Critere | Action |
+|---------|--------|
+| Usage > 30% des sessions | Considerer promotion en bottom nav |
+| Feature temporaire (event) | Garder dans drawer + banner promo |
+| Feature niche | Drawer permanent |
+| Feature critique | Bottom nav obligatoire |
+
+**Note :** Si un mode secondaire devient tres populaire, on peut reorganiser la bottom nav (ex: fusionner Simple+Avance) pour lui faire de la place.
 
 ---
 
 ## 5. Wireframes
 
-### 5.1 Mode Connexion
-
-```
-+---------------------------------------+
-|                                       |
-|              mastock                  |
-|                                       |
-|         [Logo Montoboard]             |
-|                                       |
-| +-----------------------------------+ |
-| | Email                             | |
-| +-----------------------------------+ |
-| +-----------------------------------+ |
-| | Mot de passe                      | |
-| +-----------------------------------+ |
-|                                       |
-|         [Se connecter]                |
-|                                       |
-| ------------------------------------- |
-|                                       |
-| Connecte en tant que :                |
-| Pierre Martin (@pierre_climb)         |
-|                                       |
-| [Deconnexion]      [Parametres]       |
-|                                       |
-+---------------------------------------+
-| Compte Sync Simple Avance Creer Moi   |
-+---------------------------------------+
-```
-
-### 5.2 Mode Synchronisation
+### 5.1 Mode Synchronisation
 
 ```
 +---------------------------------------+
@@ -327,7 +459,11 @@ Selection prises   Informations       Confirmation
 | | - 892 pictos generes              | |
 | +-----------------------------------+ |
 |                                       |
-| ------------------------------------- |
+| +-----------------------------------+ |
+| | Actions en attente : 3            | |  <- Queue offline
+| | - 2 likes                         | |
+| | - 1 commentaire                   | |
+| +-----------------------------------+ |
 |                                       |
 |         [Synchroniser]                |
 |                                       |
@@ -343,52 +479,63 @@ Selection prises   Informations       Confirmation
 | Telechargement blocs...               |
 |                                       |
 +---------------------------------------+
-| Compte Sync Simple Avance Creer Moi   |
+|  Sync  Simple  Avance  Creer  Profil  |
 +---------------------------------------+
 ```
 
-### 5.3 Mode Recherche Simple
+### 5.2 Mode Recherche Simple
 
 **Vue liste (scroll vertical) :**
 
 ```
 +---------------------------------------+
-| Recherche Simple                      |
+| Recherche Simple              [cog]   |
 +---------------------------------------+
 | Niveau : [4+] [5] [6a] [6b+] [7a] [>] |
 +---------------------------------------+
-|                  ^                    |  <- Swipe haut = suivant
-| +-----------------------------------+ |
-| |                                   | |
-| |         [Picto bloc]              | |
-| |                                   | |
-| |  Bloc "Nia"                       | |
-| |  6a+ - Mathias               [i]  | |  <- Social cache
-| |                                   | |
-| |        <- Swipe = Like ->         | |
-| |                                   | |
-| +-----------------------------------+ |
-|                  v                    |  <- Swipe bas = precedent
 |                                       |
-| Bloc 12 / 156                         |
+| +-----------------------------------+ |
+| |  [Picto]  Bloc "Nia"              | |
+| |           6a+ - Mathias           | |
+| |                                   | |
+| |  [heart] 12   [comment] 3   [bm]  | |  <- Stats visibles
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| |  [Picto]  Bloc "Sunrise"          | |
+| |           5+ - Alex               | |
+| |                                   | |
+| |  [heart] 8    [comment] 1   [bm]  | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| |  [Picto]  Bloc "Moonlight"        | |
+| |           6b+ - Thomas            | |
+| |                                   | |
+| |  [heart] 24   [comment] 5   [bm]  | |
+| +-----------------------------------+ |
+|                                       |
+| [v Plus de filtres]                   |  <- Depliable
 |                                       |
 +---------------------------------------+
-| Compte Sync Simple Avance Creer Moi   |
+|  Sync  Simple  Avance  Creer  Profil  |
 +---------------------------------------+
 ```
 
-### 5.4 Mode Recherche Avancee
+### 5.3 Mode Recherche Avancee
 
 ```
 +---------------------------------------+
-| Recherche Avancee                     |
+| Recherche Avancee             [cog]   |
 +---------------------------------------+
 | Niveau : [4+]----*----*----[8A]       |
+| Mode : [Min] [Max] [Freq] [Rare]      |
++---------------------------------------+
 |                                       |
 | +-----------------------------------+ |
 | |                                   | |
 | |      [Image mur avec prises]      | |
-| |      Prises colorees par niveau   | |
+| |      Prises colorees par mode     | |
 | |      Tap = selectionner           | |
 | |                                   | |
 | |      * Prise selectionnee         | |
@@ -401,12 +548,14 @@ Selection prises   Informations       Confirmation
 |                                       |
 | [Undo] [Clear]        [Voir blocs ->] |
 |                                       |
+| [v Plus d'options]                    |  <- Depliable
+|                                       |
 +---------------------------------------+
-| Compte Sync Simple Avance Creer Moi   |
+|  Sync  Simple  Avance  Creer  Profil  |
 +---------------------------------------+
 ```
 
-### 5.5 Mode Creer - Wizard
+### 5.4 Mode Creer - Wizard
 
 **Etape 1/3 : Selection des prises**
 
@@ -431,7 +580,7 @@ Selection prises   Informations       Confirmation
 | Selection : 5 prises                  |
 | - 2 START ok  - 2 OTHER  - 1 TOP ok   |
 |                                       |
-| ! Minimum 2 prises START requises     |
+| [Undo]                                |
 |                                       |
 |           [Suivant ->]                |
 +---------------------------------------+
@@ -451,8 +600,9 @@ Selection prises   Informations       Confirmation
 | +-----------------------------------+ |
 | | Ex: "Moonlight"                   | |
 | +-----------------------------------+ |
+| ! Le nom doit contenir 3-50 car.      |  <- Validation inline
 |                                       |
-| Grade                                 |
+| Grade *                               |
 | [4] [5] [5+] [6a] [6a+] [6b] [6b+]...|
 |                                       |
 | Regle pieds                           |
@@ -473,7 +623,7 @@ Selection prises   Informations       Confirmation
 +---------------------------------------+
 | <- Retour       Creation      Publier |
 +---------------------------------------+
-| [***] 3/3                             |
+| [***-----------------------] 3/3      |
 |                                       |
 | Verifiez votre bloc                   |
 |                                       |
@@ -490,24 +640,48 @@ Selection prises   Informations       Confirmation
 | Prises : 7                            |
 | - 2 START - 4 OTHER - 1 TOP           |
 |                                       |
-|    [Modifier]        [Publier ok]     |
+|    [<- Modifier]     [Publier ->]     |
 |                                       |
 +---------------------------------------+
 ```
 
-### 5.6 Mode Moi
+**Dialog interruption (Annuler / Back) :**
 
 ```
 +---------------------------------------+
-| Moi                             [cog] |
+|                                       |
+|     Quitter la creation ?             |
+|                                       |
+|     Votre progression sera perdue     |
+|     sauf si vous sauvegardez.         |
+|                                       |
+| +-----------------------------------+ |
+| |        [Sauvegarder brouillon]    | |
+| +-----------------------------------+ |
+| |        [Quitter sans sauvegarder] | |
+| +-----------------------------------+ |
+| |        [Continuer]                | |
+| +-----------------------------------+ |
+|                                       |
++---------------------------------------+
+```
+
+### 5.5 Mode Profil
+
+```
++---------------------------------------+
+| Profil                          [cog] |
 +---------------------------------------+
 |                                       |
 |           [Avatar]                    |
 |         Pierre Martin                 |
+|         @pierre_climb                 |
+|                                       |
+|     [Se deconnecter]                  |
 |                                       |
 | ------------------------------------- |
 |                                       |
-| [Mes blocs]  [Mes likes]  [Favoris]   |
+| [Mes blocs] [Likes] [Favoris] [Stats] |
 |                                       |
 | ------------------------------------- |
 |                                       |
@@ -515,23 +689,30 @@ Selection prises   Informations       Confirmation
 |                                       |
 | +-----------------------------------+ |
 | | [Picto] Moonlight - 6b+ - 15 dec  | |
+| | [heart] 24  [comment] 5           | |
 | +-----------------------------------+ |
 | +-----------------------------------+ |
 | | [Picto] Sunrise - 5+ - 10 dec     | |
+| | [heart] 8   [comment] 1           | |
+| +-----------------------------------+ |
+|                                       |
+| Brouillons (1)                        |
+| +-----------------------------------+ |
+| | [draft] Sans nom - 6a - En cours  | |
 | +-----------------------------------+ |
 |                                       |
 +---------------------------------------+
-| Compte Sync Simple Avance Creer Moi   |
+|  Sync  Simple  Avance  Creer  Profil  |
 +---------------------------------------+
 ```
 
-### 5.7 Detail Bloc
+### 5.6 Detail Bloc
 
-**Etat initial (social cache) :**
+**Etat par defaut (stats visibles) :**
 
 ```
 +---------------------------------------+
-| <- Retour                             |
+| <- Retour                       [cog] |
 +---------------------------------------+
 |                                       |
 |         [Image mur + prises]          |
@@ -542,28 +723,26 @@ Selection prises   Informations       Confirmation
 | Bloc "Nia"                            |
 | 6a+ - Mathias - 15 decembre 2025      |
 |                                       |
-| [heart]  [bookmark]             [i]   |
-| Like     Save                  Social |
+| [heart] 12  [bookmark]  [share]       |
+|                                       |
+| [v Voir ascensions et commentaires]   |
 |                                       |
 +---------------------------------------+
 ```
 
-**Apres tap sur [i] (panel social revele) :**
+**Panel social deploye :**
 
 ```
 +---------------------------------------+
-| <- Retour                             |
+| <- Retour                       [cog] |
 +---------------------------------------+
 |         [Image mur + prises]          |
 |         (reduite)                     |
 +---------------------------------------+
 | ------------------------------------- |  <- Drag handle
 |                                       |
-| Bloc "Nia" - 6a+ - Mathias            |
+| [^ Masquer]                           |
 |                                       |
-| 12 likes  3 commentaires              |
-|                                       |
-| ------------------------------------- |
 | Ascensions recentes                   |
 |                                       |
 | Pierre - Flash - il y a 2h            |
@@ -576,7 +755,33 @@ Selection prises   Informations       Confirmation
 | Alex : "Super bloc !"                 |
 | Julie : "Attention au devers"         |
 |                                       |
-| [Ajouter un commentaire...]           |
+| +-----------------------------------+ |
+| | Ajouter un commentaire...         | |
+| +-----------------------------------+ |
+|                                       |
++---------------------------------------+
+```
+
+### 5.7 Bottom Sheet Controles Apparence
+
+```
++---------------------------------------+
+| ------------------------------------- |  <- Drag handle
+|                                       |
+| Apparence                    [Reset]  |
+|                                       |
+| Luminosite                            |
+| [----*-----------------------] 85%    |
+|                                       |
+| Mode coloration                       |
+| [Min] [Max] [Frequence] [Rarete]      |
+|                                       |
+| Palette                               |
+| [viridis v]                           |
+| [apercu gradient colormap]            |
+|                                       |
+| Epaisseur contour                     |
+| [--*---------] 2px                    |
 |                                       |
 +---------------------------------------+
 ```
@@ -593,6 +798,7 @@ Selection prises   Informations       Confirmation
 | Chargement image | Shimmer | Effet brillance |
 | Sync en cours | Progress linear | En haut de l'ecran |
 | Action en cours | Circular progress | Sur le bouton |
+| Chargement mur | Placeholder + progress | Image basse resolution puis HD |
 
 ### 6.2 Etats Vides
 
@@ -619,6 +825,7 @@ Selection prises   Informations       Confirmation
 | Erreur validation | Inline sous champ | "Nom trop court (min 3 car.)" |
 | Erreur serveur | Dialog | "Erreur serveur. Reessayez plus tard." |
 | Erreur auth | Redirect | Retour ecran login |
+| Mode offline | Banner persistent | "Mode hors ligne - Actions en attente : 3" |
 
 ### 6.4 Snackbars (Feedback Actions)
 
@@ -630,6 +837,8 @@ Selection prises   Informations       Confirmation
 | Comment | "Commentaire publie" | 2s |
 | Sync OK | "Synchronisation terminee" | 2s |
 | Bloc cree | "Bloc publie !" | 3s + [Voir] |
+| Brouillon sauve | "Brouillon sauvegarde" | 2s |
+| Action queued | "Action enregistree (hors ligne)" | 3s |
 
 ---
 
@@ -647,6 +856,7 @@ Selection prises   Informations       Confirmation
 ### 7.2 Touch Targets
 
 - **Minimum 48x48 dp** pour tous elements interactifs
+- **56x56 dp** recommande pour actions principales (like, bookmark)
 - Espacement 8dp minimum entre cibles adjacentes
 - Zone de tap peut depasser la zone visuelle
 
@@ -657,13 +867,15 @@ Selection prises   Informations       Confirmation
 | Boutons icone | contentDescription obligatoire |
 | Images | alt text si informatif |
 | Formulaires | labels visibles + hints |
-| Etats | annonces vocales (TalkBack/VoiceOver) |
+| Etats | annonces vocales (TalkBack) |
+| Mode offline | Annonce "Mode hors ligne actif" |
 
 ### 7.4 Navigation
 
 - Focus order logique (haut -> bas, gauche -> droite)
 - Skip links pour contenu principal
-- Gestes alternatifs pour swipe actions
+- Actions accessibles sans gestes complexes
+- Boutons explicites plutot que swipes
 
 ---
 
@@ -686,14 +898,17 @@ Tous les controles de modification d'apparence doivent avoir un **look & feel ho
 
 | Categorie | Settings persistes | Stockage |
 |-----------|-------------------|----------|
-| **Apparence** | Luminosite, colormap, epaisseur, mode | Local (SharedPreferences) |
-| **Filtres** | Dernier niveau selectionne, ouvreur | Local |
+| **Apparence** | Luminosite, colormap, epaisseur, mode | SharedPreferences |
+| **Filtres** | Dernier niveau selectionne, ouvreur | SharedPreferences |
 | **Selection** | Prises selectionnees (recherche avancee) | Session uniquement |
-| **Navigation** | Dernier mode actif, position scroll | Local |
+| **Navigation** | Dernier mode actif, position scroll | SharedPreferences |
+| **Preferences** | Mode focus (social cache), notifications | SharedPreferences |
+| **Brouillons** | Blocs en cours de creation | Room (SQLite) |
+| **Queue offline** | Actions en attente | Room (SQLite) |
 
 **Implementation Android :**
-- `SharedPreferences` pour settings simples
-- Room/SQLite pour donnees complexes
+- `SharedPreferences` / `DataStore` pour settings simples
+- Room/SQLite pour donnees complexes et queue offline
 
 ### 8.3 Reset Independant
 
@@ -718,6 +933,7 @@ Tous les controles de modification d'apparence doivent avoir un **look & feel ho
 | Niveau max | 8A |
 | Ouvreur | Tous |
 | Periode | Tout |
+| Mode focus | Desactive (social visible) |
 
 ### 8.5 Acces aux Controles d'Apparence
 
@@ -728,16 +944,516 @@ Depuis n'importe quel mode avec visualisation du mur :
 
 ---
 
-## Checklist Pre-Implementation
+## 9. Comportement Offline
+
+### 9.1 Principe : Offline-First
+
+> mastock est concu pour fonctionner **sans connexion** dans la salle d'escalade.
+
+**Donnees disponibles offline :**
+- Tous les blocs synchronises
+- Toutes les prises et coordonnees
+- Tous les pictos generes
+- Filtres et recherche
+- Brouillons de creation
+
+### 9.2 Actions Offline vs Online
+
+| Action | Offline | Online |
+|--------|---------|--------|
+| Parcourir blocs | OK | OK |
+| Filtrer par niveau | OK | OK |
+| Recherche par prises | OK | OK |
+| Voir detail bloc | OK | OK |
+| Like/Unlike | **Queued** | OK |
+| Bookmark | **Queued** | OK |
+| Commenter | **Queued** | OK |
+| Creer bloc | **Queued** | OK |
+| Synchroniser | NON | OK |
+| Voir stats temps reel | NON | OK |
+
+### 9.3 Queue d'Actions Offline
+
+| Element | Comportement |
+|---------|--------------|
+| Stockage | Room (SQLite), persiste redemarrage |
+| Indicateur | Badge sur icone Sync + compteur |
+| Retry | Automatique a la reconnexion |
+| Conflits | Last-write-wins (timestamp) |
+| Expiration | 7 jours, puis warning |
+
+### 9.4 Indicateurs Visuels Offline
+
+```
++---------------------------------------+
+| [!] Mode hors ligne                   |  <- Banner persistent
++---------------------------------------+
+|  Sync(3) Simple  Avance  Creer Profil |  <- Badge sur Sync
++---------------------------------------+
+```
+
+**Regles d'affichage :**
+- Banner jaune en haut si offline
+- Badge numerique sur icone Sync (actions en attente)
+- Snackbar a chaque action queued
+
+### 9.5 Synchronisation
+
+| Declencheur | Comportement |
+|-------------|--------------|
+| Retour online | Sync auto des actions queued |
+| Tap "Synchroniser" | Sync complete (blocs + actions) |
+| Pull-to-refresh | Sync incrementale |
+| Background | Sync periodique si WiFi (WorkManager) |
+
+---
+
+## 10. Performance
+
+### 10.1 Donnees a Gerer
+
+| Element | Volume | Strategie |
+|---------|--------|-----------|
+| Blocs | 1017+ | LazyColumn avec pagination |
+| Prises | 776 polygones | Canvas optimise, pas de recomposition |
+| Image mur | 2263x3000 (~500KB) | Coil + cache disque + thumbnails |
+| Pictos | 1017 miniatures | Cache LRU memoire + disque |
+
+### 10.2 Strategies de Chargement
+
+| Ecran | Strategie |
+|-------|-----------|
+| Liste blocs | LazyColumn, prefetch 10 items, skeleton loading |
+| Image mur | Thumbnail d'abord, puis HD progressive |
+| Pictos | Cache memoire (50 items), puis disque |
+| Polygones | Pre-calcul au sync, stockage SQLite |
+
+### 10.3 Optimisations Compose
+
+| Technique | Application |
+|-----------|-------------|
+| `remember` | Calculs couteux (filtres, colormaps) |
+| `derivedStateOf` | Compteurs derives (blocs filtres) |
+| `LazyColumn` | Listes longues |
+| `key()` | Items de liste (ID bloc) |
+| Stable classes | Data classes immutables |
+
+### 10.4 Seuils de Performance
+
+| Metrique | Objectif |
+|----------|----------|
+| Temps demarrage froid | < 2s |
+| Scroll 60fps | Pas de jank |
+| Tap-to-response | < 100ms |
+| Chargement image mur | < 500ms (cache), < 2s (reseau) |
+| Sync complete | < 30s pour 1000 blocs |
+
+---
+
+## 11. Gestion Multi-Murs
+
+### 11.1 Concept
+
+> mastock peut gérer **plusieurs murs** (salles d'escalade différentes ou faces distinctes d'une même salle).
+
+**Terminologie :**
+- **Mur** : Une face d'escalade avec son image, ses prises et ses blocs
+- **Salle** : Un lieu physique pouvant contenir plusieurs murs
+- **Mur actif** : Le mur actuellement sélectionné dans l'application
+
+### 11.2 Architecture de Données
+
+```
+Salle (Gym)
+├── Mur 1 (Face Nord)
+│   ├── Image fond
+│   ├── Prises (coordonnées)
+│   └── Blocs
+├── Mur 2 (Face Sud)
+│   ├── Image fond
+│   ├── Prises
+│   └── Blocs
+└── Mur 3 (Dévers)
+    ├── Image fond
+    ├── Prises
+    └── Blocs
+```
+
+**Isolation des données :**
+
+| Donnée | Scope | Notes |
+|--------|-------|-------|
+| Prises | Par mur | Coordonnées spécifiques à l'image |
+| Blocs | Par mur | Référencent les prises du mur |
+| Pictos | Par bloc (donc par mur) | Générés à partir de l'image du mur |
+| Likes/Favoris | Par utilisateur, globaux | Peuvent traverser les murs |
+| Brouillons | Par mur | Liés aux prises du mur |
+| Settings apparence | Globaux | Même config sur tous les murs |
+
+### 11.3 Sélection du Mur
+
+#### Option A : Sélecteur dans la Top Bar (Recommandé)
+
+```
++---------------------------------------+
+| [=] [v Arkose Nation ▼]         [cog] |  <- Dropdown sélecteur mur
++---------------------------------------+
+|                                       |
+|            [Contenu actif]            |
+|                                       |
++---------------------------------------+
+|  Sync  Simple  Avance  Creer  Profil  |
++---------------------------------------+
+```
+
+**Comportement dropdown :**
+- Tap -> Liste des murs disponibles
+- Mur actif coché
+- Indicateur sync (badge si données obsolètes)
+- Option "Gérer mes murs" en bas
+
+#### Option B : Dans le Navigation Drawer
+
+```
++--------------------+------------------+
+| [X] Menu           |                  |
+|                    |                  |
+| --- MUR ACTIF ---  |                  |
+| [v] Arkose Nation  |                  |
+|     Face Nord      |                  |
+|                    |                  |
+| [ ] Arkose Nation  |                  |
+|     Face Sud       |                  |
+| [ ] Climb Up       |   [Contenu       |
+|     Mur Principal  |    principal     |
+|                    |    grisé]        |
+| [+ Ajouter un mur] |                  |
+|                    |                  |
+| --- PRINCIPAL ---  |                  |
+| ...                |                  |
++--------------------+------------------+
+```
+
+#### Option C : Écran dédié au démarrage
+
+```
++---------------------------------------+
+|           Choisir un mur              |
++---------------------------------------+
+|                                       |
+| +-----------------------------------+ |
+| | [Thumbnail]                       | |
+| | Arkose Nation - Face Nord         | |
+| | 324 blocs · Sync il y a 2h        | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [Thumbnail]                       | |
+| | Arkose Nation - Face Sud          | |
+| | 156 blocs · Sync il y a 1j        | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [+] Ajouter un nouveau mur        | |
+| +-----------------------------------+ |
+|                                       |
+| [v] Toujours démarrer sur ce mur     |
+|                                       |
++---------------------------------------+
+```
+
+### 11.4 Ajout d'un Nouveau Mur
+
+**Wizard d'ajout (3 étapes) :**
+
+```
+Étape 1/3          Étape 2/3          Étape 3/3
+Identifier salle   Choisir face       Synchroniser
+[*oo]              [**o]              [***]
+```
+
+**Étape 1 : Identifier la salle**
+```
++---------------------------------------+
+| <- Annuler    Nouveau mur   Suivant ->|
++---------------------------------------+
+| [*oo-----------------------] 1/3      |
+|                                       |
+| Comment voulez-vous ajouter ce mur ?  |
+|                                       |
+| +-----------------------------------+ |
+| | [QR] Scanner le QR code           | |
+| |     (affiché dans la salle)       | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [search] Rechercher une salle     | |
+| |          Par nom ou ville         | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [link] Entrer un code d'accès     | |
+| |        (fourni par la salle)      | |
+| +-----------------------------------+ |
+|                                       |
++---------------------------------------+
+```
+
+**Étape 2 : Choisir la face**
+```
++---------------------------------------+
+| <- Retour     Nouveau mur   Suivant ->|
++---------------------------------------+
+| [**o-----------------------] 2/3      |
+|                                       |
+| Arkose Nation - Paris 15              |
+| 3 faces disponibles                   |
+|                                       |
+| +-----------------------------------+ |
+| | [Thumbnail] Face Nord             | |
+| | 324 blocs · 245 prises            | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [Thumbnail] Face Sud              | |
+| | 156 blocs · 180 prises            | |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | [Thumbnail] Dévers                | |
+| | 89 blocs · 120 prises             | |
+| +-----------------------------------+ |
+|                                       |
+|           [Tout sélectionner]         |
+|                                       |
++---------------------------------------+
+```
+
+**Étape 3 : Synchronisation initiale**
+```
++---------------------------------------+
+| <- Retour     Nouveau mur    Terminer |
++---------------------------------------+
+| [***-----------------------] 3/3      |
+|                                       |
+| Synchronisation en cours...           |
+|                                       |
+| Face Nord                             |
+| [============........] 60%            |
+| Téléchargement des prises...          |
+|                                       |
+| Face Sud                              |
+| [....................] En attente     |
+|                                       |
+| Estimation : 2 min restantes          |
+|                                       |
+| +-----------------------------------+ |
+| | [i] La synchronisation peut       | |
+| |     continuer en arrière-plan     | |
+| +-----------------------------------+ |
+|                                       |
+|      [Continuer en arrière-plan]      |
+|                                       |
++---------------------------------------+
+```
+
+### 11.5 Indicateur Mur Actif
+
+**Règle : l'utilisateur doit toujours savoir sur quel mur il travaille**
+
+| Élément | Emplacement | Information |
+|---------|-------------|-------------|
+| **Nom du mur** | Top bar (centre ou dropdown) | "Arkose Nation - Nord" |
+| **Badge sync** | À côté du nom | Point orange si données > 24h |
+| **Thumbnail** | Drawer / Sélecteur | Miniature du mur |
+
+### 11.6 Synchronisation Multi-Murs
+
+#### Stratégies
+
+| Stratégie | Description | Recommandation |
+|-----------|-------------|----------------|
+| **Sync mur actif uniquement** | Économise data/batterie | Par défaut |
+| **Sync tous les murs** | Toutes données à jour | Option manuelle |
+| **Sync intelligente** | Murs visités < 7j | Background WiFi |
+
+#### Écran Sync mis à jour
+
+```
++---------------------------------------+
+|            Synchronisation            |
++---------------------------------------+
+|                                       |
+| Mur actif : Arkose Nation - Nord      |
+| Dernière sync : il y a 2 heures       |
+|                                       |
+|         [Synchroniser ce mur]         |
+|                                       |
+| ------------------------------------- |
+|                                       |
+| Autres murs :                         |
+|                                       |
+| +-----------------------------------+ |
+| | Arkose Nation - Sud               | |
+| | Sync : il y a 3 jours    [Sync]   | |
+| +-----------------------------------+ |
+| +-----------------------------------+ |
+| | Climb Up - Principal              | |
+| | Sync : il y a 1 semaine  [Sync]   | |
+| +-----------------------------------+ |
+|                                       |
+| ------------------------------------- |
+|                                       |
+| [Synchroniser tous les murs]          |
+| (WiFi recommandé)                     |
+|                                       |
+| Espace utilisé : 156 MB               |
+| [Gérer le stockage]                   |
+|                                       |
++---------------------------------------+
+|  Sync  Simple  Avance  Creer  Profil  |
++---------------------------------------+
+```
+
+### 11.7 Gestion du Stockage
+
+```
++---------------------------------------+
+|         Gestion du stockage           |
++---------------------------------------+
+|                                       |
+| Espace total : 156 MB                 |
+|                                       |
+| +-----------------------------------+ |
+| | Arkose Nation - Nord              | |
+| | 45 MB · 324 blocs · 892 pictos    | |
+| |            [Supprimer les données]| |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | Arkose Nation - Sud               | |
+| | 28 MB · 156 blocs · 456 pictos    | |
+| |            [Supprimer les données]| |
+| +-----------------------------------+ |
+|                                       |
+| +-----------------------------------+ |
+| | Climb Up - Principal              | |
+| | 83 MB · 537 blocs · 1200 pictos   | |
+| |            [Supprimer les données]| |
+| +-----------------------------------+ |
+|                                       |
+| Options :                             |
+| [ ] Supprimer les pictos > 30 jours   |
+| [ ] Garder uniquement le mur actif    |
+|                                       |
++---------------------------------------+
+```
+
+### 11.8 Comportement Offline Multi-Murs
+
+| Scénario | Comportement |
+|----------|--------------|
+| Mur actif non synchronisé | Banner "Aucune donnée. Connectez-vous pour synchroniser." |
+| Changement de mur offline | OK si données locales existent |
+| Action sur autre mur offline | Queue spécifique au mur |
+| Sync au retour online | Prioriser le mur actif |
+
+### 11.9 Profil Multi-Murs
+
+Le profil affiche les données **agrégées** ou **filtrées par mur** :
+
+```
++---------------------------------------+
+| Profil                          [cog] |
++---------------------------------------+
+|           [Avatar]                    |
+|         Pierre Martin                 |
+|                                       |
+| Filtrer par mur :                     |
+| [Tous] [Arkose Nord] [Arkose Sud] ... |
+|                                       |
+| ------------------------------------- |
+|                                       |
+| [Mes blocs] [Likes] [Favoris] [Stats] |
+|                                       |
+| Mes blocs (47 au total) :             |
+|                                       |
+| -- Arkose Nation - Nord (32) --       |
+| +-----------------------------------+ |
+| | [Picto] Moonlight - 6b+           | |
+| +-----------------------------------+ |
+|                                       |
+| -- Arkose Nation - Sud (15) --        |
+| +-----------------------------------+ |
+| | [Picto] Sunset - 6a               | |
+| +-----------------------------------+ |
+|                                       |
++---------------------------------------+
+```
+
+### 11.10 Considérations Techniques
+
+| Aspect | Implémentation |
+|--------|----------------|
+| **Base de données** | Une DB Room avec tables préfixées par gym_id + wall_id |
+| **API** | Endpoints paramétrés par wall_id |
+| **Cache images** | Dossiers séparés par mur |
+| **Pictos** | Générés et stockés par mur |
+| **Migration** | Script pour ajouter wall_id aux tables existantes |
+
+### 11.11 Cas Particuliers
+
+| Cas | Gestion |
+|-----|---------|
+| **Salle avec 1 seul mur** | Pas de sélecteur visible, comportement actuel |
+| **Mur supprimé côté serveur** | Notification + option archiver local ou supprimer |
+| **Nouveau mur ajouté à une salle** | Notification + option sync |
+| **Transfert de bloc entre murs** | Non supporté (prises différentes) |
+| **Fusion de murs** | Admin seulement, migration côté serveur |
+
+---
+
+## 12. Roadmap des Features
+
+### Phase 0 (MVP)
+
+- [ ] Navigation 5 tabs
+- [ ] Recherche Simple (liste + filtres niveau)
+- [ ] Recherche Avancee (selection prises, mode Min)
+- [ ] Detail bloc
+- [ ] Sync basique
+- [ ] Profil (login, mes blocs)
+- [ ] Mode offline (consultation)
+
+### Phase 1
+
+- [ ] Wizard creation bloc complet
+- [ ] Like/Bookmark avec queue offline
+- [ ] 4 modes coloration (Min, Max, Freq, Rarete)
+- [ ] 7 colormaps
+- [ ] Panel social complet
+
+### Phase 2
+
+- [ ] Commentaires
+- [ ] Statistiques personnelles
+- [ ] Filtres avances (ouvreur, periode)
+- [ ] Brouillons
+- [ ] Notifications
+
+---
+
+## 13. Checklist Pre-Implementation
 
 Avant chaque nouvel ecran, verifier :
 
 - [ ] Respect zones de pouce (actions principales en bas)
-- [ ] Touch targets >= 48dp
+- [ ] Touch targets >= 48dp (56dp pour actions principales)
 - [ ] Espacement multiples de 4dp
 - [ ] Composants M3 standards utilises
 - [ ] Loading state defini
 - [ ] Etat vide defini
+- [ ] Etat offline defini
 - [ ] Messages erreur prevus
 - [ ] Feedback actions (snackbars)
 - [ ] Contraste WCAG AA
@@ -745,8 +1461,34 @@ Avant chaque nouvel ecran, verifier :
 - [ ] Settings persistables identifies
 - [ ] Boutons Reset disponibles si applicable
 - [ ] Controles d'apparence homogenes
+- [ ] Performance : pas de jank au scroll
 
 ---
 
-**Version** : 1.0
-**Date** : 2025-12-22
+**Version** : 2.2
+**Date** : 2025-12-23
+**Changelog** :
+- v2.2 : Gestion Multi-Murs
+  - Section 11 : Architecture multi-murs complete
+  - Hierarchie Salle > Mur > Blocs
+  - 3 options de selection du mur (top bar, drawer, ecran dedie)
+  - Wizard d'ajout de mur (QR code, recherche, code acces)
+  - Synchronisation par mur avec strategies
+  - Gestion du stockage multi-murs
+  - Comportement offline adapte
+  - Profil avec filtrage par mur
+  - Considerations techniques (DB, API, cache)
+- v2.1 : Extensibilite navigation
+  - Section 4.7 : Navigation Drawer pour modes supplementaires (6+ destinations)
+  - Architecture hybride bottom nav + drawer
+  - Exemple mode "Brossage de Prises" (gamification)
+  - Regles de promotion modes secondaires -> principaux
+- v2.0 : Corrections suite analyse critique
+  - Navigation reduite de 6 a 5 destinations (fusion Compte+Moi -> Profil)
+  - Wizard detaille (interruptions, erreurs, autosave, brouillons)
+  - Social configurable (visible par defaut, option Mode Focus)
+  - Swipes horizontaux remplaces par boutons explicites
+  - Section Offline complete (queue, indicateurs, sync)
+  - Section Performance ajoutee
+  - Roadmap features (Phase 0/1/2)
+  - Stack technique specifie (Jetpack Compose)

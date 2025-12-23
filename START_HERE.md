@@ -42,6 +42,19 @@ cd /media/veracrypt1/Repositories/mastock/mastock
 python -m mastock.gui.hold_selector
 ```
 
+### 3. Création de bloc (`gui/creation_app.py`) - TODO 10
+
+Wizard multi-écrans pour créer de nouveaux blocs :
+
+1. **Écran 1** : Sélection des prises par type (START, OTHER, FEET, TOP)
+2. **Écran 2** : Formulaire (nom, grade, description)
+3. **Soumission** : POST vers l'API Stokt
+
+```bash
+cd /media/veracrypt1/Repositories/mastock/mastock
+python -m mastock.gui.creation_app
+```
+
 ## TODOs
 
 | TODO | Description | Statut |
@@ -55,7 +68,7 @@ python -m mastock.gui.hold_selector
 | 07 | Interactions Blocs | 45% - En cours |
 | 08 | Modes Coloration Heatmaps | 100% - **Termine** |
 | 09 | Listes Personnalisees | 5% - Investigation |
-| 10 | Creation de Blocs | 17% - Investigation |
+| 10 | Creation de Blocs | 93% - En cours |
 | 11 | Principes Ergonomie UI/UX | 100% - **Termine** |
 
 ## Données clés
