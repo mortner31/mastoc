@@ -12,7 +12,7 @@ from mastoc_api.database import get_db
 from mastoc_api.models import Climb, Face, Hold, User, Gym, IdMapping
 from mastoc_api.config import get_settings
 
-router = APIRouter(prefix="/api/sync", tags=["sync"])
+router = APIRouter(prefix="/sync", tags=["sync"])
 
 
 # --- Schemas ---

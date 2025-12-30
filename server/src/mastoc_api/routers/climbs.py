@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from mastoc_api.database import get_db
 from mastoc_api.models import Climb, Face, User
 
-router = APIRouter(prefix="/api/climbs", tags=["climbs"])
+router = APIRouter(prefix="/climbs", tags=["climbs"])
 
 
 # --- Schemas Pydantic ---

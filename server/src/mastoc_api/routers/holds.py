@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from mastoc_api.database import get_db
 from mastoc_api.models import Hold, Face
 
-router = APIRouter(prefix="/api/holds", tags=["holds"])
+router = APIRouter(prefix="/holds", tags=["holds"])
 
 
 # --- Schemas Pydantic ---
