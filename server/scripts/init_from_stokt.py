@@ -69,7 +69,7 @@ def import_face(client: httpx.Client, face, gym_stokt_id: str) -> str:
 
 
 def import_holds(client: httpx.Client, holds: list, face_stokt_id: str) -> int:
-    """Importe les holds d'une face."""
+    """Importe les holds d'une face (version legacy)."""
     count = 0
     for hold in holds:
         centroid = hold.centroid  # tuple (x, y)
@@ -90,6 +90,30 @@ def import_holds(client: httpx.Client, holds: list, face_stokt_id: str) -> int:
     return count
 
 
+def import_holds_batch(client: httpx.Client, holds: list, face_stokt_id: str) -> tuple[int, int, int]:
+    """Importe les holds d'une face en batch."""
+    batch_data = []
+    for hold in holds:
+        centroid = hold.centroid
+        batch_data.append({
+            "stokt_id": hold.id,
+            "face_stokt_id": face_stokt_id,
+            "polygon_str": hold.polygon_str,
+            "centroid_x": centroid[0],
+            "centroid_y": centroid[1],
+            "area": hold.area,
+            "path_str": hold.path_str,
+        })
+
+    response = client.post(
+        f"{MASTOC_API_URL}/api/sync/import/holds/batch",
+        json={"holds": batch_data}
+    )
+    response.raise_for_status()
+    result = response.json()
+    return result["created"], result["updated"], result["errors"]
+
+
 def import_user(client: httpx.Client, user_id: str, full_name: str) -> str:
     """Importe un user (setter)."""
     response = client.post(
@@ -103,8 +127,69 @@ def import_user(client: httpx.Client, user_id: str, full_name: str) -> str:
     return response.json()["id"]
 
 
+def prepare_climb_data(climb) -> dict:
+    """Prépare les données d'un climb pour l'import."""
+    grade_font = climb.grade.font if climb.grade else None
+    grade_ircra = climb.grade.ircra if climb.grade else None
+
+    return {
+        "stokt_id": str(climb.id),
+        "face_stokt_id": str(climb.face_id),
+        "setter_stokt_id": climb.setter.id if climb.setter else None,
+        "name": climb.name,
+        "holds_list": climb.holds_list,
+        "grade_font": grade_font,
+        "grade_ircra": grade_ircra,
+        "feet_rule": climb.feet_rule,
+        "description": None,
+        "is_private": climb.is_private,
+        "climbed_by": climb.climbed_by or 0,
+        "total_likes": climb.total_likes or 0,
+        "date_created": climb.date_created if climb.date_created else None,
+    }
+
+
+def import_climbs_batch(client: httpx.Client, climbs: list, batch_size: int = 50):
+    """Import les climbs par batch pour de meilleures performances."""
+    total_created = 0
+    total_updated = 0
+    total_errors = 0
+
+    # D'abord importer tous les setters uniques
+    setters_seen = set()
+    for climb in climbs:
+        if climb.setter and climb.setter.id not in setters_seen:
+            try:
+                import_user(client, climb.setter.id, climb.setter.full_name)
+                setters_seen.add(climb.setter.id)
+            except Exception:
+                pass
+
+    print(f"  {len(setters_seen)} setters importés")
+
+    # Ensuite importer les climbs par batch
+    for i in range(0, len(climbs), batch_size):
+        batch = climbs[i:i + batch_size]
+        batch_data = [prepare_climb_data(c) for c in batch]
+
+        response = client.post(
+            f"{MASTOC_API_URL}/api/sync/import/climbs/batch",
+            json={"climbs": batch_data}
+        )
+        response.raise_for_status()
+        result = response.json()
+
+        total_created += result["created"]
+        total_updated += result["updated"]
+        total_errors += result["errors"]
+
+        print(f"  Batch {i // batch_size + 1}: +{result['created']} créés, {result['updated']} màj, {result['errors']} err")
+
+    return total_created, total_updated, total_errors
+
+
 def import_climb(client: httpx.Client, climb, face_stokt_id: str) -> str:
-    """Importe un climb."""
+    """Importe un climb (version legacy, préférer import_climbs_batch)."""
     # Import du setter si présent
     setter_stokt_id = None
     if climb.setter:
@@ -147,7 +232,12 @@ def main():
     parser.add_argument("--token", help="Stokt token (alternative to username/password)")
     parser.add_argument("--api-key", help="mastoc-api API Key (if auth enabled)")
     parser.add_argument("--dry-run", action="store_true", help="Don't actually import")
+    parser.add_argument("--batch", action="store_true", default=True, help="Use batch imports (default)")
+    parser.add_argument("--no-batch", action="store_true", help="Disable batch imports (slow)")
+    parser.add_argument("--batch-size", type=int, default=50, help="Batch size for climbs (default: 50)")
     args = parser.parse_args()
+
+    use_batch = args.batch and not args.no_batch
 
     if not args.token and not (args.username and args.password):
         parser.error("Either --token or --username/--password required")
@@ -168,7 +258,7 @@ def main():
     if args.api_key:
         headers[API_KEY_HEADER] = args.api_key
         print(f"API Key configurée")
-    mastoc = httpx.Client(timeout=60, headers=headers)
+    mastoc = httpx.Client(timeout=120, headers=headers)
 
     # Vérifier que mastoc-api est accessible
     print("\n=== Vérification mastoc-api ===")
@@ -177,6 +267,9 @@ def main():
 
     if args.dry_run:
         print("\n[DRY RUN] Aucune modification ne sera effectuée")
+
+    if use_batch:
+        print("\n[BATCH MODE] Import optimisé par lots")
 
     # 1. Import gym
     print("\n=== Import Gym Montoboard ===")
@@ -190,10 +283,9 @@ def main():
     print("\n=== Import Faces et Holds ===")
     walls = stokt.get_gym_walls(MONTOBOARD_GYM_ID)
 
-    face_ids = []
+    total_holds = 0
     for wall in walls:
         for face in wall.faces:
-            face_ids.append(face.id)
             print(f"\nFace {face.id}:")
 
             # Récupérer le setup complet avec holds
@@ -202,8 +294,17 @@ def main():
 
             if not args.dry_run:
                 import_face(mastoc, face_setup, MONTOBOARD_GYM_ID)
-                count = import_holds(mastoc, face_setup.holds, str(face.id))
-                print(f"  {count} holds importés")
+
+                if use_batch:
+                    created, updated, errors = import_holds_batch(mastoc, face_setup.holds, str(face.id))
+                    print(f"  {created} créés, {updated} existants, {errors} erreurs")
+                    total_holds += created
+                else:
+                    count = import_holds(mastoc, face_setup.holds, str(face.id))
+                    print(f"  {count} holds importés")
+                    total_holds += count
+
+    print(f"\nTotal: {total_holds} holds importés")
 
     # 3. Import climbs
     print("\n=== Import Climbs ===")
@@ -215,25 +316,29 @@ def main():
     print(f"\n{len(climbs)} climbs récupérés")
 
     if not args.dry_run:
-        created = 0
-        updated = 0
-        errors = 0
+        if use_batch:
+            created, updated, errors = import_climbs_batch(mastoc, climbs, args.batch_size)
+            print(f"\nRésultat: {created} créés, {updated} mis à jour, {errors} erreurs")
+        else:
+            created = 0
+            updated = 0
+            errors = 0
 
-        for i, climb in enumerate(climbs):
-            try:
-                status = import_climb(mastoc, climb, str(climb.face_id))
-                if status == "created":
-                    created += 1
-                else:
-                    updated += 1
-            except Exception as e:
-                errors += 1
-                print(f"  Erreur climb {climb.id}: {e}")
+            for i, climb in enumerate(climbs):
+                try:
+                    status = import_climb(mastoc, climb, str(climb.face_id))
+                    if status == "created":
+                        created += 1
+                    else:
+                        updated += 1
+                except Exception as e:
+                    errors += 1
+                    print(f"  Erreur climb {climb.id}: {e}")
 
-            if (i + 1) % 50 == 0:
-                print(f"  Progress: {i + 1}/{len(climbs)} (created={created}, updated={updated}, errors={errors})")
+                if (i + 1) % 50 == 0:
+                    print(f"  Progress: {i + 1}/{len(climbs)} (created={created}, updated={updated}, errors={errors})")
 
-        print(f"\nRésultat: {created} créés, {updated} mis à jour, {errors} erreurs")
+            print(f"\nRésultat: {created} créés, {updated} mis à jour, {errors} erreurs")
 
     # Stats finales
     print("\n=== Stats finales ===")

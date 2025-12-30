@@ -177,6 +177,97 @@ def import_hold(data: ImportHoldRequest, db: Session = Depends(get_db)):
     return {"id": hold.id, "status": "created"}
 
 
+class BatchImportHoldsRequest(BaseModel):
+    """Batch import de holds."""
+    holds: list[ImportHoldRequest]
+
+
+@router.post("/import/holds/batch", response_model=BatchImportResult)
+def import_holds_batch(data: BatchImportHoldsRequest, db: Session = Depends(get_db)):
+    """Importe plusieurs holds en une seule transaction."""
+    created = 0
+    updated = 0
+    errors = 0
+
+    # Pré-charger les faces
+    face_stokt_ids = {h.face_stokt_id for h in data.holds}
+    faces = db.query(Face).filter(Face.stokt_id.in_(face_stokt_ids)).all()
+    face_map = {f.stokt_id: f for f in faces}
+
+    # Pré-charger les holds existants
+    hold_stokt_ids = {h.stokt_id for h in data.holds}
+    existing_holds = db.query(Hold).filter(Hold.stokt_id.in_(hold_stokt_ids)).all()
+    existing_map = {h.stokt_id: h for h in existing_holds}
+
+    for hold_data in data.holds:
+        try:
+            if hold_data.stokt_id in existing_map:
+                updated += 1
+                continue
+
+            face = face_map.get(hold_data.face_stokt_id)
+            if not face:
+                errors += 1
+                continue
+
+            hold = Hold(
+                stokt_id=hold_data.stokt_id,
+                face_id=face.id,
+                polygon_str=hold_data.polygon_str,
+                centroid_x=hold_data.centroid_x,
+                centroid_y=hold_data.centroid_y,
+                area=hold_data.area,
+                path_str=hold_data.path_str,
+            )
+            db.add(hold)
+            created += 1
+
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return BatchImportResult(created=created, updated=updated, errors=errors, total=len(data.holds))
+
+
+class BatchImportUsersRequest(BaseModel):
+    """Batch import de users."""
+    users: list[ImportUserRequest]
+
+
+@router.post("/import/users/batch", response_model=BatchImportResult)
+def import_users_batch(data: BatchImportUsersRequest, db: Session = Depends(get_db)):
+    """Importe plusieurs users en une seule transaction."""
+    created = 0
+    updated = 0
+    errors = 0
+
+    # Pré-charger les users existants
+    user_stokt_ids = {u.stokt_id for u in data.users}
+    existing_users = db.query(User).filter(User.stokt_id.in_(user_stokt_ids)).all()
+    existing_map = {u.stokt_id: u for u in existing_users}
+
+    for user_data in data.users:
+        try:
+            if user_data.stokt_id in existing_map:
+                updated += 1
+                continue
+
+            user = User(
+                stokt_id=user_data.stokt_id,
+                full_name=user_data.full_name,
+                avatar_path=user_data.avatar_path,
+                source="stokt",
+            )
+            db.add(user)
+            created += 1
+
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return BatchImportResult(created=created, updated=updated, errors=errors, total=len(data.users))
+
+
 @router.post("/import/climb")
 def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
     """Importe un climb depuis Stokt."""
@@ -231,6 +322,91 @@ def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"id": str(climb.id), "status": "created"}
+
+
+class BatchImportClimbsRequest(BaseModel):
+    """Batch import de climbs."""
+    climbs: list[ImportClimbRequest]
+
+
+class BatchImportResult(BaseModel):
+    """Résultat du batch import."""
+    created: int
+    updated: int
+    errors: int
+    total: int
+
+
+@router.post("/import/climbs/batch", response_model=BatchImportResult)
+def import_climbs_batch(data: BatchImportClimbsRequest, db: Session = Depends(get_db)):
+    """Importe plusieurs climbs en une seule transaction."""
+    created = 0
+    updated = 0
+    errors = 0
+
+    # Pré-charger les faces et users pour éviter les requêtes N+1
+    face_stokt_ids = {c.face_stokt_id for c in data.climbs}
+    faces = db.query(Face).filter(Face.stokt_id.in_(face_stokt_ids)).all()
+    face_map = {f.stokt_id: f for f in faces}
+
+    setter_stokt_ids = {c.setter_stokt_id for c in data.climbs if c.setter_stokt_id}
+    users = db.query(User).filter(User.stokt_id.in_(setter_stokt_ids)).all()
+    user_map = {u.stokt_id: u for u in users}
+
+    # Pré-charger les climbs existants
+    climb_stokt_ids = {c.stokt_id for c in data.climbs}
+    existing_climbs = db.query(Climb).filter(Climb.stokt_id.in_(climb_stokt_ids)).all()
+    existing_map = {c.stokt_id: c for c in existing_climbs}
+
+    for climb_data in data.climbs:
+        try:
+            # Vérifier si déjà importé
+            if climb_data.stokt_id in existing_map:
+                existing = existing_map[climb_data.stokt_id]
+                existing.climbed_by = climb_data.climbed_by
+                existing.total_likes = climb_data.total_likes
+                existing.synced_at = datetime.utcnow()
+                updated += 1
+                continue
+
+            # Trouver la face
+            face = face_map.get(climb_data.face_stokt_id)
+            if not face:
+                errors += 1
+                continue
+
+            # Trouver le setter
+            setter = user_map.get(climb_data.setter_stokt_id) if climb_data.setter_stokt_id else None
+
+            climb = Climb(
+                stokt_id=climb_data.stokt_id,
+                face_id=face.id,
+                setter_id=setter.id if setter else None,
+                name=climb_data.name,
+                holds_list=climb_data.holds_list,
+                grade_font=climb_data.grade_font,
+                grade_ircra=climb_data.grade_ircra,
+                feet_rule=climb_data.feet_rule,
+                description=climb_data.description,
+                is_private=climb_data.is_private,
+                climbed_by=climb_data.climbed_by,
+                total_likes=climb_data.total_likes,
+                source="stokt",
+                synced_at=datetime.utcnow(),
+            )
+            db.add(climb)
+            created += 1
+
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return BatchImportResult(
+        created=created,
+        updated=updated,
+        errors=errors,
+        total=len(data.climbs),
+    )
 
 
 class ImportGymRequest(BaseModel):
