@@ -23,12 +23,19 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - BackendSwitch remplace DataSourceManager
   - Plan de dev mis à jour pour cohérence
 
-- **TODO 13 créé** - Serveur Railway (mastoc-api)
+- **TODO 13 avancé à 70%** - Serveur Railway (mastoc-api)
   - Structure FastAPI créée dans `server/`
   - Modèles SQLAlchemy : Gym, Face, Hold, Climb, User, IdMapping
   - Routers : health, climbs, holds, sync
   - Endpoints CRUD + import Stokt
-  - Statut : 40% (interrompu lors création main.py)
+  - **Déploiement Railway réussi** :
+    - URL : https://mastoc-production.up.railway.app
+    - PostgreSQL connecté et fonctionnel
+    - Endpoints /health, /docs, /redoc opérationnels
+  - Problèmes résolus :
+    - `uvicorn: command not found` → ajout requirements.txt
+    - Module non trouvé → PYTHONPATH=src dans Procfile
+  - Rapport : `docs/reports/SESSION_2025-12-30_deploiement_railway.md`
 
 ## 2025-12-23
 

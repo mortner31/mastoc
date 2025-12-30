@@ -111,6 +111,45 @@ pytest
 
 ## Déploiement Railway
 
-Le projet est configuré pour Railway :
-- `Procfile` : `web: uvicorn mastoc_api.main:app --host 0.0.0.0 --port $PORT`
-- Variables d'environnement à configurer sur Railway
+**URL Production** : https://mastoc-production.up.railway.app
+
+### Configuration initiale
+
+1. **Créer un projet Railway**
+   - Aller sur [railway.app/dashboard](https://railway.app/dashboard)
+   - Cliquer "New Project" → "Deploy from GitHub repo"
+   - Sélectionner le repo `mastoc`
+
+2. **Configurer le service**
+   - Dans Settings → Source : **Root Directory** = `server`
+   - Railway détecte automatiquement Python via `requirements.txt`
+
+3. **Ajouter PostgreSQL**
+   - Dans le projet, cliquer "+ New" → "Database" → "PostgreSQL"
+
+4. **Configurer les variables**
+   - Aller dans "Shared Variables" du projet
+   - Ajouter : `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+
+   Ou dans le service API → Variables :
+   ```
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   DEBUG=false
+   SECRET_KEY=<clé-secrète-générée>
+   ```
+
+5. **Générer le domaine public**
+   - Service API → Settings → Networking → "Generate"
+   - Choisir port **8080**
+
+### Fichiers de configuration
+
+| Fichier | Description |
+|---------|-------------|
+| `Procfile` | Commande de démarrage : `PYTHONPATH=src uvicorn mastoc_api.main:app --host 0.0.0.0 --port $PORT` |
+| `requirements.txt` | Dépendances Python (Railway ne détecte pas pyproject.toml) |
+
+### Redéploiement
+
+Railway redéploie automatiquement à chaque push sur `main`. Pour forcer un redéploiement :
+- Service → Deployments → ⋮ → Redeploy
