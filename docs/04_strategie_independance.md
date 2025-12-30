@@ -597,6 +597,21 @@ def sync_mastoc_to_stokt(climb_ids: list[str]):
 | Sync automatique en arrière-plan | Oui / Non | À décider plus tard |
 | Fréquence de sync recommandée | Quotidienne / Hebdo / Manuel | À décider |
 | Gestion des conflits (même bloc modifié) | Timestamp / Manuel | À décider |
+| Vue comparaison ponctuelle | UI dédiée / Modal / Onglet | Évolution future |
+
+---
+
+## Évolutions Futures
+
+### Vue Comparaison (Sync Preview)
+
+Fonctionnalité pour comparer ponctuellement les blocs Railway vs Stokt :
+- Fetch Stokt à la demande (pas permanent)
+- Comparaison via `stokt_id` comme clé de jointure
+- Affichage des états : Local / Synchronisé / À importer / Conflit
+- Actions : Importer, Pousser, Ignorer
+
+**Priorité** : Basse (après Phase 3 - Synchronisation de base)
 
 ---
 
@@ -613,4 +628,5 @@ def sync_mastoc_to_stokt(climb_ids: list[str]):
 
 *Document créé le 2025-12-23*
 *Dernière mise à jour : 2025-12-30*
+*Ajout : Vue Comparaison (Sync Preview) comme évolution future*
 *Version : 3.0 - Railway-First avec Mapping*
