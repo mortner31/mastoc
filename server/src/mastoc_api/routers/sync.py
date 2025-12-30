@@ -72,6 +72,36 @@ class ImportHoldRequest(BaseModel):
     path_str: str | None = None
 
 
+class BatchImportResult(BaseModel):
+    """Résultat du batch import."""
+    created: int
+    updated: int
+    errors: int
+    total: int
+
+
+class BatchImportHoldsRequest(BaseModel):
+    """Batch import de holds."""
+    holds: list[ImportHoldRequest]
+
+
+class BatchImportUsersRequest(BaseModel):
+    """Batch import de users."""
+    users: list[ImportUserRequest]
+
+
+class BatchImportClimbsRequest(BaseModel):
+    """Batch import de climbs."""
+    climbs: list[ImportClimbRequest]
+
+
+class ImportGymRequest(BaseModel):
+    """Données pour importer un gym depuis Stokt."""
+    stokt_id: UUID
+    display_name: str
+    location_string: str | None = None
+
+
 # --- Endpoints ---
 
 @router.get("/stats", response_model=SyncStats)
@@ -177,11 +207,6 @@ def import_hold(data: ImportHoldRequest, db: Session = Depends(get_db)):
     return {"id": hold.id, "status": "created"}
 
 
-class BatchImportHoldsRequest(BaseModel):
-    """Batch import de holds."""
-    holds: list[ImportHoldRequest]
-
-
 @router.post("/import/holds/batch", response_model=BatchImportResult)
 def import_holds_batch(data: BatchImportHoldsRequest, db: Session = Depends(get_db)):
     """Importe plusieurs holds en une seule transaction."""
@@ -227,11 +252,6 @@ def import_holds_batch(data: BatchImportHoldsRequest, db: Session = Depends(get_
 
     db.commit()
     return BatchImportResult(created=created, updated=updated, errors=errors, total=len(data.holds))
-
-
-class BatchImportUsersRequest(BaseModel):
-    """Batch import de users."""
-    users: list[ImportUserRequest]
 
 
 @router.post("/import/users/batch", response_model=BatchImportResult)
@@ -324,19 +344,6 @@ def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
     return {"id": str(climb.id), "status": "created"}
 
 
-class BatchImportClimbsRequest(BaseModel):
-    """Batch import de climbs."""
-    climbs: list[ImportClimbRequest]
-
-
-class BatchImportResult(BaseModel):
-    """Résultat du batch import."""
-    created: int
-    updated: int
-    errors: int
-    total: int
-
-
 @router.post("/import/climbs/batch", response_model=BatchImportResult)
 def import_climbs_batch(data: BatchImportClimbsRequest, db: Session = Depends(get_db)):
     """Importe plusieurs climbs en une seule transaction."""
@@ -407,13 +414,6 @@ def import_climbs_batch(data: BatchImportClimbsRequest, db: Session = Depends(ge
         errors=errors,
         total=len(data.climbs),
     )
-
-
-class ImportGymRequest(BaseModel):
-    """Données pour importer un gym depuis Stokt."""
-    stokt_id: UUID
-    display_name: str
-    location_string: str | None = None
 
 
 @router.post("/import/gym")
