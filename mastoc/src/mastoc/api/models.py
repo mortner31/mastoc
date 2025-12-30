@@ -410,8 +410,9 @@ class ClimbList:
         user = data.get("user", {})
         if isinstance(user, dict):
             owner_id = user.get("id", "")
-            owner_name = user.get("fullName", user.get("full_name", ""))
-            owner_avatar = user.get("avatar")
+            # L'API utilise parfois 'name', parfois 'fullName'
+            owner_name = user.get("name", user.get("fullName", user.get("full_name", "")))
+            owner_avatar = user.get("avatar", user.get("avatarThumbnail"))
         else:
             owner_id = ""
             owner_name = ""

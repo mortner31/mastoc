@@ -14,7 +14,7 @@ import pyqtgraph as pg
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QLabel, QSlider, QPushButton, QStatusBar, QMenuBar,
-    QMenu, QMessageBox, QProgressDialog, QToolBar
+    QMenu, QMessageBox, QProgressDialog, QToolBar, QTabWidget
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction
@@ -28,6 +28,7 @@ from mastoc.db import Database, ClimbRepository, HoldRepository
 from mastoc.api.models import Climb, Hold, HoldType
 from mastoc.core.sync import SyncManager
 from mastoc.gui.widgets.climb_list import ClimbListWidget
+from mastoc.gui.widgets.my_lists_panel import MyListsPanel
 from mastoc.gui.dialogs.login import LoginDialog, TokenExpiredDialog
 
 
@@ -444,11 +445,24 @@ class MastockApp(QMainWindow):
         # Splitter pour liste / viewer
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Liste des climbs (gauche)
+        # Panneau gauche avec onglets
+        self.left_tabs = QTabWidget()
+        self.left_tabs.setMinimumWidth(350)
+
+        # Onglet Climbs (base de donnees locale)
         self.climb_list = ClimbListWidget(self.db)
         self.climb_list.climb_selected.connect(self.on_climb_selected)
-        self.climb_list.setMinimumWidth(350)
-        splitter.addWidget(self.climb_list)
+        self.left_tabs.addTab(self.climb_list, "Climbs")
+
+        # Onglet Listes (API, necessite connexion)
+        self.lists_panel = MyListsPanel(self.api, MONTOBOARD_GYM_ID, "")
+        self.lists_panel.climb_selected.connect(self.on_climb_selected)
+        self.left_tabs.addTab(self.lists_panel, "Listes")
+
+        # Rafraichir les listes quand on change d'onglet
+        self.left_tabs.currentChanged.connect(self._on_tab_changed)
+
+        splitter.addWidget(self.left_tabs)
 
         # Viewer (droite)
         self.climb_viewer = ClimbViewerWidget()
@@ -458,7 +472,7 @@ class MastockApp(QMainWindow):
         layout.addWidget(splitter)
 
         # Status bar
-        self.statusBar().showMessage("Prêt")
+        self.statusBar().showMessage("Pret")
 
     def setup_menu(self):
         """Configure la barre de menu."""
@@ -522,16 +536,44 @@ class MastockApp(QMainWindow):
         )
 
     def on_climb_selected(self, climb: Climb):
-        """Appelé quand un climb est sélectionné."""
-        logger.info(f"Climb sélectionné: {climb.name} ({climb.grade.font if climb.grade else '?'})")
+        """Appele quand un climb est selectionne."""
+        logger.info(f"Climb selectionne: {climb.name} ({climb.grade.font if climb.grade else '?'})")
         self.climb_viewer.show_climb(climb)
         self.statusBar().showMessage(f"Climb: {climb.name}")
+
+    def _on_tab_changed(self, index: int):
+        """Appele quand l'onglet change."""
+        # Onglet Listes (index 1)
+        if index == 1:
+            if not self.api.is_authenticated():
+                self.statusBar().showMessage("Connexion requise pour voir les listes")
+                QMessageBox.information(
+                    self, "Connexion requise",
+                    "Connectez-vous pour acceder a vos listes personnalisees."
+                )
+            elif not self.lists_panel.my_lists and not self.lists_panel.gym_lists:
+                # Premier chargement
+                self._update_lists_panel_user()
+                self.lists_panel.refresh()
+
+    def _update_lists_panel_user(self):
+        """Met a jour le user_id du panel listes."""
+        if self.api.is_authenticated():
+            try:
+                profile = self.api.get_user_profile()
+                user_id = profile.get("id", "")
+                self.lists_panel.user_id = user_id
+                logger.info(f"User ID pour listes: {user_id}")
+            except Exception as e:
+                logger.error(f"Erreur recuperation profil: {e}")
 
     def show_login(self):
         """Affiche le dialog de connexion."""
         dialog = LoginDialog(self.api, self)
         if dialog.exec():
-            self.statusBar().showMessage("Connecté")
+            self.statusBar().showMessage("Connecte")
+            # Mettre a jour le user_id du panel listes
+            self._update_lists_panel_user()
 
     def sync_data(self):
         """Synchronise les données depuis l'API."""

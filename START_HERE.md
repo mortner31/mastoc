@@ -67,7 +67,7 @@ python -m mastoc.gui.creation_app
 | 06 | Interface Filtrage Blocs | 100% - **Termine** |
 | 07 | Interactions Blocs | 45% - En cours |
 | 08 | Modes Coloration Heatmaps | 100% - **Termine** |
-| 09 | Listes Personnalisees | 5% - Investigation |
+| 09 | Listes Personnalisees | 60% - API OK |
 | 10 | Creation de Blocs | 93% - En cours |
 | 11 | Principes Ergonomie UI/UX | 100% - **Termine** |
 
@@ -120,6 +120,14 @@ python -m pytest tests/ -v
 
 ## Résumé des sessions
 
+### Session 2025-12-23
+- TODO 09 Listes Personnalisées avancé de 5% à 60%
+- Analyse code décompilé : 25 endpoints, 18 fonctions JS
+- Modèles ClimbList et ListItem créés
+- 14 méthodes API ajoutées dans client.py
+- Tests réels OK (3 listes perso, 45 listes gym)
+- 224 tests passent
+
 ### Session 2025-12-22 (après-midi)
 - Refactoring TODO 06 : architecture deux modes
 - Renderer commun `climb_renderer.py` créé
@@ -160,5 +168,5 @@ python -m pytest tests/ -v
 
 ---
 
-**Dernière mise à jour** : 2025-12-22
-**Statut du projet** : Prototype Python complet - Prêt pour migration mobile
+**Dernière mise à jour** : 2025-12-23
+**Statut du projet** : Prototype Python complet - API listes OK

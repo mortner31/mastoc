@@ -1,6 +1,6 @@
 # STATUS - TODO 09 : Listes Personnalisées
 
-**Progression** : 40%
+**Progression** : 70%
 
 ## Phase 0 : Investigation API (100%)
 
@@ -30,10 +30,15 @@
 - [x] Ajouter get_gym_lists() dans client.py
 - [x] Tests passent (224/225)
 
-## Phase 1 : Lecture seule (0%)
+## Phase 1 : Lecture seule (100%)
 
-- [ ] Tester les endpoints avec token réel
-- [ ] UI "Mes listes"
+- [x] Tester get_user_lists() - 3 listes personnelles
+- [x] Tester get_gym_lists() - 45 listes populaires
+- [x] Tester get_list() - détail liste
+- [x] Tester get_list_items() - items de liste
+- [x] Tester get_my_set_climbs() - 4 climbs créés
+- [x] Tester get_my_sent_climbs() - 3 climbs envoyés
+- [x] UI "Mes listes" (MyListsPanel widget)
 
 ## Phase 2 : Gestion de listes (0%)
 
@@ -76,3 +81,16 @@
 **Filtres fetchListItems** :
 - page_size, exclude_mine, grade_from, grade_to
 - ordering, tags, search, show_circuit_only
+
+### UI "Mes listes" (2025-12-23)
+
+**Widget MyListsPanel créé** (`gui/widgets/my_lists_panel.py`) :
+- Onglet "Mes listes" : listes personnelles de l'utilisateur
+- Onglet "Populaires" : listes du gym
+- Affichage des items (climbs) d'une liste sélectionnée
+- Double-clic sur un climb pour l'afficher dans le viewer
+
+**Intégration app.py** :
+- Nouvel onglet "Listes" dans le panneau gauche
+- Rafraîchissement automatique au changement d'onglet
+- Mise à jour du user_id après connexion

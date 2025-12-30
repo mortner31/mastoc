@@ -41,26 +41,41 @@ Le wizard de création est fonctionnel, premier bloc créé avec succès.
 
 ### Objectif
 
-Déployer un backend indépendant pour :
-- Backup des données Stokt
-- Hold Annotations
+Déployer un backend indépendant avec **architecture Railway-First** :
+- **Import initial des données Stokt** (one-shot)
+- **Duplication des images** (critique pour résilience)
+- Hold Annotations et features custom
 - Support pan personnel
-- Résilience
+- Indépendance totale si Stokt ferme
 
-### Architecture
+### Architecture Railway-First avec Mapping
 
 ```
-┌─────────────┐     ┌─────────────────────────┐
-│   mastoc    │────▶│   Railway (API + DB)    │
-│  (Python)   │     │  ─────────────────────  │
-└─────────────┘     │  FastAPI + PostgreSQL   │
-       │            │  • Climbs (sync Stokt)   │
-       │            │  • Hold Annotations      │
-       ▼            │  • Pan personnel         │
-┌─────────────┐     └─────────────────────────┘
-│  API Stokt  │
-└─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     mastoc CLIENT                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────────┐         ┌─────────────────┐          │
+│   │  MODE: RAILWAY  │   OU    │  MODE: STOKT    │          │
+│   │  (par défaut)   │         │  (optionnel)    │          │
+│   └────────┬────────┘         └────────┬────────┘          │
+│            │                           │                    │
+│            ▼                           ▼                    │
+│   ┌─────────────────────────────────────────────┐          │
+│   │           SQLite Local                       │          │
+│   │  • id (UUID mastoc)                          │          │
+│   │  • stokt_id (nullable) ◄─── MAPPING          │          │
+│   └─────────────────────────────────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Répartition des données :**
+| Données | Railway | Stokt | Notes |
+|---------|---------|-------|-------|
+| Blocs (travail quotidien) | ✓ | - | Créés sur mastoc |
+| Blocs Montoboard (copie) | ✓ | ✓ | Import initial |
+| **Images murs** | ✓ | ✓ | **CRITIQUE: dupliquées** |
+| Features custom | ✓ | - | Hold annotations, etc. |
 
 ### Tâches
 
@@ -69,9 +84,29 @@ Déployer un backend indépendant pour :
 | Créer projet Railway | Haute | 1h |
 | Setup PostgreSQL | Haute | 2h |
 | API FastAPI (endpoints base) | Haute | 8h |
-| Sync initiale Stokt → Railway | Haute | 4h |
-| Authentification simple (token) | Haute | 4h |
+| **Script `init_from_stokt.py`** | **Haute** | 4h |
+| **Duplication images murs** | **Critique** | 2h |
+| Client `RailwayAPI` Python | Haute | 4h |
 | Tests API | Moyenne | 4h |
+
+### Script d'Import Initial (`init_from_stokt.py`)
+
+Script one-shot pour importer les données Stokt vers Railway :
+
+```bash
+python init_from_stokt.py --stokt-token "abc123..." --railway-url "https://mastoc-api.railway.app"
+```
+
+**Ce que le script fait :**
+| Étape | Action | Données |
+|-------|--------|---------|
+| 1 | Fetch faces | Faces + 776 prises avec polygones |
+| 2 | **Duplicate images** | Images HD des murs → Railway + backup local |
+| 3 | Fetch climbs | ~1000+ blocs avec pagination |
+| 4 | Create users | Setters uniques + avatars (mapping Stokt ID) |
+| 5 | Push Railway | Bulk insert vers API Railway |
+
+Voir `/docs/04_strategie_independance.md` pour le code complet.
 
 ### Stack technique
 

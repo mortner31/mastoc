@@ -121,36 +121,78 @@
 
 ### Objectif
 
-Permettre la modification des données depuis Android avec sync vers le serveur.
+Permettre la modification des données depuis Android avec sync vers le serveur, en utilisant l'**architecture double-source**.
 
-### Flux de données
+### Flux de données (Architecture Double-Source)
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Android    │────▶│   Railway    │────▶│    Stokt     │
-│   (Room)     │◀────│  (PostgreSQL)│◀────│   (API)      │
-└──────────────┘     └──────────────┘     └──────────────┘
-     Local             Serveur perso         Source vérité
+┌────────────────────────────────────────────────────────────────────┐
+│                         Android (Room)                              │
+│                              │                                      │
+│          ┌───────────────────┼───────────────────┐                  │
+│          ▼                   │                   ▼                  │
+│   ┌──────────────┐           │           ┌──────────────┐          │
+│   │   API Stokt  │           │           │ API Railway  │          │
+│   │ (Montoboard) │           │           │ (Backup+Cust)│          │
+│   └──────────────┘           │           └──────────────┘          │
+│          │                   │                   │                  │
+│          │         ┌─────────▼─────────┐         │                  │
+│          └────────►│DataSourceManager │◄────────┘                  │
+│                    │ • Health checks   │                            │
+│                    │ • Source routing  │                            │
+│                    │ • Conflict resolv.│                            │
+│                    └───────────────────┘                            │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Stratégie de synchronisation
 
 | Scénario | Comportement |
 |----------|--------------|
-| Online | Sync immédiate vers serveur |
-| Offline | Queue locale, sync au retour |
-| Conflit | Priorité serveur (timestamp) |
-| Création bloc | Dual-write Stokt + serveur perso |
+| **Lecture** | Cache local → Stokt (si OK) → Railway (fallback) |
+| **Écriture bloc Montoboard** | POST Stokt → Sync async Railway |
+| **Écriture features custom** | POST Railway only |
+| Offline | Queue locale (Room), sync au retour |
+| Conflit | **Timestamp le plus récent gagne** |
+| Stokt down | **Basculement auto vers Railway** |
+
+### Composant DataSourceManager
+
+```kotlin
+class DataSourceManager(
+    private val stoktApi: StoktApi,
+    private val railwayApi: RailwayApi,
+    private val localDb: AppDatabase
+) {
+    private var stoktHealthy = true
+    private var railwayHealthy = true
+
+    suspend fun checkHealth() {
+        stoktHealthy = try { stoktApi.ping(); true } catch (e: Exception) { false }
+        railwayHealthy = try { railwayApi.ping(); true } catch (e: Exception) { false }
+    }
+
+    fun getPrimarySource(dataType: DataType): Source {
+        return when (dataType) {
+            DataType.CLIMBS, DataType.HOLDS ->
+                if (stoktHealthy) Source.STOKT else Source.RAILWAY
+            DataType.ANNOTATIONS, DataType.CUSTOM -> Source.RAILWAY
+        }
+    }
+}
+```
 
 ### Tâches
 
 | Tâche | Effort |
 |-------|--------|
+| **DataSourceManager** (routing + health) | 8h |
 | WorkManager pour sync background | 8h |
 | Queue offline (Room) | 8h |
-| Résolution de conflits | 8h |
+| Résolution de conflits (timestamp) | 8h |
+| **Basculement auto Stokt ↔ Railway** | 4h |
 | Indicateurs sync UI | 4h |
-| Tests sync | 8h |
+| Tests sync double-source | 8h |
 
 ---
 

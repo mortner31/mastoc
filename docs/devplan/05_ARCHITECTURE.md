@@ -114,49 +114,78 @@ Dépendance totale à l'API Stokt = risque de perte de service.
 
 ---
 
-## ADR-005 : Stratégie de Synchronisation
+## ADR-005 : Stratégie de Synchronisation "Railway-First avec Mapping"
 
 ### Contexte
 
 Comment synchroniser les données entre :
-- API Stokt (source vérité pour Montoboard)
-- Serveur personnel
-- Application mobile locale
+- API Stokt (source originale Montoboard)
+- Serveur personnel Railway (backend principal)
+- Application mobile/desktop locale
 
 ### Décision
 
-**Sync hiérarchique** :
+**Architecture Railway-First** : mastoc se connecte à **UN seul backend à la fois** (Railway par défaut), avec un **mapping d'identifiants** permettant la synchronisation manuelle avec Stokt.
 
 ```
-                  Stokt API
-                      │
-                      │ (lecture seule, sync horaire)
-                      ▼
-               Serveur Railway
-                      │
-                      │ (bi-directionnelle)
-                      ▼
-              App Mobile (Room)
+┌─────────────────────────────────────────────────────────────┐
+│                     mastoc CLIENT                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────────┐         ┌─────────────────┐          │
+│   │  MODE: RAILWAY  │   OU    │  MODE: STOKT    │          │
+│   │  (par défaut)   │         │  (optionnel)    │          │
+│   └────────┬────────┘         └────────┬────────┘          │
+│            │                           │                    │
+│            ▼                           ▼                    │
+│   ┌─────────────────────────────────────────────┐          │
+│   │           SQLite Local                       │          │
+│   │  ┌─────────────────────────────────────┐    │          │
+│   │  │ climbs                               │    │          │
+│   │  │  • id (UUID mastoc)                  │    │          │
+│   │  │  • stokt_id (UUID, nullable) ◄───────┼── MAPPING    │
+│   │  │  • name, holds_list, grade...        │    │          │
+│   │  └─────────────────────────────────────┘    │          │
+│   └─────────────────────────────────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Règles de synchronisation
+### Principe du mapping
 
-| Source | Destination | Direction | Fréquence |
-|--------|-------------|-----------|-----------|
-| Stokt | Railway | Lecture | Horaire |
-| Railway | Mobile | Bi-dir | Temps réel |
-| Mobile | Stokt | Écriture | Optionnel (dual-write) |
+Chaque entité possède :
+- **`id`** : UUID mastoc (toujours présent)
+- **`stokt_id`** : UUID Stokt (nullable, rempli après sync)
 
-### Résolution de conflits
+| Scénario | `id` (mastoc) | `stokt_id` | État |
+|----------|---------------|------------|------|
+| Bloc créé sur mastoc | `abc-123` | `NULL` | Local uniquement |
+| Bloc poussé vers Stokt | `abc-123` | `uvw-012` | Synchronisé |
+| Bloc importé depuis Stokt | `def-456` | `xyz-789` | Importé |
 
-**Stratégie : Last Write Wins avec timestamp**
+### Répartition des données
 
-```
-Si conflit:
-  - Comparer timestamps
-  - Garder la version la plus récente
-  - Logger le conflit pour audit
-```
+| Données | Railway | Stokt | Notes |
+|---------|---------|-------|-------|
+| Blocs (travail quotidien) | ✓ | - | Créés sur mastoc |
+| Blocs Montoboard (copie) | ✓ | ✓ | Import initial |
+| **Images murs** | ✓ | ✓ | **CRITIQUE: dupliquées** |
+| Features custom | ✓ | - | Hold annotations, etc. |
+
+### Opérations de synchronisation
+
+| Opération | Description |
+|-----------|-------------|
+| **Import initial** | Stokt → Railway (script `init_from_stokt.py`) |
+| **Push vers Stokt** | Climb mastoc → POST Stokt → MAJ `stokt_id` |
+| **Import depuis Stokt** | GET Stokt → INSERT/UPDATE local avec mapping |
+
+### Avantages
+
+- **Simplicité** : Un seul backend actif, pas de sync auto complexe
+- **Contrôle** : Push/Import explicite, pas de surprises
+- **Indépendance** : Fonctionne 100% sur Railway sans Stokt
+
+Voir `/docs/04_strategie_independance.md` pour les détails complets.
 
 ---
 

@@ -849,4 +849,7 @@ class StoktAPI:
             f"api/gyms/{gym_id}/lists",
             params={"page_size": page_size}
         )
-        return [ClimbList.from_api(lst) for lst in response.json()]
+        data = response.json()
+        # Réponse paginée : {count, next, previous, results}
+        results = data.get("results", data) if isinstance(data, dict) else data
+        return [ClimbList.from_api(lst) for lst in results]

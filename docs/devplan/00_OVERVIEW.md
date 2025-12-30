@@ -57,13 +57,28 @@ Compléter les fonctionnalités restantes avant migration mobile :
 - Hold Annotations (TODO 12) - crowdsourcing état des prises
 - Listes personnalisées (TODO 09) - collections de blocs
 
-### 2. Infrastructure indépendante
+### 2. Infrastructure "Railway-First avec Mapping"
 
-Déploiement d'un serveur personnel (Railway) pour :
-- Résilience (backup des données Stokt)
-- Fonctionnalités custom impossibles sur Stokt
-- Support du pan personnel
-- Hold annotations communautaires
+**Architecture clé** : mastoc se connecte à **UN seul backend** (Railway par défaut), avec un **mapping d'identifiants** pour sync manuelle avec Stokt.
+
+```
+mastoc ──► API Railway (backend principal)
+              │
+              ├── Blocs créés localement (stokt_id = NULL)
+              ├── Blocs importés de Stokt (stokt_id = UUID)
+              ├── Images murs (dupliquées - CRITIQUE)
+              ├── Hold Annotations
+              └── Features custom
+
+         [Push/Import manuel vers Stokt si besoin]
+```
+
+**Avantages** :
+- **Simplicité** : Un seul backend actif, pas de sync auto complexe
+- **Contrôle** : Push/Import explicite, pas de surprises
+- **Indépendance** : Fonctionne 100% sur Railway sans Stokt
+
+**Script `init_from_stokt.py`** : Import initial Stokt → Railway.
 
 ### 3. Migration mobile Android
 
@@ -71,10 +86,11 @@ Portage vers application native Android :
 - Stack : Kotlin + Jetpack Compose + Room
 - Design : Material Design 3
 - Architecture : MVVM + Clean Architecture
+- **BackendSwitch** : Sélection du backend (Railway ou Stokt)
 
 ### 4. Écosystème complet
 
-- Synchronisation bi-directionnelle
+- Push/Import manuel vers Stokt (mapping d'IDs)
 - Support multi-utilisateurs (grimpeurs locaux)
 - Export/Import de données
 - Statistiques avancées

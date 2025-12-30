@@ -44,10 +44,21 @@
 
 | Document | Emplacement | Description |
 |----------|-------------|-------------|
-| Stratégie indépendance | `/docs/04_strategie_independance.md` | Serveur perso, migration Stokt |
+| **Stratégie Double-Source** | `/docs/04_strategie_independance.md` | Architecture Stokt + Railway, script init |
 | Ergonomie UI/UX | `/docs/03_ergonomie_ui_ux.md` | Guide Material Design 3 |
-| Backend spec | `/docs/backend_spec.md` | Spécification API |
+| Backend spec | `/docs/backend_spec.md` | Spécification API Railway |
 | Design system | `/docs/05_theme_design_system.md` | Palette, tokens, dark mode |
+
+## Architecture Clé
+
+**Double-Source** : mastoc se connecte simultanément à Stokt ET Railway.
+
+| Composant | Rôle |
+|-----------|------|
+| API Stokt | Source primaire Montoboard |
+| API Railway | Backup + Features custom |
+| DataSourceManager | Routing + Health checks |
+| `init_railway.py` | Script duplication initiale |
 
 ---
 
