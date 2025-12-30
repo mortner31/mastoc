@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # Auth
     secret_key: str = "dev-secret-key-change-in-production"
     access_token_expire_minutes: int = 60 * 24  # 24 heures
+    api_key: str = ""  # Si vide, pas d'auth requise (dev mode)
 
     class Config:
         env_file = ".env"

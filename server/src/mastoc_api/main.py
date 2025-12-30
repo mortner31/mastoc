@@ -4,11 +4,12 @@ Application FastAPI principale pour mastoc-api.
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from mastoc_api.config import get_settings
 from mastoc_api.database import Base, engine
+from mastoc_api.auth import verify_api_key
 from mastoc_api.routers import (
     health_router,
     climbs_router,
@@ -54,10 +55,14 @@ app.add_middleware(
 )
 
 # Inclusion des routers
+# Health : public (pour monitoring)
 app.include_router(health_router)
-app.include_router(climbs_router, prefix="/api")
-app.include_router(holds_router, prefix="/api")
-app.include_router(sync_router, prefix="/api")
+
+# API : protégée par API Key
+api_dependencies = [Depends(verify_api_key)]
+app.include_router(climbs_router, prefix="/api", dependencies=api_dependencies)
+app.include_router(holds_router, prefix="/api", dependencies=api_dependencies)
+app.include_router(sync_router, prefix="/api", dependencies=api_dependencies)
 
 
 if __name__ == "__main__":

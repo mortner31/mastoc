@@ -36,7 +36,20 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mastoc
 DEBUG=true
 SECRET_KEY=your-secret-key
 STOKT_TOKEN=your-stokt-token
+API_KEY=your-api-key-here
 ```
+
+### Authentification
+
+L'API est protégée par API Key (header `X-API-Key`).
+
+- **Sans `API_KEY` configurée** : mode dev, pas d'auth requise
+- **Avec `API_KEY` configurée** : auth requise sur tous les endpoints `/api/*`
+
+Endpoints publics (pas d'auth) :
+- `/health` - Health check
+- `/docs` - Documentation Swagger
+- `/redoc` - Documentation ReDoc
 
 ## Démarrage
 

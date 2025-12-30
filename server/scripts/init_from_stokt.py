@@ -7,6 +7,9 @@ Usage:
 
 Ou avec token existant:
     python scripts/init_from_stokt.py --token TOKEN
+
+Avec API Key (si configurée sur Railway):
+    python scripts/init_from_stokt.py --token TOKEN --api-key YOUR_API_KEY
 """
 
 import argparse
@@ -22,6 +25,7 @@ from mastoc.api.client import StoktAPI, MONTOBOARD_GYM_ID
 
 # Configuration
 MASTOC_API_URL = "https://mastoc-production.up.railway.app"
+API_KEY_HEADER = "X-API-Key"
 
 
 def import_gym(client: httpx.Client, gym_summary) -> str:
@@ -141,6 +145,7 @@ def main():
     parser.add_argument("--username", help="Stokt username")
     parser.add_argument("--password", help="Stokt password")
     parser.add_argument("--token", help="Stokt token (alternative to username/password)")
+    parser.add_argument("--api-key", help="mastoc-api API Key (if auth enabled)")
     parser.add_argument("--dry-run", action="store_true", help="Don't actually import")
     args = parser.parse_args()
 
@@ -158,8 +163,12 @@ def main():
         stokt.login(args.username, args.password)
         print(f"Connecté en tant que {args.username}")
 
-    # Client mastoc-api
-    mastoc = httpx.Client(timeout=60)
+    # Client mastoc-api (avec API Key si fournie)
+    headers = {}
+    if args.api_key:
+        headers[API_KEY_HEADER] = args.api_key
+        print(f"API Key configurée")
+    mastoc = httpx.Client(timeout=60, headers=headers)
 
     # Vérifier que mastoc-api est accessible
     print("\n=== Vérification mastoc-api ===")
