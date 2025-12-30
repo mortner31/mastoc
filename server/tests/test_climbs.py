@@ -12,7 +12,7 @@ def _setup_gym_face(client):
 
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
     )
     face_response = client.post(
         "/api/sync/import/face",

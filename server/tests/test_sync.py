@@ -22,7 +22,7 @@ def test_import_gym(client):
     gym_id = str(uuid.uuid4())
     response = client.post(
         "/api/sync/import/gym",
-        params={
+        json={
             "stokt_id": gym_id,
             "display_name": "Test Gym",
             "location_string": "Paris, France",
@@ -45,13 +45,13 @@ def test_import_gym_duplicate(client):
     # Premier import
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_id, "display_name": "Test Gym"}
     )
 
     # Deuxième import (même stokt_id)
     response = client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_id, "display_name": "Test Gym Updated"}
+        json={"stokt_id": gym_id, "display_name": "Test Gym Updated"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -83,7 +83,7 @@ def test_import_face(client):
     gym_stokt_id = str(uuid.uuid4())
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
     )
 
     # Puis importer une face
@@ -128,7 +128,7 @@ def test_import_hold(client):
 
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
     )
     client.post(
         "/api/sync/import/face",
@@ -169,7 +169,7 @@ def test_import_climb(client):
 
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
     )
     client.post(
         "/api/sync/import/face",
@@ -215,7 +215,7 @@ def test_import_climb_update(client):
 
     client.post(
         "/api/sync/import/gym",
-        params={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
+        json={"stokt_id": gym_stokt_id, "display_name": "Test Gym"}
     )
     client.post(
         "/api/sync/import/face",

@@ -233,22 +233,24 @@ def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
     return {"id": str(climb.id), "status": "created"}
 
 
+class ImportGymRequest(BaseModel):
+    """Données pour importer un gym depuis Stokt."""
+    stokt_id: UUID
+    display_name: str
+    location_string: str | None = None
+
+
 @router.post("/import/gym")
-def import_gym(
-    stokt_id: UUID,
-    display_name: str,
-    location_string: str | None = None,
-    db: Session = Depends(get_db),
-):
+def import_gym(data: ImportGymRequest, db: Session = Depends(get_db)):
     """Importe un gym depuis Stokt."""
-    existing = db.query(Gym).filter(Gym.stokt_id == stokt_id).first()
+    existing = db.query(Gym).filter(Gym.stokt_id == data.stokt_id).first()
     if existing:
         return {"id": str(existing.id), "status": "exists"}
 
     gym = Gym(
-        stokt_id=stokt_id,
-        display_name=display_name,
-        location_string=location_string,
+        stokt_id=data.stokt_id,
+        display_name=data.display_name,
+        location_string=data.location_string,
         source="stokt",
     )
     db.add(gym)

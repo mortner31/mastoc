@@ -28,7 +28,7 @@ def import_gym(client: httpx.Client, gym_summary) -> str:
     """Importe un gym."""
     response = client.post(
         f"{MASTOC_API_URL}/api/sync/import/gym",
-        params={
+        json={
             "stokt_id": MONTOBOARD_GYM_ID,
             "display_name": gym_summary.display_name,
             "location_string": gym_summary.location_string,
