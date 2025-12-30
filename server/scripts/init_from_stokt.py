@@ -10,11 +10,16 @@ Ou avec token existant:
 
 Avec API Key (si configurée sur Railway):
     python scripts/init_from_stokt.py --token TOKEN --api-key YOUR_API_KEY
+
+Avec cache (évite de re-télécharger depuis Stokt):
+    python scripts/init_from_stokt.py --token TOKEN --api-key KEY --use-cache
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Ajouter le chemin du client mastoc
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "mastoc" / "src"))
@@ -26,6 +31,51 @@ from mastoc.api.client import StoktAPI, MONTOBOARD_GYM_ID
 # Configuration
 MASTOC_API_URL = "https://mastoc-production.up.railway.app"
 API_KEY_HEADER = "X-API-Key"
+CACHE_DIR = Path(__file__).parent / ".cache"
+
+
+def get_cache_path(name: str) -> Path:
+    """Retourne le chemin du fichier cache."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    return CACHE_DIR / f"{name}.json"
+
+
+def save_to_cache(name: str, data: list):
+    """Sauvegarde les données en cache."""
+    cache_path = get_cache_path(name)
+
+    # Convertir les objets en dicts sérialisables
+    serializable = []
+    for item in data:
+        if hasattr(item, '__dict__'):
+            d = {}
+            for k, v in item.__dict__.items():
+                if hasattr(v, '__dict__'):
+                    d[k] = v.__dict__
+                else:
+                    d[k] = v
+            serializable.append(d)
+        else:
+            serializable.append(item)
+
+    cache_data = {
+        "timestamp": datetime.now().isoformat(),
+        "count": len(data),
+        "data": serializable
+    }
+    cache_path.write_text(json.dumps(cache_data, indent=2, default=str))
+    print(f"  Cache sauvegardé: {cache_path} ({len(data)} items)")
+
+
+def load_from_cache(name: str) -> list | None:
+    """Charge les données depuis le cache."""
+    cache_path = get_cache_path(name)
+    if not cache_path.exists():
+        return None
+
+    cache_data = json.loads(cache_path.read_text())
+    print(f"  Cache chargé: {cache_path} ({cache_data['count']} items, {cache_data['timestamp']})")
+    return cache_data["data"]
 
 
 def import_gym(client: httpx.Client, gym_summary) -> str:
@@ -149,23 +199,40 @@ def prepare_climb_data(climb) -> dict:
     }
 
 
+def import_users_batch(client: httpx.Client, climbs: list) -> tuple[int, int, int]:
+    """Import les setters uniques par batch."""
+    # Collecter les setters uniques
+    setters = {}
+    for climb in climbs:
+        if climb.setter and climb.setter.id not in setters:
+            setters[climb.setter.id] = climb.setter.full_name
+
+    if not setters:
+        return 0, 0, 0
+
+    batch_data = [
+        {"stokt_id": str(sid), "full_name": name}
+        for sid, name in setters.items()
+    ]
+
+    response = client.post(
+        f"{MASTOC_API_URL}/api/sync/import/users/batch",
+        json={"users": batch_data}
+    )
+    response.raise_for_status()
+    result = response.json()
+    return result["created"], result["updated"], result["errors"]
+
+
 def import_climbs_batch(client: httpx.Client, climbs: list, batch_size: int = 50):
     """Import les climbs par batch pour de meilleures performances."""
     total_created = 0
     total_updated = 0
     total_errors = 0
 
-    # D'abord importer tous les setters uniques
-    setters_seen = set()
-    for climb in climbs:
-        if climb.setter and climb.setter.id not in setters_seen:
-            try:
-                import_user(client, climb.setter.id, climb.setter.full_name)
-                setters_seen.add(climb.setter.id)
-            except Exception:
-                pass
-
-    print(f"  {len(setters_seen)} setters importés")
+    # D'abord importer tous les setters en batch
+    u_created, u_updated, u_errors = import_users_batch(client, climbs)
+    print(f"  {u_created} setters créés, {u_updated} existants")
 
     # Ensuite importer les climbs par batch
     for i in range(0, len(climbs), batch_size):
@@ -235,23 +302,31 @@ def main():
     parser.add_argument("--batch", action="store_true", default=True, help="Use batch imports (default)")
     parser.add_argument("--no-batch", action="store_true", help="Disable batch imports (slow)")
     parser.add_argument("--batch-size", type=int, default=50, help="Batch size for climbs (default: 50)")
+    parser.add_argument("--use-cache", action="store_true", help="Use cached data instead of fetching from Stokt")
+    parser.add_argument("--save-cache", action="store_true", help="Save fetched data to cache (for future --use-cache)")
+    parser.add_argument("--climbs-only", action="store_true", help="Only import climbs (skip gym/faces/holds)")
     args = parser.parse_args()
 
     use_batch = args.batch and not args.no_batch
 
-    if not args.token and not (args.username and args.password):
-        parser.error("Either --token or --username/--password required")
+    # Si on utilise le cache, pas besoin de credentials Stokt
+    if not args.use_cache and not args.token and not (args.username and args.password):
+        parser.error("Either --token or --username/--password required (or use --use-cache)")
 
-    # Client Stokt
-    print("=== Connexion à Stokt ===")
-    stokt = StoktAPI()
+    # Client Stokt (sauf si cache-only)
+    stokt = None
+    if not args.use_cache or not args.climbs_only:
+        print("=== Connexion à Stokt ===")
+        stokt = StoktAPI()
 
-    if args.token:
-        stokt.set_token(args.token)
-        print("Token configuré")
+        if args.token:
+            stokt.set_token(args.token)
+            print("Token configuré")
+        elif args.username and args.password:
+            stokt.login(args.username, args.password)
+            print(f"Connecté en tant que {args.username}")
     else:
-        stokt.login(args.username, args.password)
-        print(f"Connecté en tant que {args.username}")
+        print("=== Mode cache uniquement ===")
 
     # Client mastoc-api (avec API Key si fournie)
     headers = {}
@@ -271,49 +346,64 @@ def main():
     if use_batch:
         print("\n[BATCH MODE] Import optimisé par lots")
 
-    # 1. Import gym
-    print("\n=== Import Gym Montoboard ===")
-    gym_summary = stokt.get_gym_summary(MONTOBOARD_GYM_ID)
-    print(f"Gym: {gym_summary.display_name}")
+    if not args.climbs_only:
+        # 1. Import gym
+        print("\n=== Import Gym Montoboard ===")
+        gym_summary = stokt.get_gym_summary(MONTOBOARD_GYM_ID)
+        print(f"Gym: {gym_summary.display_name}")
 
-    if not args.dry_run:
-        import_gym(mastoc, gym_summary)
+        if not args.dry_run:
+            import_gym(mastoc, gym_summary)
 
-    # 2. Import faces et holds
-    print("\n=== Import Faces et Holds ===")
-    walls = stokt.get_gym_walls(MONTOBOARD_GYM_ID)
+        # 2. Import faces et holds
+        print("\n=== Import Faces et Holds ===")
+        walls = stokt.get_gym_walls(MONTOBOARD_GYM_ID)
 
-    total_holds = 0
-    for wall in walls:
-        for face in wall.faces:
-            print(f"\nFace {face.id}:")
+        total_holds = 0
+        for wall in walls:
+            for face in wall.faces:
+                print(f"\nFace {face.id}:")
 
-            # Récupérer le setup complet avec holds
-            face_setup = stokt.get_face_setup(face.id)
-            print(f"  {len(face_setup.holds)} holds")
+                # Récupérer le setup complet avec holds
+                face_setup = stokt.get_face_setup(face.id)
+                print(f"  {len(face_setup.holds)} holds")
 
-            if not args.dry_run:
-                import_face(mastoc, face_setup, MONTOBOARD_GYM_ID)
+                if not args.dry_run:
+                    import_face(mastoc, face_setup, MONTOBOARD_GYM_ID)
 
-                if use_batch:
-                    created, updated, errors = import_holds_batch(mastoc, face_setup.holds, str(face.id))
-                    print(f"  {created} créés, {updated} existants, {errors} erreurs")
-                    total_holds += created
-                else:
-                    count = import_holds(mastoc, face_setup.holds, str(face.id))
-                    print(f"  {count} holds importés")
-                    total_holds += count
+                    if use_batch:
+                        created, updated, errors = import_holds_batch(mastoc, face_setup.holds, str(face.id))
+                        print(f"  {created} créés, {updated} existants, {errors} erreurs")
+                        total_holds += created
+                    else:
+                        count = import_holds(mastoc, face_setup.holds, str(face.id))
+                        print(f"  {count} holds importés")
+                        total_holds += count
 
-    print(f"\nTotal: {total_holds} holds importés")
+        print(f"\nTotal: {total_holds} holds importés")
+    else:
+        print("\n[CLIMBS-ONLY] Skip gym/faces/holds")
 
     # 3. Import climbs
     print("\n=== Import Climbs ===")
 
-    def progress_callback(current, total):
-        print(f"  Récupération: {current}/{total}", end="\r")
+    climbs = None
+    if args.use_cache:
+        climbs = load_from_cache("climbs")
+        if climbs is None:
+            print("  Pas de cache trouvé, récupération depuis Stokt...")
 
-    climbs = stokt.get_all_gym_climbs(MONTOBOARD_GYM_ID, callback=progress_callback)
-    print(f"\n{len(climbs)} climbs récupérés")
+    if climbs is None:
+        def progress_callback(current, total):
+            print(f"  Récupération: {current}/{total}", end="\r")
+
+        climbs = stokt.get_all_gym_climbs(MONTOBOARD_GYM_ID, callback=progress_callback)
+        print(f"\n{len(climbs)} climbs récupérés depuis Stokt")
+
+        if args.save_cache:
+            save_to_cache("climbs", climbs)
+    else:
+        print(f"{len(climbs)} climbs depuis le cache")
 
     if not args.dry_run:
         if use_batch:

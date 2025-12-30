@@ -1,6 +1,6 @@
 # STATUS - TODO 13 : Serveur Railway
 
-**Progression** : 95%
+**Progression** : 100%
 
 ---
 
@@ -28,7 +28,9 @@
 - [x] Import gym Montoboard
 - [x] Import faces et holds (776 prises)
 - [x] Import climbs (~1000 blocs)
-- [ ] Duplication images (reporté)
+- [x] Endpoints batch (holds, users, climbs)
+- [x] Cache local pour éviter re-téléchargement
+- [ ] Duplication images (reporté - optionnel)
 
 ## Phase 4 : Tests (100%)
 
@@ -46,10 +48,11 @@
 - [x] Mode dev (sans API_KEY = pas d'auth)
 - [x] API_KEY configurée sur Railway
 
-## Phase 6 : Intégration client (0%)
+## Phase 6 : Documentation (100%)
 
-- [ ] Modifier client mastoc pour utiliser Railway
-- [ ] Tests end-to-end
+- [x] ADRs créés (5 ADRs dans docs/adr/)
+- [x] Rapport de session complet
+- [x] README serveur
 
 ---
 
@@ -65,40 +68,42 @@ https://mastoc-production.up.railway.app
 | `/docs` | Swagger UI |
 | `/api/sync/stats` | Statistiques de la base |
 | `/api/sync/import/*` | Import depuis Stokt |
+| `/api/sync/import/*/batch` | Import batch (holds, users, climbs) |
 | `/api/climbs` | CRUD climbs |
 | `/api/holds` | Liste holds |
 
+## Données importées
+
+| Entité | Quantité |
+|--------|----------|
+| Gyms | 1 |
+| Faces | 1 |
+| Holds | 776 |
+| Climbs | ~1000 |
+| Users | ~50 |
+
 ## Notes
 
-### Session 2025-12-30
+### Session 2025-12-30 (suite)
 
-**Travail effectué :**
-- Finalisation main.py (app FastAPI)
-- Création README serveur avec doc Railway complète
-- Création Procfile + requirements.txt
-- Déploiement Railway réussi
-- PostgreSQL connecté et fonctionnel
-- Script d'import `init_from_stokt.py`
-- Suite de tests (28 tests)
-- Authentification par API Key
+**Import complet réussi :**
+- Endpoints batch implémentés (10x plus rapide)
+- Import des données Stokt terminé
+- ADRs documentant l'architecture
+- Cache local pour éviter les appels répétés à Stokt
 
-**Problèmes résolus :**
-- `uvicorn: command not found` → ajout requirements.txt
-- Module non trouvé → ajout PYTHONPATH=src dans Procfile
-- 404 sur import/gym → correction endpoint (JSON body au lieu de query params)
-- Double prefix `/api/api` → correction des routers
-- API publique → ajout auth API Key
+**Options du script :**
+```bash
+# Import complet
+python scripts/init_from_stokt.py --username USER --password PASS --api-key KEY
 
-**API Key configurée :**
-- Variable `API_KEY` sur Railway
-- Header `X-API-Key` requis sur `/api/*`
+# Sauvegarder en cache
+python scripts/init_from_stokt.py ... --save-cache
 
-**Rapport complet :**
-- `docs/reports/SESSION_2025-12-30_serveur_railway_complet.md`
+# Utiliser le cache (pas d'appels Stokt)
+python scripts/init_from_stokt.py --api-key KEY --use-cache --climbs-only
+```
 
-### Prochaine session
+### TODO terminé
 
-1. Relancer import avec API Key
-2. Vérifier données (776 holds, ~1000 climbs)
-3. Mettre à jour client mastoc pour utiliser Railway
-4. Tests end-to-end
+Ce TODO est complet. L'intégration client sera un nouveau TODO séparé.

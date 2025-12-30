@@ -9,6 +9,27 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-30
 
+- **TODO 13 complété à 100%** - Serveur Railway mastoc-api
+  - **Import complet des données Stokt réussi**
+    - 1 gym, 1 face, 776 holds, ~1000 climbs, ~50 users
+  - **Endpoints batch** pour import optimisé (10x plus rapide)
+    - `POST /api/sync/import/holds/batch`
+    - `POST /api/sync/import/users/batch`
+    - `POST /api/sync/import/climbs/batch`
+  - **ADRs créés** dans `docs/adr/` :
+    - 001: Architecture Railway-First avec Mapping d'IDs
+    - 002: Authentification par API Key
+    - 003: Stack serveur (FastAPI + PostgreSQL)
+    - 004: Client PyQtGraph + SQLite
+    - 005: Batch Import pour Holds, Users et Climbs
+  - **Script d'import amélioré** :
+    - `--use-cache` : utilise cache local (évite appels Stokt)
+    - `--save-cache` : sauvegarde les données en cache
+    - `--climbs-only` : skip gym/faces/holds
+    - `--batch-size N` : taille des lots (défaut: 50)
+  - URL production : https://mastoc-production.up.railway.app
+  - API Key configurée sur Railway
+
 - **TODO 10 archivé** - Interface de Création de Blocs (97% → Terminé)
   - Premier bloc créé avec succès via mastoc
   - API création fonctionnelle (POST /api/faces/{faceId}/climbs)
