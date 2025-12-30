@@ -549,14 +549,69 @@ def sync_mastoc_to_stokt(climb_ids: list[str]):
 
 ---
 
+## Serveur Railway - Déploiement Réalisé
+
+### URL Production
+
+**https://mastoc-production.up.railway.app**
+
+### Authentification
+
+| Header | Valeur |
+|--------|--------|
+| `X-API-Key` | Configurée sur Railway (variable `API_KEY`) |
+
+**Endpoints publics (sans auth)** : `/health`, `/docs`, `/redoc`
+**Endpoints protégés** : `/api/*`
+
+### Endpoints Disponibles
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/health` | GET | Status serveur + DB |
+| `/docs` | GET | Documentation Swagger |
+| `/api/climbs` | GET | Liste climbs (filtres, pagination) |
+| `/api/climbs/{id}` | GET | Détail climb |
+| `/api/climbs` | POST | Créer climb |
+| `/api/climbs/{id}` | PATCH | Modifier climb |
+| `/api/climbs/{id}` | DELETE | Supprimer climb |
+| `/api/holds` | GET | Liste holds d'une face |
+| `/api/sync/stats` | GET | Statistiques de la base |
+| `/api/sync/import/gym` | POST | Import gym Stokt |
+| `/api/sync/import/face` | POST | Import face Stokt |
+| `/api/sync/import/hold` | POST | Import hold Stokt |
+| `/api/sync/import/climb` | POST | Import climb Stokt |
+| `/api/sync/import/user` | POST | Import user Stokt |
+
+### Variables d'Environnement Railway
+
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+API_KEY=<clé-secrète>
+DEBUG=false
+```
+
+### Script d'Import
+
+```bash
+cd server
+python scripts/init_from_stokt.py \
+  --username USER \
+  --password PASS \
+  --api-key "YOUR_API_KEY"
+```
+
+---
+
 ## Plan d'Implémentation
 
-### Phase 1 : Infrastructure Railway
+### Phase 1 : Infrastructure Railway ✅
 
-- [ ] Créer le projet Railway (FastAPI + PostgreSQL)
-- [ ] Implémenter les endpoints de base
+- [x] Créer le projet Railway (FastAPI + PostgreSQL)
+- [x] Implémenter les endpoints de base
+- [x] Script `init_from_stokt.py`
+- [x] Authentification API Key
 - [ ] Créer `RailwayAPI` client Python
-- [ ] Script `init_from_stokt.py`
 - [ ] **Dupliquer les images** (critique)
 
 ### Phase 2 : Client Unifié

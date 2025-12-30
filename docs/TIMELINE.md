@@ -23,7 +23,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
   - BackendSwitch remplace DataSourceManager
   - Plan de dev mis à jour pour cohérence
 
-- **TODO 13 avancé à 85%** - Serveur Railway (mastoc-api)
+- **TODO 13 avancé à 95%** - Serveur Railway (mastoc-api)
   - Structure FastAPI créée dans `server/`
   - Modèles SQLAlchemy : Gym, Face, Hold, Climb, User, IdMapping
   - Routers : health, climbs, holds, sync
@@ -32,18 +32,23 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
     - URL : https://mastoc-production.up.railway.app
     - PostgreSQL connecté et fonctionnel
     - Endpoints /health, /docs, /redoc opérationnels
+  - **Authentification API Key** :
+    - Header `X-API-Key` requis sur `/api/*`
+    - `/health`, `/docs`, `/redoc` restent publics
+    - Mode dev (sans API_KEY = pas d'auth)
   - **Script d'import Stokt** :
     - `scripts/init_from_stokt.py` : import gym/faces/holds/climbs
-    - Import Montoboard en cours (776 prises, ~1000 blocs)
+    - Support `--api-key` pour authentification
   - **Suite de tests** :
-    - 17 tests (health, sync, climbs)
+    - 28 tests (health, sync, climbs, auth)
     - Fixtures SQLite en mémoire
   - Problèmes résolus :
     - `uvicorn: command not found` → ajout requirements.txt
     - Module non trouvé → PYTHONPATH=src dans Procfile
     - 404 sur import/gym → JSON body au lieu de query params
     - Double prefix `/api/api` → correction routers
-  - Rapport : `docs/reports/SESSION_2025-12-30_deploiement_railway.md`
+    - API publique → authentification API Key
+  - Rapport complet : `docs/reports/SESSION_2025-12-30_serveur_railway_complet.md`
 
 ## 2025-12-23
 

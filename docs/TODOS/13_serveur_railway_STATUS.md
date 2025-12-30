@@ -1,6 +1,6 @@
 # STATUS - TODO 13 : Serveur Railway
 
-**Progression** : 85%
+**Progression** : 95%
 
 ---
 
@@ -36,8 +36,17 @@
 - [x] test_health.py (2 tests)
 - [x] test_sync.py (8 tests)
 - [x] test_climbs.py (7 tests)
+- [x] test_auth.py (11 tests)
 
-## Phase 5 : Intégration client (0%)
+## Phase 5 : Authentification (100%)
+
+- [x] auth.py (API Key verification)
+- [x] Endpoints /api/* protégés
+- [x] /health, /docs, /redoc publics
+- [x] Mode dev (sans API_KEY = pas d'auth)
+- [x] API_KEY configurée sur Railway
+
+## Phase 6 : Intégration client (0%)
 
 - [ ] Modifier client mastoc pour utiliser Railway
 - [ ] Tests end-to-end
@@ -70,16 +79,26 @@ https://mastoc-production.up.railway.app
 - Déploiement Railway réussi
 - PostgreSQL connecté et fonctionnel
 - Script d'import `init_from_stokt.py`
-- Suite de tests (17 tests)
+- Suite de tests (28 tests)
+- Authentification par API Key
 
 **Problèmes résolus :**
 - `uvicorn: command not found` → ajout requirements.txt
 - Module non trouvé → ajout PYTHONPATH=src dans Procfile
 - 404 sur import/gym → correction endpoint (JSON body au lieu de query params)
 - Double prefix `/api/api` → correction des routers
+- API publique → ajout auth API Key
+
+**API Key configurée :**
+- Variable `API_KEY` sur Railway
+- Header `X-API-Key` requis sur `/api/*`
+
+**Rapport complet :**
+- `docs/reports/SESSION_2025-12-30_serveur_railway_complet.md`
 
 ### Prochaine session
 
-1. Vérifier import complet
-2. Mettre à jour client mastoc pour utiliser Railway
-3. Tests end-to-end
+1. Relancer import avec API Key
+2. Vérifier données (776 holds, ~1000 climbs)
+3. Mettre à jour client mastoc pour utiliser Railway
+4. Tests end-to-end
