@@ -7,6 +7,29 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-30
+
+- **TODO 10 archivé** - Interface de Création de Blocs (97% → Terminé)
+  - Premier bloc créé avec succès via mastoc
+  - API création fonctionnelle (POST /api/faces/{faceId}/climbs)
+  - Wizard complet : sélection prises → formulaire → soumission
+  - 3 tâches polish reportées (erreurs par champ, timeout, sauvegarde locale)
+  - Archivé dans `/archive/TODOS/`
+
+- **Architecture Railway-First avec Mapping**
+  - Refonte stratégie d'indépendance (v3.0)
+  - Single-source sélectionnable (Railway par défaut)
+  - Mapping `stokt_id` nullable pour sync bidirectionnelle
+  - BackendSwitch remplace DataSourceManager
+  - Plan de dev mis à jour pour cohérence
+
+- **TODO 13 créé** - Serveur Railway (mastoc-api)
+  - Structure FastAPI créée dans `server/`
+  - Modèles SQLAlchemy : Gym, Face, Hold, Climb, User, IdMapping
+  - Routers : health, climbs, holds, sync
+  - Endpoints CRUD + import Stokt
+  - Statut : 40% (interrompu lors création main.py)
+
 ## 2025-12-23
 
 - **Plan de développement créé** - `/docs/devplan/`
