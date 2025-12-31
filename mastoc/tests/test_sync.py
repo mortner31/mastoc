@@ -294,3 +294,54 @@ class TestSyncManager:
             total_likes=original.total_likes + 5, total_comments=original.total_comments
         )
         assert manager._climb_changed(original, modified) is True
+
+    def test_calculate_max_age_recent_sync(self, temp_db, mock_api):
+        """Teste le calcul de max_age pour une sync récente."""
+        manager = SyncManager(mock_api, temp_db)
+
+        # Sync il y a 2 jours -> max_age = 7 (minimum)
+        last_sync = datetime.now() - timedelta(days=2)
+        max_age = manager._calculate_max_age(last_sync)
+        assert max_age == 7  # Minimum de 7 jours
+
+    def test_calculate_max_age_old_sync(self, temp_db, mock_api):
+        """Teste le calcul de max_age pour une sync ancienne."""
+        manager = SyncManager(mock_api, temp_db)
+
+        # Sync il y a 15 jours -> max_age = 16 (15 + 1)
+        last_sync = datetime.now() - timedelta(days=15)
+        max_age = manager._calculate_max_age(last_sync)
+        assert max_age == 16
+
+    def test_calculate_max_age_custom_minimum(self, temp_db, mock_api):
+        """Teste le calcul de max_age avec minimum personnalisé."""
+        manager = SyncManager(mock_api, temp_db)
+
+        # Sync il y a 2 jours avec minimum 14
+        last_sync = datetime.now() - timedelta(days=2)
+        max_age = manager._calculate_max_age(last_sync, min_days=14)
+        assert max_age == 14
+
+    def test_sync_incremental_uses_max_age(self, temp_db, mock_api, sample_climbs, sample_face):
+        """Teste que sync_incremental utilise max_age dynamique."""
+        # Setup initial
+        hold_repo = HoldRepository(temp_db)
+        hold_repo.save_face(sample_face)
+
+        climb_repo = ClimbRepository(temp_db)
+        for climb in sample_climbs:
+            climb_repo.save_climb(climb)
+
+        # Simuler une sync il y a 3 jours
+        old_sync = datetime.now() - timedelta(days=3)
+        temp_db.set_last_sync(old_sync)
+
+        mock_api.get_all_gym_climbs.return_value = sample_climbs
+
+        manager = SyncManager(mock_api, temp_db)
+        result = manager.sync_incremental()
+
+        # Vérifier que l'API a été appelée avec max_age (7 minimum)
+        mock_api.get_all_gym_climbs.assert_called_once()
+        call_args = mock_api.get_all_gym_climbs.call_args
+        assert call_args.kwargs.get('max_age') == 7  # min_days par défaut

@@ -9,6 +9,11 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 14 archivé** - Portage Client Railway (100%)
+  - 7 phases complétées : Client API, Backend Switch, Migration GUI, Endpoints, Sync, Validation, Assets
+  - 296 tests au total
+  - Archivé dans `/archive/TODOS/`
+
 - **TODO 17 créé** - Système d'Authentification et Utilisateurs mastoc
   - Authentification native mastoc : email/password + JWT
   - Rôles : User + Admin

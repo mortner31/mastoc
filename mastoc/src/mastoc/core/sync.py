@@ -143,6 +143,20 @@ class SyncManager:
 
         return result
 
+    def _calculate_max_age(self, last_sync: datetime, min_days: int = 7) -> int:
+        """
+        Calcule max_age basé sur la dernière synchronisation.
+
+        Args:
+            last_sync: Date de dernière synchronisation
+            min_days: Nombre minimum de jours (marge de sécurité)
+
+        Returns:
+            Nombre de jours à demander à l'API
+        """
+        days_since = (datetime.now() - last_sync).days + 1
+        return max(days_since, min_days)
+
     def sync_incremental(
         self,
         callback: Optional[ProgressCallback] = None
@@ -150,7 +164,8 @@ class SyncManager:
         """
         Synchronisation incrémentale (nouveaux climbs seulement).
 
-        Récupère les climbs depuis la dernière synchronisation.
+        Utilise le paramètre max_age de l'API Stokt pour ne télécharger
+        que les climbs créés depuis la dernière synchronisation.
 
         Returns:
             SyncResult avec les statistiques
@@ -162,20 +177,23 @@ class SyncManager:
             # Pas de sync précédente, faire une sync complète
             return self.sync_full(callback=callback)
 
+        # Calculer max_age dynamiquement
+        max_age = self._calculate_max_age(last_sync)
+
         try:
             if callback:
-                callback(0, 0, "Vérification des nouveaux climbs...")
+                callback(0, 0, f"Sync incrémentale (derniers {max_age} jours)...")
 
             # Récupérer les climbs existants
             existing_climbs = self.climb_repo.get_all_climbs()
             existing_ids = {c.id for c in existing_climbs}
 
-            # Récupérer les climbs depuis l'API
+            # Récupérer uniquement les climbs récents depuis l'API
             def climb_progress(current, total):
                 if callback:
                     callback(current, total, f"Téléchargement: {current}/{total}")
 
-            all_climbs = self.api.get_all_gym_climbs(self.gym_id, callback=climb_progress)
+            all_climbs = self.api.get_all_gym_climbs(self.gym_id, max_age=max_age, callback=climb_progress)
 
             # Identifier les nouveaux et les mis à jour
             new_climbs = []

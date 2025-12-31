@@ -148,21 +148,22 @@ class StoktAPI:
         climbs = [Climb.from_api(c) for c in data.get("results", [])]
         return climbs, data.get("count", 0), data.get("next")
 
-    def get_all_gym_climbs(self, gym_id: str, callback=None) -> list[Climb]:
+    def get_all_gym_climbs(self, gym_id: str, max_age: int = 9999, callback=None) -> list[Climb]:
         """
-        Récupère TOUS les climbs d'un gym avec pagination automatique.
+        Récupère les climbs d'un gym avec pagination automatique.
 
         Args:
             gym_id: ID du gym
+            max_age: Nombre de jours depuis création (défaut: 9999 = tous)
             callback: Fonction appelée avec (current, total) pour la progression
 
         Returns:
-            Liste de tous les climbs
+            Liste des climbs correspondants
         """
         all_climbs = []
 
         # Première page
-        climbs, total, next_url = self.get_gym_climbs(gym_id, max_age=9999)
+        climbs, total, next_url = self.get_gym_climbs(gym_id, max_age=max_age)
         all_climbs.extend(climbs)
 
         if callback:

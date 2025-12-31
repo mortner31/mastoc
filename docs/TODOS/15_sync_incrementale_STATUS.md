@@ -1,14 +1,14 @@
 # STATUS - TODO 15 : Synchronisation Incrémentale
 
-**Progression** : 0%
+**Progression** : 20%
 
-## Phase 1 : Stokt - Quick Win (0%)
+## Phase 1 : Stokt - Quick Win (100%)
 
-- [ ] Modifier `SyncManager.sync_incremental()` pour `max_age` dynamique
-- [ ] Ajouter param `max_age` à `get_all_gym_climbs()`
-- [ ] Logique calcul basée sur `last_sync`
-- [ ] Tests unitaires
-- [ ] Test d'intégration API Stokt
+- [x] Modifier `SyncManager.sync_incremental()` pour `max_age` dynamique
+- [x] Ajouter param `max_age` à `get_all_gym_climbs()`
+- [x] Logique calcul basée sur `last_sync` (`_calculate_max_age()`)
+- [x] Tests unitaires (4 nouveaux tests)
+- [ ] Test d'intégration API Stokt (optionnel - nécessite connexion réelle)
 
 ## Phase 2 : Railway - Serveur (0%)
 
