@@ -9,11 +9,26 @@ Ce document définit les règles à suivre pour maintenir la structure et l'orga
 ### Dossiers Principaux
 
 - **`/docs`** : Documentation de référence (stratégie, protocoles) du projet global
-- **`/mastoc`** : Code et documentation spécifiques à l'application mastoc
-- **`/tools`** : Scripts d'analyse et de validation (si nécessaire)
+- **`/docs/adr`** : **Architecture Decision Records** - Décisions architecturales documentées
 - **`/docs/reports`** : Rapports générés par les outils et sessions de travail
 - **`/docs/TODOS`** : Fiches de tâches **actives uniquement**
+- **`/mastoc`** : Code et documentation spécifiques au client Python mastoc
+- **`/server`** : Backend FastAPI déployé sur Railway
 - **`/archive`** : Documents et tâches **terminés ou obsolètes**
+
+### ADRs (Architecture Decision Records)
+
+**IMPORTANT** : Avant de prendre une décision architecturale, consulter les ADRs existants dans `/docs/adr/` :
+
+| ADR | Titre |
+|-----|-------|
+| 001 | Architecture Railway-First avec Mapping d'IDs |
+| 002 | Authentification par API Key |
+| 003 | Stack serveur (FastAPI + PostgreSQL) |
+| 004 | Client PyQtGraph + SQLite |
+| 005 | Batch Import pour Holds, Users et Climbs |
+
+Pour créer un nouvel ADR : copier le format dans `/docs/adr/README.md`
 
 ### Documents à la Racine
 
