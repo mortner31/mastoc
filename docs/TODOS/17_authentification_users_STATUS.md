@@ -94,9 +94,35 @@ mastoc/src/mastoc/
     └── mastoc_auth.py                  # NEW - dialogs
 ```
 
+## Comment Lancer le Serveur Local
+
+```bash
+cd /media/veracrypt1/Repositories/mastack/server
+
+# Installer dépendances (une fois)
+pip install -r requirements.txt
+pip install email-validator
+
+# Fichier .env déjà créé avec DATABASE_URL Railway
+
+# Lancer le serveur
+PYTHONPATH=src python -m uvicorn mastoc_api.main:app --reload --port 8000
+
+# Swagger UI : http://localhost:8000/docs
+```
+
+## Migration DB
+
+**Déjà exécutée** sur Railway le 2025-12-31 :
+```bash
+PYTHONPATH=src python scripts/migrate_user_auth.py
+# Résultat : 14 OK, 0 skipped, 0 errors
+```
+
 ## Prochaines Étapes
 
-1. Déployer sur Railway
-2. Exécuter la migration : `python scripts/migrate_user_auth.py`
+1. ~~Déployer sur Railway~~ ✅ Migration exécutée
+2. ~~Exécuter la migration~~ ✅
 3. Intégrer menu "Compte" dans app.py principale
-4. Tester inscription/connexion/profil
+4. Tester inscription/connexion/profil via Swagger
+5. Push git pour déployer le code sur Railway

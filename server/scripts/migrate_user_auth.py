@@ -26,52 +26,25 @@ from sqlalchemy import text
 from mastoc_api.database import engine
 
 
-MIGRATION_SQL = """
--- Migration: Add auth columns to users table
--- Date: 2025-12-31
-
--- =========================================
--- Users table
--- =========================================
-
--- Email (unique, indexed)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE;
-CREATE INDEX IF NOT EXISTS ix_users_email ON users(email);
-
--- Username (unique, indexed)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(100) UNIQUE;
-CREATE INDEX IF NOT EXISTS ix_users_username ON users(username);
-
--- Password hash
-ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
-
--- Account status
-ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
-
--- Role (user/admin)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';
-
--- Timestamps
-ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
-
--- Reset password
-ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
-
--- =========================================
--- Climbs table (traçabilité)
--- =========================================
-
--- Created by (utilisateur mastoc qui a créé)
-ALTER TABLE climbs ADD COLUMN IF NOT EXISTS created_by_id UUID REFERENCES users(id);
-
--- Updated by (dernier utilisateur à modifier)
-ALTER TABLE climbs ADD COLUMN IF NOT EXISTS updated_by_id UUID REFERENCES users(id);
-
--- Updated at (date de dernière modification)
-ALTER TABLE climbs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
-"""
+MIGRATIONS = [
+    # Users - colonnes
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(100)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP",
+    # Users - index (après les colonnes)
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users(email) WHERE email IS NOT NULL",
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users(username) WHERE username IS NOT NULL",
+    # Climbs - traçabilité
+    "ALTER TABLE climbs ADD COLUMN IF NOT EXISTS created_by_id UUID REFERENCES users(id)",
+    "ALTER TABLE climbs ADD COLUMN IF NOT EXISTS updated_by_id UUID REFERENCES users(id)",
+    "ALTER TABLE climbs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+]
 
 
 def run_migration(dry_run: bool = False):
@@ -81,33 +54,34 @@ def run_migration(dry_run: bool = False):
 
     if dry_run:
         print("\n[DRY-RUN] Requêtes SQL qui seront exécutées:\n")
-        print(MIGRATION_SQL)
+        for stmt in MIGRATIONS:
+            print(f"  - {stmt}")
         return
 
-    # Exécuter les migrations
-    with engine.connect() as conn:
-        # Split par requête (chaque ligne qui ne commence pas par --)
-        statements = [
-            stmt.strip()
-            for stmt in MIGRATION_SQL.split(';')
-            if stmt.strip() and not stmt.strip().startswith('--')
-        ]
+    # Exécuter les migrations une par une avec commit individuel
+    success = 0
+    skipped = 0
+    errors = 0
 
-        for stmt in statements:
+    for stmt in MIGRATIONS:
+        with engine.connect() as conn:
             try:
                 print(f"Executing: {stmt[:60]}...")
                 conn.execute(text(stmt))
+                conn.commit()
                 print("  ✓ OK")
+                success += 1
             except Exception as e:
-                if "already exists" in str(e).lower():
+                conn.rollback()
+                if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
                     print(f"  → Already exists (skipped)")
+                    skipped += 1
                 else:
                     print(f"  ✗ Error: {e}")
-
-        conn.commit()
+                    errors += 1
 
     print("\n" + "=" * 50)
-    print("Migration terminée!")
+    print(f"Migration terminée! {success} OK, {skipped} skipped, {errors} errors")
 
 
 def main():

@@ -75,8 +75,11 @@ class User(Base):
     reset_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
     reset_token_expires: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    # Relations
-    climbs: Mapped[list["Climb"]] = relationship(back_populates="setter")
+    # Relations (climbs où cet user est le setter)
+    climbs: Mapped[list["Climb"]] = relationship(
+        back_populates="setter",
+        foreign_keys="[Climb.setter_id]"
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.full_name}>"
