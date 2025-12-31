@@ -1,6 +1,6 @@
 # STATUS - TODO 14 : Portage Client Railway
 
-**Progression** : 85%
+**Progression** : 90%
 
 ---
 
@@ -34,7 +34,7 @@
 - [x] Adapter `hold_selector.py` - BackendSwitch
 - [x] Adapter `creation_app.py` - BackendSwitch
 - [x] Login dialog - inchangé (spécifique Stokt)
-- [x] Tests (267 passent)
+- [x] Tests (277 passent)
 
 ## Phase 4 : Endpoints Railway (100%)
 
@@ -48,17 +48,25 @@
 - [ ] Endpoints social (reporté)
 - [ ] Endpoints listes (reporté)
 
-## Phase 5 : Sync et Données (50%)
+## Phase 5 : Sync et Données (80%)
 
 - [x] ADR-006 : Deux bases SQLite séparées (stokt.db + railway.db)
 - [x] RailwaySyncManager pour sync Railway → SQLite
 - [x] Basculement automatique de DB selon BackendSource
-- [ ] Sync holds (prises) automatique avec face_id
+- [x] Sync holds (prises) automatique avec face_id
+- [x] Configuration persistante (API key + source) - `core/config.py`
+- [x] Tests config (10 tests)
 - [ ] Sync images (photos des faces)
 - [ ] Sync avatars utilisateurs
 - [ ] Sync users/setters
 - [ ] Gestion conflits (reporté → TODO 15)
 - [ ] Mode offline
+
+## Phase 6 : Validation (100%)
+
+- [x] Synchronisation Railway testée : 1012 climbs, 776 prises
+- [x] Base railway.db créée et peuplée
+- [x] Config sauvegardée dans ~/.mastoc/config.json
 
 ---
 

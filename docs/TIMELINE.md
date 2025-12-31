@@ -9,7 +9,16 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
-- **TODO 14 avancé à 85%** - Portage Client Python vers Railway
+- **TODO 14 avancé à 90%** - Portage Client Python vers Railway
+  - **Session 2** : Config persistante + fix sync holds
+    - Module `core/config.py` créé : sauvegarde API key + source dans `~/.mastoc/config.json`
+    - Méthode `save_hold()` ajoutée à `HoldRepository` (manquait)
+    - `RailwaySyncManager` refactorisé : climbs → extraction face_ids → prises
+    - Synchronisation Railway testée : **1012 climbs, 776 prises**
+    - 10 tests config + 277 tests totaux
+    - Rapport : `docs/reports/SESSION_2025-12-31_config_persistance_sync_holds.md`
+
+- **TODO 14 session précédente (85%)**
   - **Phase 1-4 (100%)** : Complétées (session précédente)
   - **Phase 5 (50%)** : Sync et Données
     - **ADR-006 créé** : Deux bases SQLite séparées

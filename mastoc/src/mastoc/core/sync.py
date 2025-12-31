@@ -247,6 +247,9 @@ class SyncManager:
 class RailwaySyncManager:
     """Gère la synchronisation Railway ↔ BD locale (ADR-006)."""
 
+    # Face ID par défaut pour Montoboard
+    DEFAULT_FACE_ID = "61b42d14-c629-434a-8827-801512151a18"
+
     def __init__(self, api, db: Database):
         """
         Args:
@@ -281,6 +284,8 @@ class RailwaySyncManager:
         """
         Synchronisation complète depuis Railway.
 
+        Ordre : climbs d'abord, puis prises (pour extraire les face_id).
+
         Args:
             face_id: ID de la face à synchroniser (optionnel)
             callback: Fonction (current, total, message) pour la progression
@@ -297,55 +302,57 @@ class RailwaySyncManager:
                     callback(0, 0, "Suppression des données existantes...")
                 self.db.clear_all()
 
-            # 1. Récupérer les faces et leurs holds
-            if callback:
-                callback(0, 0, "Récupération des faces...")
-
-            try:
-                faces = self.api.get_faces() if not face_id else [{"id": face_id}]
-            except Exception as e:
-                faces = [{"id": face_id}] if face_id else []
-                result.errors.append(f"Erreur liste faces: {e}")
-
-            for face_info in faces:
-                fid = face_info.get("id") or face_id
-                if not fid:
-                    continue
-                if callback:
-                    callback(0, 0, f"Récupération des prises (face {fid[:8]}...)...")
-                try:
-                    face = self.api.get_face_setup(fid)
-                    for hold in face.holds:
-                        self.hold_repo.save_hold(hold, fid)
-                        result.holds_added += 1
-                except Exception as e:
-                    result.errors.append(f"Erreur prises face {fid}: {e}")
-
-            # 2. Récupérer les climbs
+            # 1. Récupérer les climbs d'ABORD (pour extraire les face_id)
             if callback:
                 callback(0, 0, "Récupération des climbs...")
 
             def climb_progress(current, total):
                 if callback:
-                    callback(current, total, f"Téléchargement: {current}/{total}")
+                    callback(current, total, f"Téléchargement climbs: {current}/{total}")
 
             all_climbs = self.api.get_all_climbs(face_id=face_id, callback=climb_progress)
 
             if callback:
                 callback(0, len(all_climbs), f"Sauvegarde de {len(all_climbs)} climbs...")
 
-            # 3. Sauvegarder les climbs
+            # 2. Sauvegarder les climbs
             for i, climb in enumerate(all_climbs):
                 self.climb_repo.save_climb(climb)
                 result.climbs_added += 1
                 if callback and i % 50 == 0:
-                    callback(i, len(all_climbs), f"Sauvegarde: {i}/{len(all_climbs)}")
+                    callback(i, len(all_climbs), f"Sauvegarde climbs: {i}/{len(all_climbs)}")
 
-            # 4. Mettre à jour la date de sync
+            # 3. Extraire les face_id uniques des climbs
+            if face_id:
+                face_ids = {face_id}
+            else:
+                face_ids = {c.face_id for c in all_climbs if c.face_id}
+                # Fallback sur le face_id par défaut si aucun trouvé
+                if not face_ids:
+                    face_ids = {self.DEFAULT_FACE_ID}
+
+            # 4. Récupérer les prises pour chaque face
+            if callback:
+                callback(0, len(face_ids), f"Récupération des prises ({len(face_ids)} face(s))...")
+
+            for i, fid in enumerate(face_ids):
+                if callback:
+                    callback(i, len(face_ids), f"Prises face {fid[:8]}...")
+                try:
+                    face = self.api.get_face_setup(fid)
+                    for hold in face.holds:
+                        self.hold_repo.save_hold(hold, fid)
+                        result.holds_added += 1
+                    if callback:
+                        callback(i + 1, len(face_ids), f"Face {fid[:8]}: {len(face.holds)} prises")
+                except Exception as e:
+                    result.errors.append(f"Erreur prises face {fid}: {e}")
+
+            # 5. Mettre à jour la date de sync
             self.db.set_last_sync()
 
             if callback:
-                callback(len(all_climbs), len(all_climbs),
+                callback(len(face_ids), len(face_ids),
                         f"Sync terminée: {result.climbs_added} climbs, {result.holds_added} prises")
 
         except Exception as e:

@@ -260,6 +260,28 @@ class HoldRepository:
                      hold.polygon_str, cx, cy)
                 )
 
+    def save_hold(self, hold: Hold, face_id: str):
+        """Sauvegarde une prise individuelle en base."""
+        with self.db.connection() as conn:
+            cx, cy = hold.centroid
+            conn.execute(
+                """INSERT INTO holds (
+                       id, face_id, area, polygon_str, touch_polygon_str, path_str,
+                       centroid_x, centroid_y, top_polygon_str, center_tape_str,
+                       right_tape_str, left_tape_str
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(id) DO UPDATE SET
+                       face_id = ?, polygon_str = ?, centroid_x = ?, centroid_y = ?,
+                       center_tape_str = ?, right_tape_str = ?, left_tape_str = ?""",
+                (hold.id, face_id, hold.area, hold.polygon_str,
+                 hold.touch_polygon_str, hold.path_str, cx, cy,
+                 hold.top_polygon_str, hold.center_tape_str,
+                 hold.right_tape_str, hold.left_tape_str,
+                 # ON CONFLICT updates
+                 face_id, hold.polygon_str, cx, cy,
+                 hold.center_tape_str, hold.right_tape_str, hold.left_tape_str)
+            )
+
     def get_hold(self, hold_id: int) -> Optional[Hold]:
         """Récupère une prise par son ID."""
         with self.db.connection() as conn:

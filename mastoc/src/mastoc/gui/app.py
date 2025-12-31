@@ -30,6 +30,7 @@ from mastoc.core.backend import (
     BackendSource,
     MONTOBOARD_GYM_ID,
 )
+from mastoc.core.config import AppConfig
 from mastoc.db import Database, ClimbRepository, HoldRepository
 
 
@@ -441,18 +442,30 @@ class MastockApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # Charger la configuration persistante
+        self._app_config = AppConfig.load()
+
         # Backend avec fallback Stokt → Railway
-        self._current_source = BackendSource.STOKT  # Source par défaut
+        self._current_source = BackendSource(self._app_config.source)
         self.backend = BackendSwitch(BackendConfig(
             source=self._current_source,
+            railway_api_key=self._app_config.railway_api_key,
+            railway_url=self._app_config.railway_url,
             fallback_to_stokt=True,
         ))
         # Alias pour compatibilité (widgets existants)
-        self.api = self.backend.stokt.api if self.backend.stokt else StoktAPI()
+        if self._current_source == BackendSource.RAILWAY and self.backend.railway:
+            self.api = self.backend.railway.api
+        else:
+            self.api = self.backend.stokt.api if self.backend.stokt else StoktAPI()
 
         # Base SQLite selon la source (ADR-006)
         self.db = Database(get_db_path(self._current_source))
-        self.sync_manager = SyncManager(self.api, self.db)
+        # SyncManager selon la source
+        if self._current_source == BackendSource.RAILWAY:
+            self.sync_manager = RailwaySyncManager(self.api, self.db)
+        else:
+            self.sync_manager = SyncManager(self.api, self.db)
         self.holds_map = {}
 
         self.setWindowTitle("mastoc - Climb Viewer")
@@ -786,6 +799,10 @@ class MastockApp(QMainWindow):
         self._current_source = source
         self.backend.switch_source(source)
 
+        # Sauvegarder la préférence
+        self._app_config.source = source.value
+        self._app_config.save()
+
         # Mettre à jour les checkboxes du menu
         self.stokt_action.setChecked(source == BackendSource.STOKT)
         self.railway_action.setChecked(source == BackendSource.RAILWAY)
@@ -816,7 +833,7 @@ class MastockApp(QMainWindow):
         """Configure l'API Key Railway."""
         from PyQt6.QtWidgets import QInputDialog
 
-        current_key = self.backend.config.railway_api_key or ""
+        current_key = self._app_config.railway_api_key or ""
 
         key, ok = QInputDialog.getText(
             self,
@@ -827,8 +844,13 @@ class MastockApp(QMainWindow):
 
         if ok and key:
             self.backend.set_railway_api_key(key)
-            self.statusBar().showMessage("API Key Railway configurée")
-            logger.info("API Key Railway configurée")
+
+            # Sauvegarder la clé
+            self._app_config.railway_api_key = key
+            self._app_config.save()
+
+            self.statusBar().showMessage("API Key Railway configurée et sauvegardée")
+            logger.info("API Key Railway configurée et sauvegardée")
 
             # Proposer de basculer vers Railway
             reply = QMessageBox.question(

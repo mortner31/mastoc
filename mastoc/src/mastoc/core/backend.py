@@ -565,4 +565,4 @@ class BackendSwitch:
 
 # Constantes utiles
 MONTOBOARD_GYM_ID = "be149ef2-317d-4c73-8d7d-50074577d2fa"
-MONTOBOARD_FACE_ID = "e29cf833-4e78-4e78-b8c9-f8a31d7d8a01"  # À vérifier avec DB
+MONTOBOARD_FACE_ID = "61b42d14-c629-434a-8827-801512151a18"
