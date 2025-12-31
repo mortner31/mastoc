@@ -86,9 +86,10 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **15** | **Sync Incrémentale (Optimisation)** | **60% - EN COURS** |
+| **15** | **Sync Incrémentale (Optimisation)** | **90% - EN COURS** |
+| **16** | **Tableau de Bord Sync** | **0% - PLANIFIÉ** |
 | **17** | **Authentification & Users mastoc** | **0% - PLANIFIÉ** |
-| **16** | **Sync Tool mastoc <-> Stokt** | **0% - PLANIFIÉ** |
+| **18** | **Sync Données Sociales** | **0% - PLANIFIÉ** |
 | 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
@@ -126,21 +127,21 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 15** : Sync Incrémentale (60% - finir phases optionnelles)
-   - ✅ Phase 1 : Stokt `max_age` dynamique
-   - ✅ Phase 2 : Railway `since_created_at` API
-   - ✅ Phase 3 : Client Railway avec `sync_incremental()`
-   - ⏳ Phase 4-5 : UI feedback + documentation (optionnel)
-2. **TODO 16** : Sync Tool mastoc <-> Stokt
-   - Diff Engine pour comparer stokt.db vs railway.db
-   - Push/Import interactif
-   - **Sync sociale** : détecter sends/comments/likes (non captés par sync incrémentale)
+1. **TODO 15** : Sync Incrémentale (90% - finir documentation)
+   - ✅ Phase 1-4 : Complétées
+   - ⏳ Phase 5 : Documentation (optionnel)
+2. **TODO 16** : Tableau de Bord Sync
+   - Dashboard stats (climbs sync vs locaux)
+   - CLI + intégration GUI
 3. **TODO 17** : Authentification & Users mastoc
    - Email/password + JWT
    - Rôles User/Admin
-4. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
+4. **TODO 18** : Sync Données Sociales
+   - Refresh compteurs (climbed_by, likes, comments)
+   - Détection changements non captés par sync incrémentale
+5. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
 
 ---
 
 **Dernière mise à jour** : 2025-12-31
-**Statut du projet** : TODO 14 ARCHIVÉ, TODO 15 EN COURS (60%)
+**Statut du projet** : TODO 15 EN COURS (90%), TODO 16 simplifié, TODO 18 créé

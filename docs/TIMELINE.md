@@ -9,6 +9,18 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 18 créé** - Synchronisation Données Sociales
+  - Extrait de TODO 16 (ancienne Phase 2c)
+  - Refresh compteurs : climbed_by, total_likes, total_comments
+  - Approche légère (compteurs) vs complète (tables dédiées)
+  - Prérequis : TODO 15, TODO 16
+
+- **TODO 16 simplifié** - Tableau de Bord Sync
+  - Renommé de "Outil de Synchronisation Bidirectionnelle"
+  - Scope réduit : dashboard stats + liste climbs locaux
+  - Retiré : push Stokt, import, Diff Engine, tables sends/comments, conflits
+  - 2 phases au lieu de 5 (analyse critique : sur-ingénierie)
+
 - **TODO 15 avancé à 90%** - Sync Incrémentale (Phases 1-4 complétées)
   - Phase 4 : UI et Feedback (100%)
     - `SyncDialog` : Dialog avec choix full/incremental
