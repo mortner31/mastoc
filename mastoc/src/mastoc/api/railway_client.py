@@ -7,6 +7,7 @@ sur le serveur Railway personnel.
 
 import requests
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 from pathlib import Path
 
@@ -117,6 +118,7 @@ class MastocAPI:
         setter_id: Optional[str] = None,
         search: Optional[str] = None,
         source: Optional[str] = None,
+        since_created_at: Optional[datetime] = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Climb], int]:
@@ -130,6 +132,7 @@ class MastocAPI:
             setter_id: Filtrer par ouvreur
             search: Recherche par nom
             source: Filtrer par source ("stokt", "mastoc")
+            since_created_at: Retourne uniquement les climbs créés après cette date
             page: Page (1-indexed)
             page_size: Nombre par page (max 500)
 
@@ -152,6 +155,8 @@ class MastocAPI:
             params["search"] = search
         if source:
             params["source"] = source
+        if since_created_at:
+            params["since_created_at"] = since_created_at.isoformat()
 
         response = self._request("get", "api/climbs", params=params)
         data = response.json()
@@ -164,17 +169,19 @@ class MastocAPI:
     def get_all_climbs(
         self,
         face_id: Optional[str] = None,
+        since_created_at: Optional[datetime] = None,
         callback=None,
     ) -> list[Climb]:
         """
-        Récupère TOUS les climbs avec pagination automatique.
+        Récupère les climbs avec pagination automatique.
 
         Args:
             face_id: Filtrer par face
+            since_created_at: Retourne uniquement les climbs créés après cette date
             callback: Fonction appelée avec (current, total) pour la progression
 
         Returns:
-            Liste de tous les climbs
+            Liste des climbs correspondants
         """
         all_climbs = []
         page = 1
@@ -183,6 +190,7 @@ class MastocAPI:
         while True:
             climbs, total = self.get_climbs(
                 face_id=face_id,
+                since_created_at=since_created_at,
                 page=page,
                 page_size=page_size,
             )

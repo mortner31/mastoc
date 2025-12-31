@@ -1,6 +1,6 @@
 # STATUS - TODO 15 : Synchronisation Incrémentale
 
-**Progression** : 20%
+**Progression** : 60%
 
 ## Phase 1 : Stokt - Quick Win (100%)
 
@@ -10,19 +10,20 @@
 - [x] Tests unitaires (4 nouveaux tests)
 - [ ] Test d'intégration API Stokt (optionnel - nécessite connexion réelle)
 
-## Phase 2 : Railway - Serveur (0%)
+## Phase 2 : Railway - Serveur (100%)
 
-- [ ] Query param `since_created_at` sur `GET /api/climbs`
-- [ ] Query param `since_synced_at` sur `GET /api/climbs`
-- [ ] Exposer `created_at` dans `ClimbResponse`
-- [ ] Tests endpoint
+- [x] Query param `since_created_at` sur `GET /api/climbs`
+- [x] Query param `since_synced_at` sur `GET /api/climbs`
+- [x] Exposer `created_at` dans `ClimbResponse`
+- [x] Tests endpoint (2 nouveaux tests)
 
-## Phase 3 : Railway - Client (0%)
+## Phase 3 : Railway - Client (100%)
 
-- [ ] Param `since_created_at` dans `MastocAPI.get_climbs()`
-- [ ] Param `since_created_at` dans `MastocAPI.get_all_climbs()`
-- [ ] `RailwaySyncManager.sync_incremental()` utilise le filtre
-- [ ] Tests unitaires client
+- [x] Param `since_created_at` dans `MastocAPI.get_climbs()`
+- [x] Param `since_created_at` dans `MastocAPI.get_all_climbs()`
+- [x] `RailwaySyncManager.sync_incremental()` créé avec since_created_at
+- [x] `RailwaySyncManager.needs_sync()` ajouté
+- [x] Tests existants passent (300 tests)
 
 ## Phase 4 : UI et Feedback (0%)
 

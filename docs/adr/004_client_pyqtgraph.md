@@ -23,11 +23,11 @@ Options considérées :
 
 ## Décision
 
-Utiliser **PyQtGraph** avec **PySide6** et **SQLite** local :
+Utiliser **PyQtGraph** avec **PyQt6** et **SQLite** local :
 - PyQtGraph pour le rendu des images et prises (performant)
-- PySide6 comme binding Qt (licence LGPL)
+- PyQt6 comme binding Qt (licence GPL)
 - SQLite local pour le cache et mode offline
-- httpx pour les appels API au serveur Railway
+- requests pour les appels API au serveur Railway
 
 ## Conséquences
 
@@ -53,7 +53,7 @@ mastoc/
 ├── src/
 │   └── mastoc/
 │       ├── __init__.py
-│       ├── app.py              # Point d'entrée PySide6
+│       ├── app.py              # Point d'entrée PyQt6
 │       ├── api/
 │       │   └── client.py       # Client API Stokt + Railway
 │       ├── core/
@@ -75,7 +75,7 @@ mastoc/
 
 ```python
 import pyqtgraph as pg
-from PySide6.QtCore import Qt
+from PyQt6.QtCore import Qt
 
 class HoldOverlay(pg.GraphicsObject):
     """Overlay interactif des prises sur une face."""
@@ -143,28 +143,32 @@ class LocalDatabase:
 ### Client API
 
 ```python
-import httpx
+import requests
 
 class MastocAPI:
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url
-        self.client = httpx.Client(
-            headers={"X-API-Key": api_key},
-            timeout=30
-        )
+        self.session = requests.Session()
+        self.session.headers.update({
+            "X-API-Key": api_key,
+            "Content-Type": "application/json",
+        })
+        self.timeout = 30
 
     def get_climbs(self, face_id: str) -> list[dict]:
-        response = self.client.get(
+        response = self.session.get(
             f"{self.base_url}/api/climbs",
-            params={"face_id": face_id}
+            params={"face_id": face_id},
+            timeout=self.timeout
         )
         response.raise_for_status()
         return response.json()
 
     def create_climb(self, data: dict) -> dict:
-        response = self.client.post(
+        response = self.session.post(
             f"{self.base_url}/api/climbs",
-            json=data
+            json=data,
+            timeout=self.timeout
         )
         response.raise_for_status()
         return response.json()
@@ -191,10 +195,10 @@ def get_hold_colors(holds: list, climbs: list, mode: ColorMode) -> dict:
 ```toml
 [project]
 dependencies = [
-    "PySide6>=6.6",
-    "pyqtgraph>=0.13",
-    "httpx>=0.25",
-    "numpy>=1.24",
+    "PyQt6>=6.6.0",
+    "pyqtgraph>=0.13.0",
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
 ]
 ```
 

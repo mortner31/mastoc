@@ -2,6 +2,7 @@
 Endpoints pour les climbs (blocs).
 """
 
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -57,6 +58,7 @@ class ClimbResponse(ClimbBase):
     source: str
     personal_notes: Optional[str] = None
     is_project: bool = False
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -80,11 +82,18 @@ def list_climbs(
     setter_id: Optional[UUID] = None,
     search: Optional[str] = None,
     source: Optional[str] = None,
+    since_created_at: Optional[datetime] = None,
+    since_synced_at: Optional[datetime] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Liste les climbs avec filtres."""
+    """Liste les climbs avec filtres.
+
+    Args:
+        since_created_at: Retourne uniquement les climbs créés après cette date
+        since_synced_at: Retourne uniquement les climbs synchronisés après cette date
+    """
     query = select(Climb)
 
     if face_id:
@@ -95,6 +104,10 @@ def list_climbs(
         query = query.where(Climb.source == source)
     if search:
         query = query.where(Climb.name.ilike(f"%{search}%"))
+    if since_created_at:
+        query = query.where(Climb.created_at >= since_created_at)
+    if since_synced_at:
+        query = query.where(Climb.synced_at >= since_synced_at)
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
@@ -126,6 +139,7 @@ def list_climbs(
             source=climb.source,
             personal_notes=climb.personal_notes,
             is_project=climb.is_project,
+            created_at=climb.created_at,
         )
         results.append(resp)
 
@@ -162,6 +176,7 @@ def get_climb(climb_id: UUID, db: Session = Depends(get_db)):
         source=climb.source,
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
+        created_at=climb.created_at,
     )
 
 
@@ -191,6 +206,7 @@ def get_climb_by_stokt_id(stokt_id: UUID, db: Session = Depends(get_db)):
         source=climb.source,
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
+        created_at=climb.created_at,
     )
 
 
@@ -237,6 +253,7 @@ def create_climb(climb_data: ClimbCreate, db: Session = Depends(get_db)):
         source=climb.source,
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
+        created_at=climb.created_at,
     )
 
 
@@ -276,6 +293,7 @@ def update_climb(
         source=climb.source,
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
+        created_at=climb.created_at,
     )
 
 

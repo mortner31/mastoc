@@ -141,3 +141,38 @@ def test_update_stokt_id(client):
     response = client.get(f"/api/climbs/by-stokt-id/{new_stokt_id}")
     assert response.status_code == 200
     assert response.json()["id"] == climb_id
+
+
+def test_climb_response_includes_created_at(client):
+    """Test que la réponse climb inclut created_at."""
+    face_id, face_stokt_id = _setup_gym_face(client)
+    climb_id, _ = _create_climb(client, face_stokt_id, "Bloc Test")
+
+    response = client.get(f"/api/climbs/{climb_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert "created_at" in data
+    assert data["created_at"] is not None
+
+
+def test_list_climbs_since_created_at(client):
+    """Test filtrage par since_created_at."""
+    from datetime import datetime, timedelta
+
+    face_id, face_stokt_id = _setup_gym_face(client)
+    _create_climb(client, face_stokt_id, "Bloc A")
+    _create_climb(client, face_stokt_id, "Bloc B")
+
+    # Tous les climbs
+    response = client.get("/api/climbs")
+    assert response.json()["count"] == 2
+
+    # Filtrer par date future (aucun résultat)
+    future_date = (datetime.utcnow() + timedelta(days=1)).isoformat()
+    response = client.get("/api/climbs", params={"since_created_at": future_date})
+    assert response.json()["count"] == 0
+
+    # Filtrer par date passée (tous les résultats)
+    past_date = (datetime.utcnow() - timedelta(days=1)).isoformat()
+    response = client.get("/api/climbs", params={"since_created_at": past_date})
+    assert response.json()["count"] == 2

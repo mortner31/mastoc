@@ -378,3 +378,110 @@ class RailwaySyncManager:
             result.errors.append(f"Erreur: {e}")
 
         return result
+
+    def _calculate_since_date(self, last_sync: datetime, margin_days: int = 1) -> datetime:
+        """
+        Calcule la date depuis laquelle récupérer les climbs.
+
+        Args:
+            last_sync: Date de dernière synchronisation
+            margin_days: Marge de sécurité en jours
+
+        Returns:
+            Date à utiliser pour since_created_at
+        """
+        from datetime import timedelta
+        return last_sync - timedelta(days=margin_days)
+
+    def sync_incremental(
+        self,
+        face_id: Optional[str] = None,
+        callback: Optional[ProgressCallback] = None
+    ) -> SyncResult:
+        """
+        Synchronisation incrémentale depuis Railway.
+
+        Utilise since_created_at pour ne télécharger que les climbs
+        créés depuis la dernière synchronisation.
+
+        Args:
+            face_id: ID de la face à synchroniser (optionnel)
+            callback: Fonction (current, total, message) pour la progression
+
+        Returns:
+            SyncResult avec les statistiques
+        """
+        result = SyncResult()
+        last_sync = self.db.get_last_sync()
+
+        if not last_sync:
+            # Pas de sync précédente, faire une sync complète
+            return self.sync_full(face_id=face_id, callback=callback)
+
+        # Calculer la date depuis laquelle récupérer (avec marge de sécurité)
+        since_date = self._calculate_since_date(last_sync)
+
+        try:
+            if callback:
+                callback(0, 0, f"Sync incrémentale depuis {since_date.strftime('%Y-%m-%d')}...")
+
+            # Récupérer les climbs existants
+            existing_climbs = self.climb_repo.get_all_climbs()
+            existing_ids = {c.id for c in existing_climbs}
+
+            # Récupérer uniquement les climbs récents depuis l'API
+            def climb_progress(current, total):
+                if callback:
+                    callback(current, total, f"Téléchargement: {current}/{total}")
+
+            new_climbs = self.api.get_all_climbs(
+                face_id=face_id,
+                since_created_at=since_date,
+                callback=climb_progress
+            )
+
+            if callback:
+                callback(0, len(new_climbs), f"Analyse de {len(new_climbs)} climbs récents...")
+
+            # Identifier les nouveaux et les mis à jour
+            added = 0
+            updated = 0
+
+            for climb in new_climbs:
+                if climb.id not in existing_ids:
+                    self.climb_repo.save_climb(climb)
+                    added += 1
+                else:
+                    # Mettre à jour si existant
+                    self.climb_repo.save_climb(climb)
+                    updated += 1
+
+            result.climbs_added = added
+            result.climbs_updated = updated
+
+            # Mettre à jour la date de sync
+            self.db.set_last_sync()
+
+            if callback:
+                callback(len(new_climbs), len(new_climbs),
+                        f"Sync terminée: {added} ajoutés, {updated} mis à jour")
+
+        except Exception as e:
+            result.success = False
+            result.errors.append(f"Erreur: {e}")
+
+        return result
+
+    def needs_sync(self) -> bool:
+        """Vérifie si une synchronisation est nécessaire."""
+        status = self.get_sync_status()
+        if not status["is_synced"]:
+            return True
+
+        last_sync = self.db.get_last_sync()
+        if not last_sync:
+            return True
+
+        # Considérer une sync comme nécessaire après 24h
+        hours_since_sync = (datetime.now() - last_sync).total_seconds() / 3600
+        return hours_since_sync > 24
