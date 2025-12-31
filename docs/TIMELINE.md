@@ -9,6 +9,16 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 17 créé** - Système d'Authentification et Utilisateurs mastoc
+  - Authentification native mastoc : email/password + JWT
+  - Rôles : User + Admin
+  - Reset password par email
+  - Endpoints : `/api/auth/*` (register, login, refresh, reset)
+  - Endpoints : `/api/users/*` (me, profil, avatar)
+  - Client : AuthManager + dialogs PyQt6
+  - Traçabilité : `created_by_id` sur les climbs
+  - Liaison Stokt reportée (optionnel v2)
+
 - **TODO 15 créé** - Synchronisation Incrémentale (Optimisation Téléchargement)
   - Analyse complète des capacités de filtrage Stokt vs Railway
   - **Stokt** : paramètre `max_age` disponible mais non utilisé (hardcodé 9999)
