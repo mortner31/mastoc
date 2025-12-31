@@ -9,6 +9,18 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 15 créé** - Synchronisation Incrémentale (Optimisation Téléchargement)
+  - Analyse complète des capacités de filtrage Stokt vs Railway
+  - **Stokt** : paramètre `max_age` disponible mais non utilisé (hardcodé 9999)
+  - **Railway** : champs `created_at`/`synced_at` en DB mais non exposés via API
+  - **Gain potentiel** : ~99% de données en moins pour sync quotidienne
+  - Plan en 5 phases : Quick Win Stokt → Serveur Railway → Client Railway → UI → Tests
+  - Prérequis : TODO 14 (MastocAPI)
+
+- **TODO 15 (sync_tool) renommé en TODO 16**
+  - L'outil de synchronisation bidirectionnelle devient TODO 16
+  - Permet d'insérer le TODO 15 sur l'optimisation des téléchargements
+
 - **TODO 14 avancé à 90%** - Portage Client Python vers Railway
   - **Session 2** : Config persistante + fix sync holds
     - Module `core/config.py` créé : sauvegarde API key + source dans `~/.mastoc/config.json`
@@ -30,7 +42,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
     - Sync automatique des holds via `/api/faces/{id}/setup`
     - **Reste à faire** : images, avatars, users
 
-- **TODO 15 mis à jour** - Nouvelle architecture avec ADR-006
+- **TODO 16 mis à jour** - Nouvelle architecture avec ADR-006 (ex-TODO 15)
   - Sync en 3 temps : Stokt→stokt.db, Railway→railway.db, analyse diff
   - DiffEngine compare les deux bases locales (offline, rapide)
   - Actions Push/Import avec mise à jour des APIs
@@ -54,7 +66,7 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
     - Tests serveur `test_faces.py`
   - **Reste Phase 5** : Sync bidirectionnelle
 
-- **TODO 15 créé** - Outil de Synchronisation Bidirectionnelle mastoc <-> Stokt
+- **TODO 16 créé** - Outil de Synchronisation Bidirectionnelle mastoc <-> Stokt (ex-TODO 15)
   - Interface PyQtGraph avec 3 onglets : Climbs, Users, Social
   - Diff Engine pour Climbs : local_only, stokt_only, synced, conflicts
   - Diff Engine pour Users : nouveaux setters, modifiés, à jour
