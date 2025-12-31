@@ -306,10 +306,13 @@ class TestIrcraFilteringIntegration:
 
     def test_grade_4_to_5plus_range(self):
         """Test du filtrage 4-5+ avec les vraies données de la base."""
+        import pytest
         from mastoc.db import Database
         from mastoc.core.filters import ClimbFilterService, ClimbFilter
 
         db = Database()
+        if db.get_climb_count() == 0:
+            pytest.skip("Base de données vide - test d'intégration nécessite des données")
         svc = ClimbFilterService(db)
 
         # Plage 4-5+ avec les nouvelles valeurs IRCRA corrigées

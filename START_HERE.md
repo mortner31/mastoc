@@ -83,14 +83,11 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| 13 | Serveur Railway mastoc-api | **100% - COMPLET** |
+| **14** | **Portage Client vers Railway** | **80% - EN COURS** |
+| 15 | Sync Tool mastoc <-> Stokt | 0% - À faire |
+| 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
-| 11 | Principes Ergonomie UI/UX | 100% - Terminé |
-| 10 | Création de Blocs | 97% - Archivé |
-| 09 | Listes Personnalisées | 60% - API OK |
-| 08 | Modes Coloration Heatmaps | 100% - Terminé |
-| 07 | Interactions Blocs | 45% - En cours |
-| 06 | Interface Filtrage Blocs | 100% - Terminé |
+| 09 | Listes Personnalisées | 70% - API OK |
 
 ## Documentation clé
 
@@ -123,11 +120,14 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 14** : Intégrer le client mastoc avec Railway (au lieu de Stokt direct)
-2. **Application mobile** : Porter le prototype vers React Native ou Flutter
-3. **Hold Annotations** : Système de tags crowd-sourcés pour les prises
+1. **TODO 14 (ACTIF)** : Portage client Python vers Railway
+   - Créer `MastocAPI` (client Railway avec API Key)
+   - Implémenter `BackendSwitch` (basculement Stokt/Railway)
+   - Migrer les 18 fichiers GUI
+2. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
+3. **Application mobile** : Porter le prototype vers React Native ou Flutter
 
 ---
 
-**Dernière mise à jour** : 2025-12-30
-**Statut du projet** : Serveur Railway déployé et fonctionnel
+**Dernière mise à jour** : 2025-12-31
+**Statut du projet** : Serveur Railway déployé, portage client en cours (TODO 14)

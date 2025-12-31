@@ -308,6 +308,21 @@ class ClimbListWidget(QWidget):
         """Retourne le cache des pictos."""
         return self.picto_cache
 
+    def set_database(self, db: Database):
+        """Change la base de données (pour basculer entre sources)."""
+        self.db = db
+        self.filter_service = ClimbFilterService(db)
+        # Mettre à jour le filter widget avec le nouveau service
+        self.filter_widget.filter_service = self.filter_service
+        # Vider et recharger les options (setters, feet rules)
+        self.filter_widget.setter_combo.clear()
+        self.filter_widget.setter_combo.addItem("Tous", None)
+        self.filter_widget.feet_combo.clear()
+        self.filter_widget.feet_combo.addItem("Tous", None)
+        self.filter_widget.load_options()
+        # Rafraîchir la liste
+        self.load_climbs()
+
     def load_climbs(self, filter_criteria: ClimbFilter = None):
         """Charge les climbs depuis la base de données."""
         if filter_criteria is None:

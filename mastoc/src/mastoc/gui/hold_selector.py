@@ -29,7 +29,8 @@ from mastoc.gui.widgets.level_slider import LevelRangeSlider
 from mastoc.gui.widgets.hold_overlay import HoldOverlay, ColorMode
 from mastoc.gui.widgets.climb_renderer import render_climb
 from mastoc.gui.widgets.social_panel import SocialPanel
-from mastoc.api.client import StoktAPI, MONTOBOARD_GYM_ID
+from mastoc.api.client import StoktAPI
+from mastoc.core.backend import BackendSwitch, BackendConfig, BackendSource, MONTOBOARD_GYM_ID
 from mastoc.api.models import Climb
 from mastoc.gui.creation import CreationWizard
 
@@ -95,8 +96,9 @@ class HoldSelectorApp(QMainWindow):
         self.mode = "exploration"
         self.current_climb_index = -1  # Index du bloc courant en mode parcours
 
-        # API et social loader (TODO 07)
-        self.api: StoktAPI | None = None
+        # Backend et social loader (TODO 07)
+        self.backend: BackendSwitch | None = None
+        self.api: StoktAPI | None = None  # Alias pour compatibilité
         self.social_loader: SocialLoader | None = None
         self._init_api()
 
@@ -115,19 +117,26 @@ class HoldSelectorApp(QMainWindow):
         logger.info(f"Total démarrage: {(time.perf_counter() - t0)*1000:.0f}ms")
 
     def _init_api(self):
-        """Initialise l'API avec le token stocké."""
-        # Token stocké dans la documentation (TODO: dialog de login)
-        TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
+        """Initialise le backend avec le token stocké."""
+        # Token Stokt stocké (TODO: dialog de login)
+        STOKT_TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
         try:
-            self.api = StoktAPI()
-            self.api.set_token(TOKEN)
-            # Vérifier que le token est valide
-            self.api.get_user_profile()
-            self.social_loader = SocialLoader(self.api)
-            self.social_loader.on_data_loaded = self._on_social_data_loaded
-            logger.info("API initialisée avec succès")
+            self.backend = BackendSwitch(BackendConfig(
+                source=BackendSource.STOKT,
+                stokt_token=STOKT_TOKEN,
+            ))
+            # Alias pour compatibilité
+            self.api = self.backend.stokt.api if self.backend.stokt else None
+
+            if self.api:
+                # Vérifier que le token est valide
+                self.api.get_user_profile()
+                self.social_loader = SocialLoader(self.api)
+                self.social_loader.on_data_loaded = self._on_social_data_loaded
+                logger.info("Backend Stokt initialisé avec succès")
         except Exception as e:
-            logger.warning(f"API non disponible: {e}")
+            logger.warning(f"Backend non disponible: {e}")
+            self.backend = None
             self.api = None
             self.social_loader = None
 

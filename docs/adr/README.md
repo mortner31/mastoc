@@ -11,6 +11,7 @@ Ce dossier contient les décisions architecturales du projet mastoc.
 | [003](003_stack_serveur.md) | Stack technique serveur (FastAPI + PostgreSQL) | Accepté |
 | [004](004_client_pyqtgraph.md) | Client Python avec PyQtGraph + SQLite | Accepté |
 | [005](005_batch_import.md) | Batch Import pour Holds, Users et Climbs | Accepté |
+| [006](006_dual_sqlite_databases.md) | Deux Bases SQLite Séparées (Stokt + Railway) | Accepté |
 
 ## Format ADR
 

@@ -242,3 +242,102 @@ class SyncManager:
         # Considérer une sync comme nécessaire après 24h
         hours_since_sync = (datetime.now() - last_sync).total_seconds() / 3600
         return hours_since_sync > 24
+
+
+class RailwaySyncManager:
+    """Gère la synchronisation Railway ↔ BD locale (ADR-006)."""
+
+    def __init__(self, api, db: Database):
+        """
+        Args:
+            api: MastocAPI (railway_client)
+            db: Database SQLite locale
+        """
+        from mastoc.api.railway_client import MastocAPI
+        self.api: MastocAPI = api
+        self.db = db
+        self.climb_repo = ClimbRepository(db)
+        self.hold_repo = HoldRepository(db)
+
+    def get_sync_status(self) -> dict:
+        """Retourne le statut de synchronisation."""
+        last_sync = self.db.get_last_sync()
+        climb_count = self.db.get_climb_count()
+        hold_count = self.db.get_hold_count()
+
+        return {
+            "last_sync": last_sync.isoformat() if last_sync else None,
+            "climb_count": climb_count,
+            "hold_count": hold_count,
+            "is_synced": climb_count > 0,
+        }
+
+    def sync_full(
+        self,
+        face_id: Optional[str] = None,
+        callback: Optional[ProgressCallback] = None,
+        clear_existing: bool = False
+    ) -> SyncResult:
+        """
+        Synchronisation complète depuis Railway.
+
+        Args:
+            face_id: ID de la face à synchroniser (optionnel)
+            callback: Fonction (current, total, message) pour la progression
+            clear_existing: Si True, supprime les données existantes
+
+        Returns:
+            SyncResult avec les statistiques
+        """
+        result = SyncResult()
+
+        try:
+            if clear_existing:
+                if callback:
+                    callback(0, 0, "Suppression des données existantes...")
+                self.db.clear_all()
+
+            # 1. Récupérer les holds si face_id spécifié
+            if face_id:
+                if callback:
+                    callback(0, 0, "Récupération des prises...")
+                try:
+                    face = self.api.get_face_setup(face_id)
+                    for hold in face.holds:
+                        self.hold_repo.save_hold(hold, face_id)
+                        result.holds_added += 1
+                except Exception as e:
+                    result.errors.append(f"Erreur récupération prises: {e}")
+
+            # 2. Récupérer les climbs
+            if callback:
+                callback(0, 0, "Récupération des climbs...")
+
+            def climb_progress(current, total):
+                if callback:
+                    callback(current, total, f"Téléchargement: {current}/{total}")
+
+            all_climbs = self.api.get_all_climbs(face_id=face_id, callback=climb_progress)
+
+            if callback:
+                callback(0, len(all_climbs), f"Sauvegarde de {len(all_climbs)} climbs...")
+
+            # 3. Sauvegarder les climbs
+            for i, climb in enumerate(all_climbs):
+                self.climb_repo.save_climb(climb)
+                result.climbs_added += 1
+                if callback and i % 50 == 0:
+                    callback(i, len(all_climbs), f"Sauvegarde: {i}/{len(all_climbs)}")
+
+            # 4. Mettre à jour la date de sync
+            self.db.set_last_sync()
+
+            if callback:
+                callback(len(all_climbs), len(all_climbs),
+                        f"Sync terminée: {result.climbs_added} climbs, {result.holds_added} prises")
+
+        except Exception as e:
+            result.success = False
+            result.errors.append(f"Erreur: {e}")
+
+        return result

@@ -23,10 +23,18 @@ from PIL import Image as PILImage
 
 logger = logging.getLogger(__name__)
 
-from mastoc.api.client import StoktAPI, AuthenticationError, MONTOBOARD_GYM_ID
+from mastoc.api.client import StoktAPI, AuthenticationError
+from mastoc.core.backend import (
+    BackendSwitch,
+    BackendConfig,
+    BackendSource,
+    MONTOBOARD_GYM_ID,
+)
 from mastoc.db import Database, ClimbRepository, HoldRepository
+
+
 from mastoc.api.models import Climb, Hold, HoldType
-from mastoc.core.sync import SyncManager
+from mastoc.core.sync import SyncManager, RailwaySyncManager
 from mastoc.gui.widgets.climb_list import ClimbListWidget
 from mastoc.gui.widgets.my_lists_panel import MyListsPanel
 from mastoc.gui.dialogs.login import LoginDialog, TokenExpiredDialog
@@ -39,6 +47,14 @@ HOLD_COLORS = {
     HoldType.FEET: (49, 218, 255, 200),    # NEON_BLUE #31DAFF (cyan)
     HoldType.TOP: (255, 0, 0, 200),        # Rouge
 }
+
+
+def get_db_path(source: BackendSource) -> Path:
+    """Retourne le chemin de la base SQLite selon la source (ADR-006)."""
+    base_dir = Path.home() / ".mastoc"
+    if source == BackendSource.RAILWAY:
+        return base_dir / "railway.db"
+    return base_dir / "stokt.db"
 
 
 def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
@@ -424,8 +440,18 @@ class MastockApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.db = Database()
-        self.api = StoktAPI()
+
+        # Backend avec fallback Stokt → Railway
+        self._current_source = BackendSource.STOKT  # Source par défaut
+        self.backend = BackendSwitch(BackendConfig(
+            source=self._current_source,
+            fallback_to_stokt=True,
+        ))
+        # Alias pour compatibilité (widgets existants)
+        self.api = self.backend.stokt.api if self.backend.stokt else StoktAPI()
+
+        # Base SQLite selon la source (ADR-006)
+        self.db = Database(get_db_path(self._current_source))
         self.sync_manager = SyncManager(self.api, self.db)
         self.holds_map = {}
 
@@ -485,9 +511,32 @@ class MastockApp(QMainWindow):
         sync_action.triggered.connect(self.sync_data)
         file_menu.addAction(sync_action)
 
-        login_action = QAction("Connexion...", self)
+        login_action = QAction("Connexion Stokt...", self)
         login_action.triggered.connect(self.show_login)
         file_menu.addAction(login_action)
+
+        file_menu.addSeparator()
+
+        # Sous-menu Backend
+        backend_menu = file_menu.addMenu("Source de données")
+
+        self.stokt_action = QAction("Stokt (sostokt.com)", self)
+        self.stokt_action.setCheckable(True)
+        self.stokt_action.setChecked(self.backend.source == BackendSource.STOKT)
+        self.stokt_action.triggered.connect(lambda: self._set_backend_source(BackendSource.STOKT))
+        backend_menu.addAction(self.stokt_action)
+
+        self.railway_action = QAction("Railway (mastoc-api)", self)
+        self.railway_action.setCheckable(True)
+        self.railway_action.setChecked(self.backend.source == BackendSource.RAILWAY)
+        self.railway_action.triggered.connect(lambda: self._set_backend_source(BackendSource.RAILWAY))
+        backend_menu.addAction(self.railway_action)
+
+        backend_menu.addSeparator()
+
+        railway_key_action = QAction("Configurer API Key Railway...", self)
+        railway_key_action.triggered.connect(self._configure_railway_key)
+        backend_menu.addAction(railway_key_action)
 
         file_menu.addSeparator()
 
@@ -558,6 +607,11 @@ class MastockApp(QMainWindow):
 
     def _update_lists_panel_user(self):
         """Met a jour le user_id du panel listes."""
+        # get_user_profile n'existe que sur StoktAPI (pas sur MastocAPI/Railway)
+        if not hasattr(self.api, 'get_user_profile'):
+            logger.debug("API sans get_user_profile (Railway), skip profil")
+            return
+
         if self.api.is_authenticated():
             try:
                 profile = self.api.get_user_profile()
@@ -577,18 +631,36 @@ class MastockApp(QMainWindow):
 
     def sync_data(self):
         """Synchronise les données depuis l'API."""
-        if not self.api.is_authenticated():
-            reply = QMessageBox.question(
-                self, "Connexion requise",
-                "Vous devez être connecté pour synchroniser.\nVoulez-vous vous connecter ?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                self.show_login()
-                if not self.api.is_authenticated():
+        # Gestion de l'authentification selon la source
+        if self._current_source == BackendSource.RAILWAY:
+            # Railway utilise une API Key
+            if not self.api.is_authenticated():
+                reply = QMessageBox.question(
+                    self, "API Key requise",
+                    "Une API Key Railway est requise pour synchroniser.\n"
+                    "Voulez-vous la configurer ?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.Yes:
+                    self._configure_railway_key()
+                    if not self.api.is_authenticated():
+                        return
+                else:
                     return
-            else:
-                return
+        else:
+            # Stokt utilise login/password
+            if not self.api.is_authenticated():
+                reply = QMessageBox.question(
+                    self, "Connexion requise",
+                    "Vous devez être connecté pour synchroniser.\nVoulez-vous vous connecter ?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.Yes:
+                    self.show_login()
+                    if not self.api.is_authenticated():
+                        return
+                else:
+                    return
 
         # Dialog de progression
         progress = QProgressDialog("Synchronisation...", "Annuler", 0, 100, self)
@@ -705,6 +777,68 @@ class MastockApp(QMainWindow):
             progress.close()
             logger.error(f"Erreur génération pictos: {e}")
             QMessageBox.warning(self, "Erreur", str(e))
+
+    def _set_backend_source(self, source: BackendSource):
+        """Change la source de données (ADR-006 : deux bases séparées)."""
+        if source == self._current_source:
+            return
+
+        self._current_source = source
+        self.backend.switch_source(source)
+
+        # Mettre à jour les checkboxes du menu
+        self.stokt_action.setChecked(source == BackendSource.STOKT)
+        self.railway_action.setChecked(source == BackendSource.RAILWAY)
+
+        # Mettre à jour l'alias API
+        if source == BackendSource.STOKT and self.backend.stokt:
+            self.api = self.backend.stokt.api
+        elif source == BackendSource.RAILWAY and self.backend.railway:
+            self.api = self.backend.railway.api
+
+        # Basculer vers la base SQLite correspondante (ADR-006)
+        self.db = Database(get_db_path(source))
+        # Utiliser le bon SyncManager selon la source
+        if source == BackendSource.RAILWAY:
+            self.sync_manager = RailwaySyncManager(self.api, self.db)
+        else:
+            self.sync_manager = SyncManager(self.api, self.db)
+        self.climb_list.set_database(self.db)
+
+        # Mettre à jour le panel listes avec la nouvelle API
+        self.lists_panel.api = self.api
+
+        source_name = "Stokt" if source == BackendSource.STOKT else "Railway"
+        self.statusBar().showMessage(f"Source: {source_name}")
+        logger.info(f"Backend changé vers: {source_name}")
+
+    def _configure_railway_key(self):
+        """Configure l'API Key Railway."""
+        from PyQt6.QtWidgets import QInputDialog
+
+        current_key = self.backend.config.railway_api_key or ""
+
+        key, ok = QInputDialog.getText(
+            self,
+            "API Key Railway",
+            "Entrez votre API Key Railway:",
+            text=current_key
+        )
+
+        if ok and key:
+            self.backend.set_railway_api_key(key)
+            self.statusBar().showMessage("API Key Railway configurée")
+            logger.info("API Key Railway configurée")
+
+            # Proposer de basculer vers Railway
+            reply = QMessageBox.question(
+                self,
+                "Basculer vers Railway?",
+                "L'API Key est configurée.\nVoulez-vous basculer vers Railway comme source?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self._set_backend_source(BackendSource.RAILWAY)
 
 
 def main():

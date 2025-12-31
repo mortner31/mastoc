@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QListWidgetItem, QTabWidget, QPushButton, QFrame, QSplitter
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from mastoc.api.client import StoktAPI
 from mastoc.api.models import ClimbList, ListItem, Climb
@@ -124,22 +124,30 @@ class MyListsPanel(QWidget):
 
     def _load_lists(self):
         """Charge les listes (thread)."""
-        try:
-            self.my_lists = self.api.get_user_lists(self.user_id)
-        except Exception as e:
-            print(f"Erreur chargement mes listes: {e}")
+        # Ces méthodes n'existent que sur StoktAPI (pas Railway)
+        if hasattr(self.api, 'get_user_lists'):
+            try:
+                self.my_lists = self.api.get_user_lists(self.user_id)
+            except Exception as e:
+                print(f"Erreur chargement mes listes: {e}")
+                self.my_lists = []
+        else:
             self.my_lists = []
 
-        try:
-            self.gym_lists = self.api.get_gym_lists(self.gym_id, page_size=50)
-        except Exception as e:
-            print(f"Erreur chargement listes gym: {e}")
+        if hasattr(self.api, 'get_gym_lists'):
+            try:
+                self.gym_lists = self.api.get_gym_lists(self.gym_id, page_size=50)
+            except Exception as e:
+                print(f"Erreur chargement listes gym: {e}")
+                self.gym_lists = []
+        else:
             self.gym_lists = []
 
         # Mise a jour UI dans le thread principal
         from PyQt6.QtCore import QMetaObject, Q_ARG, Qt as QtCore_Qt
         QMetaObject.invokeMethod(self, "_update_lists_ui", QtCore_Qt.ConnectionType.QueuedConnection)
 
+    @pyqtSlot()
     def _update_lists_ui(self):
         """Met a jour l'interface des listes."""
         self.loading_label.hide()

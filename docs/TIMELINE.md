@@ -7,6 +7,42 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2025-12-31
+
+- **TODO 14 avancé à 80%** - Portage Client Python vers Railway
+  - **Phase 1 (100%)** : Client `MastocAPI` créé
+    - `mastoc/api/railway_client.py` (400+ lignes)
+    - Endpoints : GET/POST/PATCH/DELETE climbs, GET holds, GET faces/setup
+    - 16 tests unitaires
+  - **Phase 2 (100%)** : `BackendSwitch` créé
+    - `mastoc/core/backend.py` (580 lignes)
+    - Interface commune `BackendInterface`
+    - Adapters `RailwayBackend` et `StoktBackend`
+    - Fallback automatique si Railway indisponible
+    - 27 tests unitaires
+  - **Phase 3 (100%)** : Migration GUI
+    - `app.py` : menu "Source de données" (Stokt/Railway)
+    - `hold_selector.py`, `creation_app.py` adaptés
+  - **Phase 4 (100%)** : Endpoints Railway
+    - `server/routers/faces.py` : GET /api/faces/{id}/setup
+    - Tests serveur `test_faces.py`
+  - **Reste Phase 5** : Sync bidirectionnelle
+
+- **TODO 15 créé** - Outil de Synchronisation Bidirectionnelle mastoc <-> Stokt
+  - Interface PyQtGraph avec 3 onglets : Climbs, Users, Social
+  - Diff Engine pour Climbs : local_only, stokt_only, synced, conflicts
+  - Diff Engine pour Users : nouveaux setters, modifiés, à jour
+  - Sync données sociales : sends (réalisations), comments, likes
+  - Actions : Push vers Stokt, Import depuis Stokt, Ignorer
+  - Gestion des conflits avec résolution côte-à-côte
+  - Prérequis : TODO 14 (MastocAPI)
+
+- **TODO 14 créé** - Portage Client Python vers Railway
+  - Migration du client de Stokt (`sostokt.com`) vers Railway (`mastoc-api`)
+  - 5 phases : Client API, Backend Switch, Migration GUI, Endpoints, Sync
+  - 18 fichiers à adapter
+  - Objectif : indépendance complète de Stokt
+
 ## 2025-12-30
 
 - **TODO 13 complété à 100%** - Serveur Railway mastoc-api

@@ -14,6 +14,7 @@ from mastoc_api.routers import (
     health_router,
     climbs_router,
     holds_router,
+    faces_router,
     sync_router,
 )
 # Import des modèles pour créer les tables
@@ -62,6 +63,7 @@ app.include_router(health_router)
 api_dependencies = [Depends(verify_api_key)]
 app.include_router(climbs_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(holds_router, prefix="/api", dependencies=api_dependencies)
+app.include_router(faces_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(sync_router, prefix="/api", dependencies=api_dependencies)
 
 

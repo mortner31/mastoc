@@ -13,7 +13,8 @@ from PyQt6.QtCore import Qt
 
 from mastoc.db import Database
 from mastoc.core.hold_index import HoldClimbIndex
-from mastoc.api.client import StoktAPI, MONTOBOARD_GYM_ID
+from mastoc.api.client import StoktAPI
+from mastoc.core.backend import BackendSwitch, BackendConfig, BackendSource, MONTOBOARD_GYM_ID
 from mastoc.gui.creation import CreationWizard
 
 # Configuration du logging
@@ -61,17 +62,22 @@ class CreationTestApp(QMainWindow):
         logger.info("CreationTestApp prêt")
 
     def _init_api(self) -> StoktAPI | None:
-        """Initialise l'API avec le token stocké."""
-        TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
+        """Initialise le backend avec le token stocké."""
+        STOKT_TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
         try:
-            api = StoktAPI()
-            api.set_token(TOKEN)
-            # Vérifier le token
-            api.get_user_profile()
-            logger.info("API initialisée avec succès")
+            self.backend = BackendSwitch(BackendConfig(
+                source=BackendSource.STOKT,
+                stokt_token=STOKT_TOKEN,
+            ))
+            api = self.backend.stokt.api if self.backend.stokt else None
+            if api:
+                # Vérifier le token
+                api.get_user_profile()
+                logger.info("Backend Stokt initialisé avec succès")
             return api
         except Exception as e:
-            logger.warning(f"API non disponible: {e}")
+            logger.warning(f"Backend non disponible: {e}")
+            self.backend = None
             QMessageBox.warning(
                 self,
                 "API",
