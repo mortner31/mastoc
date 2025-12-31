@@ -297,17 +297,29 @@ class RailwaySyncManager:
                     callback(0, 0, "Suppression des données existantes...")
                 self.db.clear_all()
 
-            # 1. Récupérer les holds si face_id spécifié
-            if face_id:
+            # 1. Récupérer les faces et leurs holds
+            if callback:
+                callback(0, 0, "Récupération des faces...")
+
+            try:
+                faces = self.api.get_faces() if not face_id else [{"id": face_id}]
+            except Exception as e:
+                faces = [{"id": face_id}] if face_id else []
+                result.errors.append(f"Erreur liste faces: {e}")
+
+            for face_info in faces:
+                fid = face_info.get("id") or face_id
+                if not fid:
+                    continue
                 if callback:
-                    callback(0, 0, "Récupération des prises...")
+                    callback(0, 0, f"Récupération des prises (face {fid[:8]}...)...")
                 try:
-                    face = self.api.get_face_setup(face_id)
+                    face = self.api.get_face_setup(fid)
                     for hold in face.holds:
-                        self.hold_repo.save_hold(hold, face_id)
+                        self.hold_repo.save_hold(hold, fid)
                         result.holds_added += 1
                 except Exception as e:
-                    result.errors.append(f"Erreur récupération prises: {e}")
+                    result.errors.append(f"Erreur prises face {fid}: {e}")
 
             # 2. Récupérer les climbs
             if callback:

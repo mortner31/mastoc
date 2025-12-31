@@ -342,6 +342,18 @@ class MastocAPI:
     # Faces
     # =========================================================================
 
+    def get_faces(self) -> list[dict]:
+        """
+        GET /api/faces
+
+        Liste toutes les faces disponibles.
+
+        Returns:
+            Liste des faces (id, holds_count, climbs_count, etc.)
+        """
+        response = self._request("get", "api/faces")
+        return response.json()
+
     def get_face_setup(self, face_id: str) -> Face:
         """
         GET /api/faces/{face_id}/setup
