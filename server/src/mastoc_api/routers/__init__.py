@@ -7,6 +7,8 @@ from mastoc_api.routers.climbs import router as climbs_router
 from mastoc_api.routers.holds import router as holds_router
 from mastoc_api.routers.faces import router as faces_router
 from mastoc_api.routers.sync import router as sync_router
+from mastoc_api.routers.auth import router as auth_router
+from mastoc_api.routers.users import router as users_router
 
 __all__ = [
     "health_router",
@@ -14,4 +16,6 @@ __all__ = [
     "holds_router",
     "faces_router",
     "sync_router",
+    "auth_router",
+    "users_router",
 ]

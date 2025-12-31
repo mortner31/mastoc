@@ -73,9 +73,33 @@ class Climb(Base):
     personal_rating: Mapped[int | None] = mapped_column(Integer)
     is_project: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Traçabilité (qui a créé/modifié dans mastoc)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Utilisateur mastoc qui a créé l'entrée"
+    )
+    updated_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Dernier utilisateur mastoc à avoir modifié"
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Date de dernière modification"
+    )
+
     # Relations
     face: Mapped["Face"] = relationship(back_populates="climbs")
-    setter: Mapped["User | None"] = relationship(back_populates="climbs")
+    setter: Mapped["User | None"] = relationship(
+        back_populates="climbs",
+        foreign_keys=[setter_id]
+    )
+    created_by: Mapped["User | None"] = relationship(foreign_keys=[created_by_id])
+    updated_by: Mapped["User | None"] = relationship(foreign_keys=[updated_by_id])
 
     def __repr__(self) -> str:
         return f"<Climb {self.name} ({self.grade_font})>"

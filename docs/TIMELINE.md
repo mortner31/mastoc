@@ -9,6 +9,18 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 17 complété à 100%** - Système d'Authentification et Utilisateurs mastoc
+  - **Phase 1** : Extension Modèle User (email, password_hash, role, etc.)
+  - **Phase 2** : Endpoints Auth (register, login, refresh, logout, reset-password)
+  - **Phase 3** : Endpoints Users (profil, avatar, liste admin)
+  - **Phase 4** : Middleware JWT (security.py, dependencies.py, coexistence API Key)
+  - **Phase 5** : Client AuthManager (core/auth.py, intégration MastocAPI)
+  - **Phase 6** : Client UI (MastocLoginDialog, ProfileDialog, PasswordResetDialog)
+  - **Phase 7** : Traçabilité (created_by_id, updated_by_id sur Climb)
+  - Fichiers serveur : security.py, dependencies.py, routers/auth.py, routers/users.py
+  - Fichiers client : core/auth.py, gui/dialogs/mastoc_auth.py
+  - Script migration : scripts/migrate_user_auth.py
+
 - **TODO 18 créé** - Synchronisation Données Sociales
   - Extrait de TODO 16 (ancienne Phase 2c)
   - Refresh compteurs : climbed_by, total_likes, total_comments

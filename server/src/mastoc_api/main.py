@@ -16,6 +16,8 @@ from mastoc_api.routers import (
     holds_router,
     faces_router,
     sync_router,
+    auth_router,
+    users_router,
 )
 # Import des modèles pour créer les tables
 from mastoc_api.models import Gym, Face, Hold, Climb, User, IdMapping  # noqa: F401
@@ -58,6 +60,12 @@ app.add_middleware(
 # Inclusion des routers
 # Health : public (pour monitoring)
 app.include_router(health_router)
+
+# Auth : public (login/register ne nécessitent pas d'auth)
+app.include_router(auth_router, prefix="/api")
+
+# Users : protégé par JWT (dépendances dans le router)
+app.include_router(users_router, prefix="/api")
 
 # API : protégée par API Key
 api_dependencies = [Depends(verify_api_key)]

@@ -86,9 +86,9 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
+| **17** | **Authentification & Users mastoc** | **100% - COMPLET** |
 | **15** | **Sync Incrémentale (Optimisation)** | **90% - EN COURS** |
 | **16** | **Tableau de Bord Sync** | **0% - PLANIFIÉ** |
-| **17** | **Authentification & Users mastoc** | **0% - PLANIFIÉ** |
 | **18** | **Sync Données Sociales** | **0% - PLANIFIÉ** |
 | 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
@@ -127,15 +127,17 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 15** : Sync Incrémentale (90% - finir documentation)
+1. **TODO 17** : Authentification & Users mastoc (100% - COMPLET)
+   - ✅ Endpoints auth + users
+   - ✅ JWT + API Key coexistence
+   - ✅ Client AuthManager + dialogs PyQt
+   - ⏳ À déployer sur Railway + exécuter migration
+2. **TODO 15** : Sync Incrémentale (90% - finir documentation)
    - ✅ Phase 1-4 : Complétées
    - ⏳ Phase 5 : Documentation (optionnel)
-2. **TODO 16** : Tableau de Bord Sync
+3. **TODO 16** : Tableau de Bord Sync
    - Dashboard stats (climbs sync vs locaux)
    - CLI + intégration GUI
-3. **TODO 17** : Authentification & Users mastoc
-   - Email/password + JWT
-   - Rôles User/Admin
 4. **TODO 18** : Sync Données Sociales
    - Refresh compteurs (climbed_by, likes, comments)
    - Détection changements non captés par sync incrémentale
@@ -144,4 +146,4 @@ python -m mastoc.gui.creation_app
 ---
 
 **Dernière mise à jour** : 2025-12-31
-**Statut du projet** : TODO 15 EN COURS (90%), TODO 16 simplifié, TODO 18 créé
+**Statut du projet** : TODO 17 COMPLET, TODO 15 EN COURS (90%)

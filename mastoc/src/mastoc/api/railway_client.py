@@ -35,10 +35,22 @@ class AuthenticationError(MastocAPIError):
 class MastocAPI:
     """Client API pour mastoc-api (Railway)."""
 
-    def __init__(self, config: Optional[RailwayConfig] = None):
+    def __init__(self, config: Optional[RailwayConfig] = None, auth_manager=None):
+        """
+        Initialise le client API.
+
+        Args:
+            config: Configuration Railway (API Key)
+            auth_manager: AuthManager pour authentification JWT (optionnel)
+        """
         self.config = config or RailwayConfig()
         self.session = requests.Session()
+        self._auth_manager = auth_manager
         self._update_headers()
+
+    def set_auth_manager(self, auth_manager):
+        """Définit l'AuthManager pour l'authentification JWT."""
+        self._auth_manager = auth_manager
 
     def _update_headers(self):
         """Met à jour les headers de session."""
@@ -50,14 +62,35 @@ class MastocAPI:
             headers["X-API-Key"] = self.config.api_key
         self.session.headers.update(headers)
 
+    def _get_auth_headers(self) -> dict:
+        """Retourne les headers d'authentification."""
+        headers = {}
+
+        # Priorité : JWT > API Key
+        if self._auth_manager and self._auth_manager.access_token:
+            headers["Authorization"] = f"Bearer {self._auth_manager.access_token}"
+        elif self.config.api_key:
+            headers["X-API-Key"] = self.config.api_key
+
+        return headers
+
     def set_api_key(self, api_key: str):
         """Définit l'API Key."""
         self.config.api_key = api_key
         self._update_headers()
 
     def is_authenticated(self) -> bool:
-        """Vérifie si une API Key est configurée."""
+        """Vérifie si une authentification est configurée (API Key ou JWT)."""
+        if self._auth_manager and self._auth_manager.is_authenticated:
+            return True
         return self.config.api_key is not None
+
+    @property
+    def current_user(self):
+        """Retourne l'utilisateur connecté (si JWT)."""
+        if self._auth_manager:
+            return self._auth_manager.current_user
+        return None
 
     def _url(self, endpoint: str) -> str:
         """Construit l'URL complète."""
@@ -67,11 +100,16 @@ class MastocAPI:
         """Effectue une requête avec gestion des erreurs."""
         kwargs.setdefault("timeout", self.config.timeout)
 
+        # Ajouter les headers d'auth (JWT ou API Key)
+        headers = kwargs.get("headers", {})
+        headers.update(self._get_auth_headers())
+        kwargs["headers"] = headers
+
         url = self._url(endpoint)
         response = getattr(self.session, method)(url, **kwargs)
 
         if response.status_code == 401:
-            raise AuthenticationError("API Key invalide ou manquante")
+            raise AuthenticationError("Non authentifié (JWT ou API Key invalide)")
         if response.status_code == 403:
             raise AuthenticationError("Accès refusé")
 

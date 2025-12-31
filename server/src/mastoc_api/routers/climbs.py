@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from mastoc_api.database import get_db
 from mastoc_api.models import Climb, Face, User
+from mastoc_api.dependencies import get_current_user_optional, AuthenticatedUser
 
 router = APIRouter(prefix="/climbs", tags=["climbs"])
 
@@ -211,12 +212,21 @@ def get_climb_by_stokt_id(stokt_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=ClimbResponse, status_code=201)
-def create_climb(climb_data: ClimbCreate, db: Session = Depends(get_db)):
+def create_climb(
+    climb_data: ClimbCreate,
+    db: Session = Depends(get_db),
+    auth_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+):
     """Crée un nouveau climb."""
     # Vérifier que la face existe
     face = db.get(Face, climb_data.face_id)
     if not face:
         raise HTTPException(status_code=404, detail="Face not found")
+
+    # Traçabilité : qui a créé ce climb
+    created_by_id = None
+    if auth_user and auth_user.user:
+        created_by_id = auth_user.user.id
 
     climb = Climb(
         face_id=climb_data.face_id,
@@ -229,6 +239,7 @@ def create_climb(climb_data: ClimbCreate, db: Session = Depends(get_db)):
         is_private=climb_data.is_private,
         source="mastoc",
         stokt_id=None,  # Pas encore sync
+        created_by_id=created_by_id,
     )
 
     db.add(climb)
@@ -262,6 +273,7 @@ def update_climb(
     climb_id: UUID,
     climb_data: ClimbUpdate,
     db: Session = Depends(get_db),
+    auth_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
 ):
     """Met à jour un climb."""
     climb = db.get(Climb, climb_id)
@@ -271,6 +283,11 @@ def update_climb(
     update_data = climb_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(climb, field, value)
+
+    # Traçabilité : qui a modifié et quand
+    if auth_user and auth_user.user:
+        climb.updated_by_id = auth_user.user.id
+    climb.updated_at = datetime.utcnow()
 
     db.commit()
     db.refresh(climb)
@@ -298,11 +315,33 @@ def update_climb(
 
 
 @router.delete("/{climb_id}", status_code=204)
-def delete_climb(climb_id: UUID, db: Session = Depends(get_db)):
-    """Supprime un climb."""
+def delete_climb(
+    climb_id: UUID,
+    db: Session = Depends(get_db),
+    auth_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+):
+    """
+    Supprime un climb.
+
+    Permissions :
+    - API Key : peut tout supprimer
+    - JWT : peut supprimer ses propres climbs (created_by_id) ou si admin
+    """
     climb = db.get(Climb, climb_id)
     if not climb:
         raise HTTPException(status_code=404, detail="Climb not found")
+
+    # Vérifier les permissions si authentifié par JWT
+    if auth_user and auth_user.user and not auth_user.is_api_key:
+        can_delete = (
+            auth_user.is_admin or
+            climb.created_by_id == auth_user.user.id
+        )
+        if not can_delete:
+            raise HTTPException(
+                status_code=403,
+                detail="Vous ne pouvez supprimer que vos propres climbs"
+            )
 
     db.delete(climb)
     db.commit()
