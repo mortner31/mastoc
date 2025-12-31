@@ -32,6 +32,7 @@ from mastoc.gui.widgets.social_panel import SocialPanel
 from mastoc.api.client import StoktAPI
 from mastoc.core.backend import BackendSwitch, BackendConfig, BackendSource, MONTOBOARD_GYM_ID
 from mastoc.core.config import AppConfig
+from mastoc.core.assets import get_asset_manager
 from mastoc.api.models import Climb
 from mastoc.gui.creation import CreationWizard
 
@@ -80,12 +81,11 @@ class HoldSelectorApp(QMainWindow):
         self.index = HoldClimbIndex.from_database(self.db)
         logger.info(f"  HoldClimbIndex: {(time.perf_counter() - t1)*1000:.0f}ms ({len(self.index.climbs)} climbs, {len(self.index.holds)} holds)")
 
-        # Charger l'image
+        # Charger l'image du mur
         t1 = time.perf_counter()
-        # Remonter jusqu'à la racine du projet (5 niveaux depuis gui/)
-        self.image_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+        self.image_path = self._load_face_image()
         self.img = None
-        if self.image_path.exists():
+        if self.image_path and self.image_path.exists():
             self.img = Image.open(self.image_path).convert('RGB')
         logger.info(f"  Image: {(time.perf_counter() - t1)*1000:.0f}ms")
 
@@ -130,6 +130,44 @@ class HoldSelectorApp(QMainWindow):
         if self._current_source == BackendSource.RAILWAY:
             return base_dir / "railway.db"
         return base_dir / "stokt.db"
+
+    def _load_face_image(self) -> Path | None:
+        """
+        Charge l'image du mur depuis le cache d'assets.
+
+        Récupère le picture_path depuis la DB locale et utilise l'AssetManager
+        pour télécharger/cacher l'image si nécessaire.
+
+        Returns:
+            Chemin local de l'image, ou fallback vers le chemin legacy
+        """
+        # Fallback : chemin legacy hardcodé
+        legacy_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+
+        try:
+            # Récupérer le picture_path depuis la DB
+            hold_repo = HoldRepository(self.db)
+            picture_path = hold_repo.get_any_face_picture_path()
+
+            if not picture_path:
+                logger.warning("Pas de picture_path en DB, utilisation du fallback")
+                return legacy_path if legacy_path.exists() else None
+
+            # Utiliser l'AssetManager pour récupérer l'image
+            asset_manager = get_asset_manager()
+            cached_path = asset_manager.get_face_image(picture_path)
+
+            if cached_path and cached_path.exists():
+                logger.info(f"Image chargée depuis cache: {cached_path}")
+                return cached_path
+
+            # Fallback si le téléchargement échoue
+            logger.warning("Échec téléchargement image, utilisation du fallback")
+            return legacy_path if legacy_path.exists() else None
+
+        except Exception as e:
+            logger.error(f"Erreur chargement image: {e}")
+            return legacy_path if legacy_path.exists() else None
 
     def _init_api(self):
         """Initialise le backend avec la config persistante."""

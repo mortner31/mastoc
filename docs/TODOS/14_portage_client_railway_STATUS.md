@@ -1,6 +1,6 @@
 # STATUS - TODO 14 : Portage Client Railway
 
-**Progression** : 95%
+**Progression** : 100%
 
 ---
 
@@ -65,12 +65,15 @@
 - [x] Config sauvegardée dans ~/.mastoc/config.json
 - [x] 3 apps fonctionnelles : app.py, hold_selector.py, creation_app.py
 
-## Phase 7 : Assets (À FAIRE - Prochaine session)
+## Phase 7 : Assets (100%)
 
-- [ ] Sync image mur (face_full_hires.jpg) depuis Railway
-- [ ] Sync avatars utilisateurs
-- [ ] Stockage local dans ~/.mastoc/images/
-- [ ] Gestion cache/invalidation
+- [x] Module `core/assets.py` (AssetManager avec cache)
+- [x] Stockage local dans ~/.mastoc/images/
+- [x] Téléchargement image mur depuis Stokt (picture_path en DB)
+- [x] Gestion cache/invalidation
+- [x] Adaptation des 4 GUIs (hold_selector, app, climb_viewer, select_holds)
+- [x] Tests unitaires (19 tests)
+- [x] 296 tests au total
 
 ---
 

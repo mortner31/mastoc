@@ -22,6 +22,9 @@ from PyQt6.QtGui import QColor
 
 from mastoc.api.models import HoldType
 from mastoc.core.hold_index import HoldClimbIndex
+from mastoc.core.config import AppConfig
+from mastoc.core.assets import get_asset_manager
+from mastoc.db import Database, HoldRepository
 from mastoc.gui.widgets.hold_overlay import HoldOverlay
 from ..controller import WizardController
 
@@ -62,13 +65,10 @@ class SelectHoldsScreen(QWidget):
         self.controller = controller
         self.index = index
 
-        # Image du mur
-        self.image_path = (
-            Path(__file__).parent.parent.parent.parent.parent.parent.parent
-            / "extracted" / "images" / "face_full_hires.jpg"
-        )
+        # Image du mur (chargée depuis le cache d'assets)
+        self.image_path = self._load_face_image()
         self.img: Optional[Image.Image] = None
-        if self.image_path.exists():
+        if self.image_path and self.image_path.exists():
             self.img = Image.open(self.image_path).convert('RGB')
 
         # État local
@@ -77,6 +77,53 @@ class SelectHoldsScreen(QWidget):
         self._setup_ui()
         self._connect_signals()
         self._update_display()
+
+    def _load_face_image(self) -> Optional[Path]:
+        """
+        Charge l'image du mur depuis le cache d'assets.
+
+        Returns:
+            Chemin local de l'image, ou fallback vers le chemin legacy
+        """
+        legacy_path = (
+            Path(__file__).parent.parent.parent.parent.parent.parent.parent
+            / "extracted" / "images" / "face_full_hires.jpg"
+        )
+
+        try:
+            # Déterminer le chemin de la DB selon la config
+            config = AppConfig.load()
+            base_dir = Path.home() / ".mastoc"
+            if config.source == "railway":
+                db_path = base_dir / "railway.db"
+            else:
+                db_path = base_dir / "stokt.db"
+
+            if not db_path.exists():
+                logger.warning(f"DB {db_path} non trouvée, utilisation du fallback")
+                return legacy_path if legacy_path.exists() else None
+
+            db = Database(db_path)
+            hold_repo = HoldRepository(db)
+            picture_path = hold_repo.get_any_face_picture_path()
+
+            if not picture_path:
+                logger.warning("Pas de picture_path en DB, utilisation du fallback")
+                return legacy_path if legacy_path.exists() else None
+
+            asset_manager = get_asset_manager()
+            cached_path = asset_manager.get_face_image(picture_path)
+
+            if cached_path and cached_path.exists():
+                logger.info(f"Image chargée depuis cache: {cached_path}")
+                return cached_path
+
+            logger.warning("Échec téléchargement image, utilisation du fallback")
+            return legacy_path if legacy_path.exists() else None
+
+        except Exception as e:
+            logger.error(f"Erreur chargement image: {e}")
+            return legacy_path if legacy_path.exists() else None
 
     def _setup_ui(self):
         """Configure l'interface."""

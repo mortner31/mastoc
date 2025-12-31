@@ -12,6 +12,7 @@ from mastoc.core.backend import (
     StoktBackend,
     MONTOBOARD_GYM_ID,
 )
+from mastoc.core.assets import AssetManager, get_asset_manager
 
 __all__ = [
     # Sync
@@ -30,4 +31,7 @@ __all__ = [
     "RailwayBackend",
     "StoktBackend",
     "MONTOBOARD_GYM_ID",
+    # Assets
+    "AssetManager",
+    "get_asset_manager",
 ]

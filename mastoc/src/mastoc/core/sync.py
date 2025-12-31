@@ -340,9 +340,9 @@ class RailwaySyncManager:
                     callback(i, len(face_ids), f"Prises face {fid[:8]}...")
                 try:
                     face = self.api.get_face_setup(fid)
-                    for hold in face.holds:
-                        self.hold_repo.save_hold(hold, fid)
-                        result.holds_added += 1
+                    # Sauvegarder la face complète (avec picture_name) et ses holds
+                    self.hold_repo.save_face(face)
+                    result.holds_added += len(face.holds)
                     if callback:
                         callback(i + 1, len(face_ids), f"Face {fid[:8]}: {len(face.holds)} prises")
                 except Exception as e:

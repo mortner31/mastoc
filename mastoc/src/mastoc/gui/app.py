@@ -31,6 +31,7 @@ from mastoc.core.backend import (
     MONTOBOARD_GYM_ID,
 )
 from mastoc.core.config import AppConfig
+from mastoc.core.assets import get_asset_manager
 from mastoc.db import Database, ClimbRepository, HoldRepository
 
 
@@ -571,6 +572,37 @@ class MastockApp(QMainWindow):
         regen_pictos_action.triggered.connect(self.regenerate_pictos)
         tools_menu.addAction(regen_pictos_action)
 
+    def _load_face_image(self) -> Path | None:
+        """
+        Charge l'image du mur depuis le cache d'assets.
+
+        Returns:
+            Chemin local de l'image, ou fallback vers le chemin legacy
+        """
+        legacy_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+
+        try:
+            hold_repo = HoldRepository(self.db)
+            picture_path = hold_repo.get_any_face_picture_path()
+
+            if not picture_path:
+                logger.warning("Pas de picture_path en DB, utilisation du fallback")
+                return legacy_path if legacy_path.exists() else None
+
+            asset_manager = get_asset_manager()
+            cached_path = asset_manager.get_face_image(picture_path)
+
+            if cached_path and cached_path.exists():
+                logger.info(f"Image chargée depuis cache: {cached_path}")
+                return cached_path
+
+            logger.warning("Échec téléchargement image, utilisation du fallback")
+            return legacy_path if legacy_path.exists() else None
+
+        except Exception as e:
+            logger.error(f"Erreur chargement image: {e}")
+            return legacy_path if legacy_path.exists() else None
+
     def load_data(self):
         """Charge les données depuis la base de données."""
         # Charger les prises
@@ -579,10 +611,10 @@ class MastockApp(QMainWindow):
         self.holds_map = {h.id: h for h in holds}
         self.climb_viewer.set_holds_map(self.holds_map)
 
-        # Chercher l'image du mur
-        self.image_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+        # Charger l'image du mur depuis le cache
+        self.image_path = self._load_face_image()
         self.wall_image = None
-        if self.image_path.exists():
+        if self.image_path and self.image_path.exists():
             self.climb_viewer.set_image(self.image_path)
             self.wall_image = PILImage.open(self.image_path).convert('RGB')
 

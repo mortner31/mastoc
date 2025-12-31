@@ -327,6 +327,28 @@ class HoldRepository:
             left_tape_str=row.get("left_tape_str") or "",
         )
 
+    def get_face_picture_path(self, face_id: str) -> Optional[str]:
+        """Récupère le chemin de l'image d'une face."""
+        with self.db.connection() as conn:
+            cursor = conn.execute(
+                "SELECT picture_name FROM faces WHERE id = ?", (face_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return row["picture_name"]
+            return None
+
+    def get_any_face_picture_path(self) -> Optional[str]:
+        """Récupère le chemin de l'image de n'importe quelle face (la première trouvée)."""
+        with self.db.connection() as conn:
+            cursor = conn.execute(
+                "SELECT picture_name FROM faces WHERE picture_name IS NOT NULL LIMIT 1"
+            )
+            row = cursor.fetchone()
+            if row:
+                return row["picture_name"]
+            return None
+
     def _row_to_face(self, row: dict) -> Face:
         """Convertit une ligne SQLite en Face."""
         from mastoc.api.models import FacePicture

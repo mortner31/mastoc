@@ -19,6 +19,7 @@ from PIL import Image, ImageDraw
 
 from mastoc.db import Database, ClimbRepository, HoldRepository
 from mastoc.api.models import Climb, Hold, HoldType
+from mastoc.core.assets import get_asset_manager
 
 
 # Couleurs pour les types de prises (comme dans l'app Stokt)
@@ -410,8 +411,15 @@ def show_climb(
     holds = hold_repo.get_all_holds()
     holds_map = {h.id: h for h in holds}
 
-    # Chercher l'image du mur
-    image_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+    # Charger l'image du mur depuis le cache
+    legacy_path = Path(__file__).parent.parent.parent.parent.parent / "extracted" / "images" / "face_full_hires.jpg"
+    picture_path = hold_repo.get_any_face_picture_path()
+
+    if picture_path:
+        cached_path = get_asset_manager().get_face_image(picture_path)
+        image_path = cached_path if cached_path and cached_path.exists() else legacy_path
+    else:
+        image_path = legacy_path
 
     # Afficher
     app = QApplication.instance() or QApplication(sys.argv)

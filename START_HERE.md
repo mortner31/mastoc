@@ -86,9 +86,9 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **14** | **Portage Client vers Railway** | **90% - EN COURS** |
 | **15** | **Sync Incrémentale (Optimisation)** | **0% - PLANIFIÉ** |
 | **16** | **Sync Tool mastoc <-> Stokt** | **0% - PLANIFIÉ** |
+| 14 | Portage Client vers Railway | 100% - COMPLET |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
 | 09 | Listes Personnalisées | 70% - API OK |
@@ -125,21 +125,16 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 14 (90%)** : Finaliser portage client
-   - [x] MastocAPI client Railway
-   - [x] BackendSwitch Stokt/Railway
-   - [x] ADR-006 : Deux bases SQLite
-   - [ ] Sync images, avatars, users
-2. **TODO 15** : Sync Incrémentale (Optimisation téléchargement)
+1. **TODO 15** : Sync Incrémentale (Optimisation téléchargement)
    - Stokt : utiliser `max_age` dynamique (quick win)
    - Railway : exposer `since_created_at` via API
    - Gain potentiel : ~99% de données en moins
-3. **TODO 16** : Sync Tool mastoc <-> Stokt
+2. **TODO 16** : Sync Tool mastoc <-> Stokt
    - Diff Engine pour comparer stokt.db vs railway.db
    - Push/Import interactif
-4. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
+3. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
 
 ---
 
 **Dernière mise à jour** : 2025-12-31
-**Statut du projet** : TODO 14 à 90%, sync Railway fonctionnelle
+**Statut du projet** : TODO 14 COMPLET (296 tests), prêt pour TODO 15/16
