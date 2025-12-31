@@ -23,6 +23,17 @@ Créer un outil Python avec interface PyQtGraph permettant d'analyser les diffé
 - Détecter les blocs modifiés après sync (conflits potentiels)
 - Actions interactives : Push, Import, Ignorer
 
+**Limitation TODO 15 (sync incrémentale) :**
+> La sync incrémentale filtre par `created_at` (date de création du climb).
+> Elle ne détecte **PAS** les changements sociaux car ils ne modifient pas cette date :
+> - Quelqu'un réalise un climb (send/effort) → `created_at` inchangé
+> - Quelqu'un ajoute un commentaire → `created_at` inchangé
+> - Quelqu'un ajoute un like → `created_at` inchangé
+>
+> **Solution TODO 16** : Sync sociale dédiée qui interroge périodiquement
+> les endpoints sociaux (`/latest-sends`, `/comments`, `/likes`) pour les
+> blocs synchronisés. Voir Phase 2c.
+
 ## Architecture Cible (ADR-006)
 
 ```
@@ -106,15 +117,31 @@ Créer un outil Python avec interface PyQtGraph permettant d'analyser les diffé
 
 ### Phase 2c : Sync Données Sociales
 
+**Objectif** : Détecter et synchroniser les changements sociaux (réalisations,
+commentaires, likes) qui ne sont pas captés par la sync incrémentale TODO 15.
+
+**Stratégie** :
+- Interroger périodiquement les endpoints sociaux Stokt pour les blocs sync
+- Comparer avec les données locales (Railway)
+- Importer les nouvelles données
+
+**Implémentation** :
 - [ ] Implémenter `sync_climb_social(climb_id)` :
-  - [ ] GET `/api/climbs/{stokt_id}/efforts` → importer sends
+  - [ ] GET `/api/climbs/{stokt_id}/latest-sends` → importer réalisations
   - [ ] GET `/api/climbs/{stokt_id}/comments` → importer commentaires
-  - [ ] Mettre à jour `climbed_by` et `total_likes`
+  - [ ] GET `/api/climbs/{stokt_id}/likes` → mettre à jour compteur
+  - [ ] Mettre à jour `climbed_by` et `total_likes` localement
 - [ ] Tables Railway pour stocker :
-  - [ ] `sends` : user_id, climb_id, date, attempts
-  - [ ] `comments` : user_id, climb_id, text, date
-- [ ] Option : sync social pour tous les blocs synchronisés
-- [ ] Option : sync social pour un bloc spécifique (à la demande)
+  - [ ] `sends` : user_id, climb_id, date, attempts, rating
+  - [ ] `comments` : user_id, climb_id, text, date, replied_to
+- [ ] Modes de sync :
+  - [ ] **À la demande** : sync social pour un bloc spécifique (clic UI)
+  - [ ] **Batch** : sync social pour tous les blocs avec `stokt_id` non NULL
+  - [ ] **Intelligent** : ne sync que les blocs où `climbed_by` ou `total_likes` a changé
+- [ ] Détection des changements :
+  - [ ] Comparer `climbed_by` local vs remote → si différent, sync sends
+  - [ ] Comparer `total_comments` local vs remote → si différent, sync comments
+  - [ ] Comparer `total_likes` local vs remote → mettre à jour compteur
 
 ### Phase 3 : Interface Graphique
 
