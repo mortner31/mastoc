@@ -9,6 +9,23 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 14 avancé à 85%** - Portage Client Python vers Railway
+  - **Phase 1-4 (100%)** : Complétées (session précédente)
+  - **Phase 5 (50%)** : Sync et Données
+    - **ADR-006 créé** : Deux bases SQLite séparées
+      - `~/.mastoc/stokt.db` : données Stokt
+      - `~/.mastoc/railway.db` : données Railway
+      - Basculement automatique selon `BackendSource`
+    - `RailwaySyncManager` créé pour sync Railway → SQLite
+    - `MastocAPI.get_faces()` ajouté pour lister les faces
+    - Sync automatique des holds via `/api/faces/{id}/setup`
+    - **Reste à faire** : images, avatars, users
+
+- **TODO 15 mis à jour** - Nouvelle architecture avec ADR-006
+  - Sync en 3 temps : Stokt→stokt.db, Railway→railway.db, analyse diff
+  - DiffEngine compare les deux bases locales (offline, rapide)
+  - Actions Push/Import avec mise à jour des APIs
+
 - **TODO 14 avancé à 80%** - Portage Client Python vers Railway
   - **Phase 1 (100%)** : Client `MastocAPI` créé
     - `mastoc/api/railway_client.py` (400+ lignes)

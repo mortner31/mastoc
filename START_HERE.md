@@ -6,25 +6,26 @@
 
 mastoc est un projet visant à créer une application personnelle pour visualiser et gérer des blocs d'escalade. Le projet part de l'analyse d'une application existante (Stokt) avec pour objectif de créer une version indépendante, offline-first, spécialisée sur la salle **Montoboard** (Caraman, France).
 
-## Architecture actuelle
+## Architecture actuelle (ADR-006)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Railway                               │
 │  ┌─────────────────────┐    ┌─────────────────────────────┐ │
 │  │   mastoc-api        │    │      PostgreSQL             │ │
-│  │   (FastAPI)         │───▶│   776 holds, ~1000 climbs   │ │
-│  │   X-API-Key auth    │    │   ~50 users                 │ │
+│  │   (FastAPI)         │───▶│   776 holds, 1012 climbs    │ │
+│  │   X-API-Key auth    │    │   79 users                  │ │
 │  └─────────────────────┘    └─────────────────────────────┘ │
 │  https://mastoc-production.up.railway.app                    │
-└─────────────────────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────────────────────┐
+└──────────────────────┬──────────────────────────────────────┘
+                       │ sync
+┌──────────────────────▼──────────────────────────────────────┐
 │  Client mastoc (Python + PyQtGraph)                         │
-│  - Visualisation des blocs                                  │
-│  - Filtrage par grade, prises, setter                       │
-│  - Création de nouveaux blocs                               │
+│  - BackendSwitch : basculement Stokt / Railway              │
+│  - Deux bases SQLite séparées (ADR-006) :                   │
+│    ~/.mastoc/stokt.db   ← sync depuis Stokt                 │
+│    ~/.mastoc/railway.db ← sync depuis Railway               │
+│  - Visualisation, filtrage, création de blocs               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,8 +39,10 @@ mastoc est un projet visant à créer une application personnelle pour visualise
 |----------|-------------|
 | `/health` | Status serveur + DB |
 | `/docs` | Swagger UI (documentation interactive) |
-| `/api/climbs` | CRUD climbs |
+| `/api/climbs` | CRUD climbs (GET, POST, PATCH, DELETE) |
 | `/api/holds` | Liste holds |
+| `/api/faces` | Liste faces |
+| `/api/faces/{id}/setup` | Face avec tous ses holds |
 | `/api/sync/stats` | Statistiques de la base |
 | `/api/sync/import/*` | Import depuis Stokt |
 
@@ -83,8 +86,8 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **14** | **Portage Client vers Railway** | **80% - EN COURS** |
-| 15 | Sync Tool mastoc <-> Stokt | 0% - À faire |
+| **14** | **Portage Client vers Railway** | **85% - EN COURS** |
+| **15** | **Sync Tool mastoc <-> Stokt** | **0% - PLANIFIÉ** |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
 | 09 | Listes Personnalisées | 70% - API OK |
@@ -100,6 +103,7 @@ python -m mastoc.gui.creation_app
 | [003](docs/adr/003_stack_serveur.md) | Stack serveur (FastAPI + PostgreSQL) |
 | [004](docs/adr/004_client_pyqtgraph.md) | Client PyQtGraph + SQLite |
 | [005](docs/adr/005_batch_import.md) | Batch Import pour Holds, Users et Climbs |
+| [006](docs/adr/006_dual_sqlite_databases.md) | Deux Bases SQLite Séparées (Stokt + Railway) |
 
 ### Autres documents
 
@@ -115,19 +119,22 @@ python -m mastoc.gui.creation_app
 | Gyms | 1 | Stokt → Railway |
 | Faces | 1 | Stokt → Railway |
 | Holds | 776 | Stokt → Railway |
-| Climbs | ~1000 | Stokt → Railway |
-| Users | ~50 | Stokt → Railway |
+| Climbs | 1012 | Stokt → Railway |
+| Users | 79 | Stokt → Railway |
 
 ## Prochaines étapes
 
-1. **TODO 14 (ACTIF)** : Portage client Python vers Railway
-   - Créer `MastocAPI` (client Railway avec API Key)
-   - Implémenter `BackendSwitch` (basculement Stokt/Railway)
-   - Migrer les 18 fichiers GUI
-2. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
-3. **Application mobile** : Porter le prototype vers React Native ou Flutter
+1. **TODO 14 (85%)** : Finaliser portage client
+   - [x] MastocAPI client Railway
+   - [x] BackendSwitch Stokt/Railway
+   - [x] ADR-006 : Deux bases SQLite
+   - [ ] Sync images, avatars, users
+2. **TODO 15** : Sync Tool mastoc <-> Stokt
+   - Diff Engine pour comparer stokt.db vs railway.db
+   - Push/Import interactif
+3. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
 
 ---
 
 **Dernière mise à jour** : 2025-12-31
-**Statut du projet** : Serveur Railway déployé, portage client en cours (TODO 14)
+**Statut du projet** : TODO 14 à 85%, sync Railway fonctionnelle
