@@ -1,15 +1,26 @@
 # Plan Moyen Terme (3-6 mois)
 
 **Période** : Mars - Juin 2026
+**Mise à jour** : 2025-12-31
+
+---
+
+## Prérequis (Court Terme - à compléter avant)
+
+- [x] Serveur Railway déployé ✅
+- [x] BackendSwitch Stokt/Railway ✅
+- [ ] Sync Incrémentale (TODO 15)
+- [ ] Authentification (TODO 17)
+- [ ] Hold Annotations (TODO 12)
 
 ---
 
 ## Objectifs principaux
 
 1. **Application Android MVP**
-2. **Synchronisation bi-directionnelle**
+2. **Synchronisation bi-directionnelle** (partiellement fait : BackendSwitch ✅)
 3. **Support du pan personnel**
-4. **Listes personnalisées**
+4. **Listes personnalisées** (TODO 09 à 70%)
 
 ---
 
@@ -119,9 +130,21 @@
 
 ## Phase 6 : Synchronisation Bi-directionnelle (Mois 4-5)
 
+### État actuel
+
+**Déjà implémenté** (Python) :
+- BackendSwitch : basculement dynamique Stokt/Railway ✅
+- Dual SQLite : `stokt.db` + `railway.db` (ADR-006) ✅
+- RailwaySyncManager ✅
+
+**À implémenter** (Android) :
+- DataSourceManager Kotlin
+- WorkManager pour sync background
+- Queue offline (Room)
+
 ### Objectif
 
-Permettre la modification des données depuis Android avec sync vers le serveur, en utilisant l'**architecture double-source**.
+Porter le BackendSwitch vers Android et ajouter la sync bi-directionnelle.
 
 ### Flux de données (Architecture Double-Source)
 
@@ -337,4 +360,4 @@ Mois 6 (Juin)
 
 ---
 
-*Plan moyen terme créé le 2025-12-23*
+*Plan moyen terme créé le 2025-12-23, mis à jour le 2025-12-31*

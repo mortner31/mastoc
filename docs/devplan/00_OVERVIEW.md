@@ -1,8 +1,8 @@
 # Plan de Développement mastoc - Vue d'ensemble
 
-**Version** : 1.0
-**Date** : 2025-12-23
-**Statut** : Document de référence
+**Version** : 2.0
+**Date** : 2025-12-31
+**Statut** : Document de référence (mis à jour post-TODO 14)
 
 ---
 
@@ -12,21 +12,30 @@
 
 1. **Visualisation interactive** des blocs sur images de murs
 2. **Fonctionnement 100% hors-ligne**
-3. **Indépendance progressive** de l'API Stokt
+3. **Indépendance progressive** de l'API Stokt ✅ ATTEINT
 4. **Support multi-murs** (Montoboard + pan personnel)
 
 ---
 
 ## État actuel (Décembre 2025)
 
-### Prototype Python fonctionnel
+### Infrastructure opérationnelle
+
+| Composant | Statut | Détails |
+|-----------|--------|---------|
+| **Serveur Railway** | ✅ Déployé | https://mastoc-production.up.railway.app |
+| **Client Python** | ✅ Fonctionnel | BackendSwitch Stokt/Railway |
+| **Dual SQLite** | ✅ Implémenté | ADR-006 |
+| **Import Stokt** | ✅ Complet | 1012 climbs, 776 holds, 79 users |
+
+### Métriques
 
 | Métrique | Valeur |
 |----------|--------|
-| Lignes de code | ~10 000 |
-| Tests | 225 (passent) |
-| Couverture modules | api, core, db, gui |
-| Données | 1017 climbs, 776 prises |
+| Lignes de code | ~12 000 |
+| Tests | **301** (passent) |
+| ADRs | 6 |
+| Données | 1012 climbs, 776 prises |
 
 ### Fonctionnalités implémentées
 
@@ -34,66 +43,67 @@
 - **Visualisation** sur image du mur avec polygones des prises
 - **Sélection par prises** (recherche avancée)
 - **Modes de coloration** (heatmaps, quantiles, rareté)
-- **Création de blocs** (wizard multi-écrans, POST vers API)
+- **Création de blocs** (wizard multi-écrans, POST vers API) ✅
 - **Interactions sociales** (likes, comments, sends - lecture)
-- **Synchronisation API** Stokt
+- **Synchronisation API** Stokt ET Railway ✅
+- **BackendSwitch** (basculement dynamique Stokt/Railway) ✅
 
-### TODOs en cours
+### TODOs
 
-| TODO | Description | Progression |
-|------|-------------|-------------|
-| 09 | Listes Personnalisées | 5% |
-| 10 | Création de Blocs | 97% |
-| 12 | Hold Annotations | 0% |
+| TODO | Description | Statut |
+|------|-------------|--------|
+| 09 | Listes Personnalisées | 70% - API OK |
+| 12 | Hold Annotations | 0% - À faire |
+| **15** | **Sync Incrémentale** | **0% - PRIORITÉ** |
+| 16 | Sync Tool mastoc ↔ Stokt | 0% - Planifié |
+| **17** | **Authentification & Users** | **0% - PRIORITÉ** |
+| ~~10~~ | ~~Création de Blocs~~ | ✅ Archivé |
+| ~~13~~ | ~~Serveur Railway~~ | ✅ Archivé |
+| ~~14~~ | ~~Portage Client Railway~~ | ✅ Archivé |
 
 ---
 
 ## Axes stratégiques
 
-### 1. Finalisation du prototype Python
+### 1. ✅ Infrastructure "Railway-First avec Mapping" - COMPLÉTÉ
 
-Compléter les fonctionnalités restantes avant migration mobile :
-- Création de blocs (TODO 10) - quasi terminé
-- Hold Annotations (TODO 12) - crowdsourcing état des prises
-- Listes personnalisées (TODO 09) - collections de blocs
-
-### 2. Infrastructure "Railway-First avec Mapping"
-
-**Architecture clé** : mastoc se connecte à **UN seul backend** (Railway par défaut), avec un **mapping d'identifiants** pour sync manuelle avec Stokt.
+**Architecture déployée** : mastoc se connecte à **UN seul backend** (Railway par défaut), avec un **mapping d'identifiants** pour sync avec Stokt.
 
 ```
-mastoc ──► API Railway (backend principal)
-              │
-              ├── Blocs créés localement (stokt_id = NULL)
-              ├── Blocs importés de Stokt (stokt_id = UUID)
-              ├── Images murs (dupliquées - CRITIQUE)
-              ├── Hold Annotations
-              └── Features custom
-
-         [Push/Import manuel vers Stokt si besoin]
+┌─────────────────────────────────────────────────────────────┐
+│                     mastoc CLIENT                           │
+├─────────────────────────────────────────────────────────────┤
+│   BackendSwitch                                             │
+│   ┌─────────────────┐         ┌─────────────────┐          │
+│   │  MODE: RAILWAY  │   OU    │  MODE: STOKT    │          │
+│   │  (par défaut)   │         │  (fallback)     │          │
+│   └────────┬────────┘         └────────┬────────┘          │
+│            │                           │                    │
+│            ▼                           ▼                    │
+│   ┌─────────────────┐         ┌─────────────────┐          │
+│   │  railway.db     │         │   stokt.db      │          │
+│   │  (SQLite)       │         │   (SQLite)      │          │
+│   └─────────────────┘         └─────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Avantages** :
-- **Simplicité** : Un seul backend actif, pas de sync auto complexe
-- **Contrôle** : Push/Import explicite, pas de surprises
-- **Indépendance** : Fonctionne 100% sur Railway sans Stokt
+### 2. Optimisation et authentification (Priorité actuelle)
 
-**Script `init_from_stokt.py`** : Import initial Stokt → Railway.
+- **TODO 15** : Sync incrémentale (réduire bande passante de ~99%)
+- **TODO 17** : Authentification utilisateurs (email/password + JWT)
 
-### 3. Migration mobile Android
+### 3. Migration mobile Android (À venir)
 
 Portage vers application native Android :
 - Stack : Kotlin + Jetpack Compose + Room
 - Design : Material Design 3
 - Architecture : MVVM + Clean Architecture
-- **BackendSwitch** : Sélection du backend (Railway ou Stokt)
 
-### 4. Écosystème complet
+### 4. Écosystème complet (Long terme)
 
-- Push/Import manuel vers Stokt (mapping d'IDs)
-- Support multi-utilisateurs (grimpeurs locaux)
-- Export/Import de données
+- Support multi-utilisateurs
 - Statistiques avancées
+- Export/Import de données
 
 ---
 
@@ -102,13 +112,12 @@ Portage vers application native Android :
 ```
                      2025 Q4              2026 Q1              2026 Q2
                   ──────────────────  ──────────────────  ──────────────────
-Court terme       │ TODO 10 finalisé │                   │                  │
-(1-3 mois)        │ Serveur Railway  │                   │                  │
-                  │ Hold Annotations │                   │                  │
+Court terme       │ ✅ TODO 10,13,14 │ TODO 15,17        │                  │
+(1-3 mois)        │ ✅ Serveur Rail. │ Sync incrémental  │                  │
+                  │ ✅ BackendSwitch │ Auth utilisateurs │                  │
                   ──────────────────────────────────────────────────────────
-Moyen terme                          │ App Android MVP  │                  │
-(3-6 mois)                           │ Sync bidirect.   │                  │
-                                     │ Pan personnel    │                  │
+Moyen terme                          │ App Android MVP  │ Sync bidirect.   │
+(3-6 mois)                           │ Hold Annotations │ Pan personnel    │
                   ──────────────────────────────────────────────────────────
 Long terme                                               │ Multi-users      │
 (6-12 mois)                                              │ Stats avancées   │
@@ -127,19 +136,19 @@ Long terme                                               │ Multi-users      �
 | `03_MEDIUM_TERM.md` | Plan moyen terme (3-6 mois) |
 | `04_LONG_TERM.md` | Plan long terme (6-12 mois) |
 | `05_ARCHITECTURE.md` | Décisions architecturales |
+| `/docs/adr/` | 6 ADRs documentés |
 | `/docs/04_strategie_independance.md` | Stratégie serveur personnel |
-| `/docs/03_ergonomie_ui_ux.md` | Guide UX Android |
 
 ---
 
 ## Principes directeurs
 
-1. **Offline-first** : L'application doit fonctionner sans internet
+1. **Offline-first** : L'application doit fonctionner sans internet ✅
 2. **Simplicité** : Pas de sur-engineering, fonctionnalités essentielles
-3. **Résilience** : Toujours une solution de repli si Stokt disparaît
+3. **Résilience** : Toujours une solution de repli si Stokt disparaît ✅
 4. **Itératif** : Livrer souvent, améliorer continuellement
-5. **Testé** : Chaque fonctionnalité doit être couverte par des tests
+5. **Testé** : Chaque fonctionnalité doit être couverte par des tests ✅
 
 ---
 
-*Plan de développement créé le 2025-12-23*
+*Plan de développement mis à jour le 2025-12-31*

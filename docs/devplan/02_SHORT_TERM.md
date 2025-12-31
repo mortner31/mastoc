@@ -1,258 +1,182 @@
 # Plan Court Terme (1-3 mois)
 
 **Période** : Décembre 2025 - Mars 2026
+**Mise à jour** : 2025-12-31
 
 ---
 
 ## Objectifs principaux
 
-1. **Finaliser le prototype Python** (TODO 10)
-2. **Déployer le serveur personnel Railway**
-3. **Implémenter Hold Annotations** (TODO 12)
-4. **Préparer la migration mobile**
+1. ~~Finaliser le prototype Python (TODO 10)~~ ✅ COMPLET
+2. ~~Déployer le serveur personnel Railway~~ ✅ COMPLET
+3. ~~Portage client vers Railway (TODO 14)~~ ✅ COMPLET
+4. **Implémenter Sync Incrémentale (TODO 15)** ← PRIORITÉ
+5. **Implémenter Authentification (TODO 17)** ← PRIORITÉ
+6. Implémenter Hold Annotations (TODO 12)
 
 ---
 
-## Phase 1 : Finalisation TODO 10 (Semaine 1)
+## ✅ Phase 1 : Finalisation TODO 10 - COMPLÉTÉ
 
-### État actuel : 97%
+### État : 100% - Archivé le 2025-12-30
 
 Le wizard de création est fonctionnel, premier bloc créé avec succès.
 
-### Tâches restantes
+### Livrables complétés
 
-| Tâche | Priorité | Effort |
-|-------|----------|--------|
-| Tests edge cases (validation, erreurs API) | Haute | 2h |
-| Gestion erreur réseau (retry, queue offline) | Moyenne | 4h |
-| Amélioration feedback utilisateur | Basse | 2h |
-| Documentation utilisation | Basse | 1h |
-
-### Critères de complétion
-
-- [ ] 100% des tests passent
-- [ ] Gestion erreur réseau implémentée
-- [ ] Documentation mise à jour
-- [ ] TODO 10 archivé
+- [x] Tests edge cases (validation, erreurs API)
+- [x] Gestion erreur réseau
+- [x] Documentation mise à jour
+- [x] TODO 10 archivé
 
 ---
 
-## Phase 2 : Serveur Personnel Railway (Semaines 2-3)
+## ✅ Phase 2 : Serveur Personnel Railway - COMPLÉTÉ
 
-### Objectif
+### État : 100% - Archivé le 2025-12-30 (TODO 13)
 
-Déployer un backend indépendant avec **architecture Railway-First** :
-- **Import initial des données Stokt** (one-shot)
-- **Duplication des images** (critique pour résilience)
-- Hold Annotations et features custom
-- Support pan personnel
-- Indépendance totale si Stokt ferme
+Serveur déployé et opérationnel sur Railway.
 
-### Architecture Railway-First avec Mapping
+### Livrables complétés
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     mastoc CLIENT                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌─────────────────┐         ┌─────────────────┐          │
-│   │  MODE: RAILWAY  │   OU    │  MODE: STOKT    │          │
-│   │  (par défaut)   │         │  (optionnel)    │          │
-│   └────────┬────────┘         └────────┬────────┘          │
-│            │                           │                    │
-│            ▼                           ▼                    │
-│   ┌─────────────────────────────────────────────┐          │
-│   │           SQLite Local                       │          │
-│   │  • id (UUID mastoc)                          │          │
-│   │  • stokt_id (nullable) ◄─── MAPPING          │          │
-│   └─────────────────────────────────────────────┘          │
-└─────────────────────────────────────────────────────────────┘
-```
+- [x] Projet Railway créé
+- [x] PostgreSQL configuré
+- [x] API FastAPI (5 routers)
+- [x] Script `init_from_stokt.py`
+- [x] Import données (1012 climbs, 776 holds, 79 users)
+- [x] Auth par API Key (ADR-002)
+- [x] Tests API
 
-**Répartition des données :**
-| Données | Railway | Stokt | Notes |
-|---------|---------|-------|-------|
-| Blocs (travail quotidien) | ✓ | - | Créés sur mastoc |
-| Blocs Montoboard (copie) | ✓ | ✓ | Import initial |
-| **Images murs** | ✓ | ✓ | **CRITIQUE: dupliquées** |
-| Features custom | ✓ | - | Hold annotations, etc. |
+### URL Production
+
+https://mastoc-production.up.railway.app
+
+---
+
+## ✅ Phase 2bis : Portage Client Railway - COMPLÉTÉ
+
+### État : 100% - Archivé le 2025-12-31 (TODO 14)
+
+Client Python porté vers Railway avec BackendSwitch.
+
+### Livrables complétés
+
+- [x] Client `MastocAPI` (`railway_client.py`)
+- [x] `BackendSwitch` + `BackendSource` (`backend.py`)
+- [x] Dual SQLite (ADR-006)
+- [x] Config persistante (`config.py`)
+- [x] Cache assets (`assets.py`)
+- [x] Migration GUI (menu source)
+- [x] `RailwaySyncManager`
+- [x] 301 tests passent
+
+---
+
+## Phase 3 : Sync Incrémentale (TODO 15) - À FAIRE
+
+### État : 0%
+
+Objectif : Réduire le volume de données téléchargées de ~99%.
+
+### Contexte
+
+| Scénario | Actuel | Avec filtrage | Gain |
+|----------|--------|--------------|------|
+| Sync quotidienne | ~1000 climbs | ~5-10 climbs | **~99%** |
+| Sync hebdomadaire | ~1000 climbs | ~50-70 climbs | **~93%** |
 
 ### Tâches
 
-| Tâche | Priorité | Effort |
-|-------|----------|--------|
-| Créer projet Railway | Haute | 1h |
-| Setup PostgreSQL | Haute | 2h |
-| API FastAPI (endpoints base) | Haute | 8h |
-| **Script `init_from_stokt.py`** | **Haute** | 4h |
-| **Duplication images murs** | **Critique** | 2h |
-| Client `RailwayAPI` Python | Haute | 4h |
-| Tests API | Moyenne | 4h |
+| Phase | Description | Effort |
+|-------|-------------|--------|
+| **Phase 1** | Stokt quick win (`max_age` dynamique) | 4h |
+| **Phase 2** | Railway serveur (`since_created_at`) | 4h |
+| **Phase 3** | Railway client (utiliser le filtre) | 4h |
+| Phase 4 | UI et feedback | 2h |
+| Phase 5 | Tests et documentation | 2h |
 
-### Script d'Import Initial (`init_from_stokt.py`)
+### Critères de complétion
 
-Script one-shot pour importer les données Stokt vers Railway :
-
-```bash
-python init_from_stokt.py --stokt-token "abc123..." --railway-url "https://mastoc-api.railway.app"
-```
-
-**Ce que le script fait :**
-| Étape | Action | Données |
-|-------|--------|---------|
-| 1 | Fetch faces | Faces + 776 prises avec polygones |
-| 2 | **Duplicate images** | Images HD des murs → Railway + backup local |
-| 3 | Fetch climbs | ~1000+ blocs avec pagination |
-| 4 | Create users | Setters uniques + avatars (mapping Stokt ID) |
-| 5 | Push Railway | Bulk insert vers API Railway |
-
-Voir `/docs/04_strategie_independance.md` pour le code complet.
-
-### Stack technique
-
-- **Backend** : FastAPI (Python)
-- **Base de données** : PostgreSQL
-- **Hébergement** : Railway (~$5-10/mois)
-- **Auth** : Token simple (pas de OAuth)
-
-### Schéma PostgreSQL
-
-```sql
--- Synchronisé depuis Stokt
-CREATE TABLE climbs (
-    id UUID PRIMARY KEY,
-    stokt_id UUID UNIQUE,
-    face_id UUID,
-    name TEXT NOT NULL,
-    holds_list TEXT,
-    grade_font TEXT,
-    setter_name TEXT,
-    is_synced BOOLEAN DEFAULT FALSE,
-    synced_at TIMESTAMP
-);
-
-CREATE TABLE holds (
-    id SERIAL PRIMARY KEY,
-    stokt_id INTEGER,
-    face_id UUID,
-    polygon_str TEXT NOT NULL,
-    centroid_x REAL,
-    centroid_y REAL
-);
-
--- Fonctionnalités custom
-CREATE TABLE hold_annotations (
-    hold_id INTEGER REFERENCES holds(id),
-    user_id UUID,
-    grip_type TEXT,
-    condition TEXT,
-    difficulty TEXT,
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (hold_id, user_id)
-);
-```
-
-### Endpoints API
-
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/api/health` | GET | Status serveur |
-| `/api/sync/stokt` | POST | Sync depuis Stokt |
-| `/api/climbs` | GET | Liste climbs |
-| `/api/climbs/{id}` | GET | Détail climb |
-| `/api/holds/{id}/annotations` | GET/PUT | Annotations |
-| `/api/holds/annotations/batch` | POST | Batch annotations |
+- [ ] `max_age` calculé dynamiquement (Stokt)
+- [ ] Endpoint avec `since_created_at` (Railway)
+- [ ] Client utilise les filtres
+- [ ] Tests de performance
 
 ---
 
-## Phase 3 : Hold Annotations (Semaines 4-6)
+## Phase 4 : Authentification (TODO 17) - À FAIRE
 
-### Objectif
+### État : 0%
 
-Permettre aux grimpeurs d'annoter les prises avec :
-- Type de prise (réglette, bac, pince...)
-- État (OK, à brosser, tournée...)
-- Difficulté relative
+Objectif : Système d'authentification natif mastoc.
+
+### Décisions
+
+| Aspect | Décision |
+|--------|----------|
+| Auth type | Email/password + JWT |
+| Rôles | User + Admin |
+| Reset password | Oui (par email) |
+
+### Tâches
+
+| Phase | Description | Effort |
+|-------|-------------|--------|
+| **Phase 1** | Extension modèle User (serveur) | 4h |
+| **Phase 2** | Endpoints auth (register, login, refresh) | 8h |
+| **Phase 3** | Endpoints users (me, profil, avatar) | 4h |
+| **Phase 4** | Middleware JWT | 4h |
+| **Phase 5** | Client AuthManager | 4h |
+| **Phase 6** | UI (dialogs login/register) | 4h |
+| Phase 7 | Traçabilité (`created_by_id`) | 2h |
+
+### Critères de complétion
+
+- [ ] Inscription/Connexion fonctionnels
+- [ ] JWT valide
+- [ ] UI intégrée dans le client
+- [ ] Tests sécurité
+
+---
+
+## Phase 5 : Hold Annotations (TODO 12) - À FAIRE
+
+### État : 0%
+
+Permettre aux grimpeurs d'annoter les prises.
 
 ### Dépendances
 
-- [ ] Serveur Railway déployé
-- [ ] API annotations fonctionnelle
+- [x] Serveur Railway déployé ✅
+- [ ] Authentification utilisateurs (TODO 17)
 
-### Tâches client (mastoc Python)
+### Tâches
 
 | Tâche | Priorité | Effort |
 |-------|----------|--------|
 | Modèles Python (enums, dataclasses) | Haute | 2h |
 | Client API annotations | Haute | 4h |
+| API serveur annotations | Haute | 4h |
 | Loader async avec cache | Moyenne | 4h |
 | Panel d'annotation UI | Haute | 8h |
-| Nouveaux ColorModes (grip_type, condition) | Moyenne | 4h |
+| Nouveaux ColorModes | Moyenne | 4h |
 | Filtres par annotations | Moyenne | 4h |
 | Tests | Haute | 4h |
 
-### UI Panel d'annotation
-
-```
-┌─────────────────────────────────────┐
-│ Prise #829279                       │
-├─────────────────────────────────────┤
-│ Consensus communautaire             │
-│ ┌───────────────────────────────┐   │
-│ │ Type : Réglette (4 votes)     │   │
-│ │ État : OK (3 votes)           │   │
-│ │ Difficulté : -                │   │
-│ └───────────────────────────────┘   │
-├─────────────────────────────────────┤
-│ Mon annotation                      │
-│ Type     [▼ Réglette          ]     │
-│ État     [▼ OK                ]     │
-│ Diff.    [▼ Normale           ]     │
-│ Notes    [                    ]     │
-│                                     │
-│ [   Enregistrer   ] [   Effacer   ] │
-└─────────────────────────────────────┘
-```
-
 ---
 
-## Phase 4 : Préparation Migration Mobile (Semaines 7-8)
-
-### Objectif
-
-Documenter et préparer le portage vers Android.
-
-### Tâches
-
-| Tâche | Priorité | Effort |
-|-------|----------|--------|
-| Audit API client (ce qui doit être porté) | Haute | 4h |
-| Documentation modèles de données | Haute | 4h |
-| Wireframes Android (Figma ou similaire) | Moyenne | 8h |
-| Setup projet Android skeleton | Moyenne | 4h |
-| POC Jetpack Compose + Canvas | Moyenne | 8h |
-
-### Livrables
-
-- [ ] Document de spécification Android
-- [ ] Wireframes haute fidélité
-- [ ] Projet Android initialisé
-- [ ] POC rendu prises avec Compose Canvas
-
----
-
-## Calendrier prévisionnel
+## Calendrier révisé
 
 ```
-Semaine 1 (Déc 23-29)     : Finalisation TODO 10
-Semaine 2 (Déc 30-Jan 5)  : Setup Railway + PostgreSQL
-Semaine 3 (Jan 6-12)      : API FastAPI + Sync Stokt
-Semaine 4 (Jan 13-19)     : Hold Annotations - Backend
-Semaine 5 (Jan 20-26)     : Hold Annotations - Client
-Semaine 6 (Jan 27-Fév 2)  : Tests + Polish
-Semaine 7 (Fév 3-9)       : Préparation Android
-Semaine 8 (Fév 10-16)     : POC Jetpack Compose
+✅ Semaine 1 (Déc 23-29)     : TODO 10 finalisé - FAIT
+✅ Semaine 2 (Déc 30-31)     : TODO 13+14 complétés - FAIT
+───────────────────────────────────────────────────────────
+   Semaine 3 (Jan 6-12)      : TODO 15 - Sync Incrémentale
+   Semaine 4 (Jan 13-19)     : TODO 17 - Auth Phase 1-3
+   Semaine 5 (Jan 20-26)     : TODO 17 - Auth Phase 4-6
+   Semaine 6 (Jan 27-Fév 2)  : TODO 12 - Hold Annotations Backend
+   Semaine 7 (Fév 3-9)       : TODO 12 - Hold Annotations Client
+   Semaine 8 (Fév 10-16)     : Tests + Polish
 ```
 
 ---
@@ -261,23 +185,25 @@ Semaine 8 (Fév 10-16)     : POC Jetpack Compose
 
 ### Technique
 
-- [ ] TODO 10 archivé (100%)
-- [ ] Serveur Railway opérationnel
-- [ ] Hold Annotations fonctionnel (TODO 12 à 100%)
-- [ ] 250+ tests passent
-- [ ] Latence API < 200ms
+- [x] TODO 10 archivé (100%) ✅
+- [x] Serveur Railway opérationnel ✅
+- [x] Client porté vers Railway ✅
+- [ ] Sync incrémentale fonctionnelle (TODO 15)
+- [ ] Authentification utilisateurs (TODO 17)
+- [ ] Hold Annotations fonctionnel (TODO 12)
+- [x] 300+ tests passent ✅
 
 ### Fonctionnel
 
-- [ ] Création de blocs complète et stable
-- [ ] Annotations communautaires des prises
-- [ ] Backup automatique des données Stokt
-- [ ] Documentation à jour
+- [x] Création de blocs complète et stable ✅
+- [x] BackendSwitch Stokt/Railway ✅
+- [ ] Sync optimisée (<100 climbs par sync quotidienne)
+- [ ] Login/Register utilisateurs
 
 ### Business
 
-- [ ] Coût serveur < $15/mois
-- [ ] Zéro downtime API custom
+- [x] Coût serveur < $15/mois ✅
+- [x] Zéro downtime API custom ✅
 
 ---
 
@@ -287,7 +213,7 @@ Semaine 8 (Fév 10-16)     : POC Jetpack Compose
 |--------|------------|
 | Railway pricing change | Prévoir migration Render/VPS |
 | API Stokt rate limit | Throttling + cache agressif |
-| Bugs création blocs | Tests exhaustifs avant déploiement |
+| Complexité JWT | Utiliser bibliothèques standard (python-jose) |
 | Complexité annotations | MVP simple puis itérer |
 
 ---
@@ -302,4 +228,4 @@ Semaine 8 (Fév 10-16)     : POC Jetpack Compose
 
 ---
 
-*Plan court terme créé le 2025-12-23*
+*Plan court terme mis à jour le 2025-12-31*

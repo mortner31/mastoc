@@ -1,100 +1,163 @@
 # État Actuel du Projet mastoc
 
-**Date** : 2025-12-23
+**Date** : 2025-12-31
+**Dernière mise à jour** : Refonte complète post-TODO 14
 
 ---
 
 ## 1. Architecture du code
 
-### Structure du package Python
+### Structure du package Python (Client)
 
 ```
 mastoc/
 ├── pyproject.toml              # Configuration package
 ├── src/mastoc/
-│   ├── api/                    # Communication API Stokt
-│   │   ├── client.py           # 564 lignes - Client HTTP
-│   │   └── models.py           # 406 lignes - Dataclasses
+│   ├── api/                    # Communication API
+│   │   ├── client.py           # Client HTTP Stokt
+│   │   ├── railway_client.py   # Client HTTP Railway (NEW)
+│   │   └── models.py           # Dataclasses
 │   ├── core/                   # Logique métier
+│   │   ├── backend.py          # BackendSwitch + BackendSource (NEW)
+│   │   ├── config.py           # Config persistante ~/.mastoc/config.json (NEW)
+│   │   ├── assets.py           # Cache d'assets/images (NEW)
+│   │   ├── sync.py             # SyncManager + RailwaySyncManager
 │   │   ├── colormaps.py        # Palettes de couleurs heatmaps
 │   │   ├── filters.py          # Filtres par grade, setter
-│   │   ├── hold_index.py       # 317 lignes - Index prises ↔ blocs
-│   │   ├── picto.py            # 347 lignes - Génération pictos
+│   │   ├── hold_index.py       # Index prises ↔ blocs
+│   │   ├── picto.py            # Génération pictos
 │   │   ├── picto_cache.py      # Cache disque des miniatures
 │   │   ├── social_actions.py   # Actions like/bookmark/send
-│   │   ├── social_loader.py    # 226 lignes - Chargement async
-│   │   └── sync.py             # 244 lignes - Synchronisation API
+│   │   └── social_loader.py    # Chargement async
 │   ├── db/                     # Persistance
 │   │   ├── database.py         # Connexion SQLite
-│   │   └── repository.py       # 337 lignes - CRUD climbs/holds
+│   │   └── repository.py       # CRUD climbs/holds
 │   └── gui/                    # Interface graphique
-│       ├── app.py              # 689 lignes - Application principale
-│       ├── climb_viewer.py     # 463 lignes - Visualiseur bloc
-│       ├── hold_selector.py    # 779 lignes - Sélection par prises
+│       ├── app.py              # Application principale
+│       ├── climb_viewer.py     # Visualiseur bloc
+│       ├── hold_selector.py    # Sélection par prises
+│       ├── creation_app.py     # Point d'entrée création
 │       ├── creation/           # Module création de blocs
-│       │   ├── controller.py   # 254 lignes - Navigation wizard
-│       │   ├── state.py        # 282 lignes - État partagé
-│       │   ├── wizard.py       # 458 lignes - Fenêtre principale
+│       │   ├── controller.py   # Navigation wizard
+│       │   ├── wizard.py       # Fenêtre principale
 │       │   └── screens/
-│       │       ├── select_holds.py  # 374 lignes
-│       │       └── climb_info.py    # 288 lignes
+│       │       ├── select_holds.py
+│       │       └── climb_info.py
 │       ├── widgets/
-│       │   ├── climb_detail.py     # 472 lignes
-│       │   ├── climb_list.py       # 381 lignes
-│       │   ├── hold_overlay.py     # 542 lignes - Overlay pyqtgraph
-│       │   ├── climb_renderer.py   # Rendu PIL
-│       │   ├── social_panel.py     # Affichage interactions
-│       │   └── my_climbs_panel.py
+│       │   ├── climb_detail.py
+│       │   ├── climb_list.py
+│       │   ├── hold_overlay.py # Overlay pyqtgraph
+│       │   ├── social_panel.py
+│       │   └── ...
 │       └── dialogs/
-│           └── login.py            # Dialog authentification
-└── tests/                      # 225 tests
-    ├── test_api.py
-    ├── test_creation.py        # 43 tests création
-    ├── test_filters.py
-    ├── test_hold_index.py
-    ├── test_models.py
-    ├── test_repository.py
-    ├── test_social.py
-    └── test_sync.py
+│           └── login.py        # Dialog authentification Stokt
+└── tests/                      # 301 tests
+```
+
+### Structure du serveur (Railway)
+
+```
+server/
+├── pyproject.toml
+├── requirements.txt            # Pour Railway
+├── Procfile                    # Commande de démarrage
+├── src/mastoc_api/
+│   ├── main.py                 # App FastAPI
+│   ├── config.py               # Pydantic Settings
+│   ├── database.py             # SQLAlchemy engine/session
+│   ├── auth.py                 # API Key auth
+│   ├── models/                 # SQLAlchemy models
+│   │   ├── gym.py
+│   │   ├── face.py
+│   │   ├── hold.py
+│   │   ├── climb.py
+│   │   ├── user.py
+│   │   └── mapping.py          # IdMapping Stokt ↔ Railway
+│   └── routers/
+│       ├── health.py
+│       ├── climbs.py
+│       ├── holds.py
+│       ├── faces.py
+│       └── sync.py             # Import batch depuis Stokt
+└── tests/
 ```
 
 ### Métriques de code
 
 | Module | Lignes | Tests | Couverture |
 |--------|--------|-------|------------|
-| api/ | ~970 | 45 | Complète |
-| core/ | ~1 400 | 80 | Complète |
-| db/ | ~450 | 35 | Complète |
-| gui/ | ~4 500 | 65 | Partielle (UI) |
-| **Total** | ~10 100 | 225 | ~85% |
+| api/ | ~1 400 | 60 | Complète |
+| core/ | ~2 200 | 100 | Complète |
+| db/ | ~500 | 40 | Complète |
+| gui/ | ~5 000 | 70 | Partielle (UI) |
+| server/ | ~1 500 | 31 | Complète |
+| **Total** | ~12 000 | **301** | ~85% |
 
 ---
 
-## 2. Fonctionnalités implémentées
+## 2. Infrastructure déployée
 
-### 2.1 API Stokt
+### Serveur Railway (mastoc-api)
 
-| Fonctionnalité | Méthode | Statut |
-|----------------|---------|--------|
-| Authentification | `POST /api/token-auth` | OK |
-| Liste climbs | `GET /api/gyms/{id}/climbs` | OK |
-| Détail climb | `GET /api/climbs/{id}` | OK |
-| Setup face | `GET /api/faces/{id}/setup` | OK |
-| Création climb | `POST /api/faces/{id}/climbs` | OK |
-| Interactions sociales | GET likes/comments/sends | OK |
-| Like/Unlike | `POST/DELETE` | OK |
-| Bookmark | `POST/DELETE` | OK |
+| Élément | Valeur |
+|---------|--------|
+| URL | https://mastoc-production.up.railway.app |
+| Stack | FastAPI + PostgreSQL |
+| Auth | API Key (`X-API-Key` header) |
+| Endpoints | /health, /api/climbs, /api/holds, /api/faces, /api/sync |
 
-### 2.2 Interface graphique
+### Données Railway
+
+| Table | Enregistrements |
+|-------|-----------------|
+| climbs | 1012 |
+| holds | 776 |
+| faces | 1 |
+| users | 79 |
+| gyms | 1 |
+
+### Client - Bases SQLite (ADR-006)
+
+| Base | Emplacement | Contenu |
+|------|-------------|---------|
+| `stokt.db` | `~/.mastoc/stokt.db` | Sync depuis Stokt |
+| `railway.db` | `~/.mastoc/railway.db` | Sync depuis Railway |
+
+---
+
+## 3. Fonctionnalités implémentées
+
+### 3.1 API Client
+
+| Fonctionnalité | Stokt | Railway | Statut |
+|----------------|-------|---------|--------|
+| Authentification | Token | API Key | OK |
+| Liste climbs | GET | GET | OK |
+| Détail climb | GET | GET | OK |
+| Création climb | POST | POST | OK |
+| Setup face | GET | GET | OK |
+| Interactions sociales | GET | — | OK |
+
+### 3.2 Interface graphique
 
 | Application | Description | Statut |
 |-------------|-------------|--------|
 | `app.py` | Liste principale + visualisation | OK |
 | `hold_selector.py` | Recherche par prises | OK |
-| `creation_app.py` | Wizard création bloc | OK (97%) |
+| `creation_app.py` | Wizard création bloc | OK |
 | `climb_viewer.py` | Visualisation standalone | OK |
 
-### 2.3 Visualisation
+### 3.3 Backend Switch (ADR-006)
+
+| Feature | Description | Statut |
+|---------|-------------|--------|
+| BackendSource | Enum STOKT / RAILWAY | OK |
+| BackendSwitch | Basculement dynamique | OK |
+| Dual SQLite | Deux bases séparées | OK |
+| Config persistante | `~/.mastoc/config.json` | OK |
+| Menu source | UI pour changer de source | OK |
+
+### 3.4 Visualisation
 
 | Feature | Description | Statut |
 |---------|-------------|--------|
@@ -106,114 +169,100 @@ mastoc/
 | Heatmaps | 7 palettes + 4 modes | OK |
 | Pictos (miniatures) | Cache disque | OK |
 
-### 2.4 Modes de coloration (hold_overlay)
+---
 
-| Mode | Description |
-|------|-------------|
-| MIN | Couleur selon grade minimum des blocs |
-| MAX | Couleur selon grade maximum |
-| FREQUENCY | Quantiles de fréquence d'utilisation |
-| RARITY | 5 niveaux de rareté |
+## 4. ADRs (Architecture Decision Records)
+
+| ADR | Titre | Statut |
+|-----|-------|--------|
+| 001 | Architecture Railway-First avec Mapping d'IDs | Accepté |
+| 002 | Authentification par API Key | Accepté |
+| 003 | Stack serveur (FastAPI + PostgreSQL) | Accepté |
+| 004 | Client PyQtGraph + SQLite | Accepté |
+| 005 | Batch Import pour Holds, Users et Climbs | Accepté |
+| 006 | Deux Bases SQLite Séparées (Stokt + Railway) | Accepté |
 
 ---
 
-## 3. TODOs et progression
+## 5. TODOs et progression
 
 ### TODOs terminés (archivés)
 
-| TODO | Description | Date |
-|------|-------------|------|
-| 01 | Analyse app Stokt | 2025-11 |
-| 02 | Schéma SQLite | Fusionné TODO 05 |
-| 03 | Analyse Hermes | 2025-12-20 |
-| 04 | Extraction Montoboard | 2025-12-21 |
-| 05 | Package Python | 2025-12-21 |
-| 06 | Interface filtrage | 2025-12-22 |
-| 07 | Interactions sociales | 2025-12-22 |
-| 08 | Heatmaps | 2025-12-22 |
+| TODO | Description | Date archivage |
+|------|-------------|----------------|
+| 01-08 | Analyse, extraction, package, UI | 2025-12-22 |
+| 10 | Interface Création Blocs | 2025-12-30 |
 | 11 | Ergonomie UI/UX | 2025-12-22 |
+| 13 | Serveur Railway | 2025-12-30 |
+| 14 | Portage Client Railway | 2025-12-31 |
 
 ### TODOs en cours
 
-| TODO | Description | Progression | Reste |
-|------|-------------|-------------|-------|
-| 09 | Listes personnalisées | 5% | Investigation API |
-| 10 | Création de blocs | 97% | Tests edge cases |
+| TODO | Description | Progression | Prochaine action |
+|------|-------------|-------------|------------------|
+| 09 | Listes personnalisées | 70% | UI client |
 | 12 | Hold Annotations | 0% | Nécessite serveur |
+| 15 | Sync Incrémentale | 0% | Quick win max_age Stokt |
+| 16 | Sync Tool mastoc ↔ Stokt | 0% | DiffEngine |
+| 17 | Authentification & Users | 0% | Phase 1 serveur |
 
 ---
 
-## 4. Données locales
+## 6. Dépendances
 
-### Base SQLite
+### Client Python
 
-| Table | Enregistrements |
-|-------|-----------------|
-| climbs | 1017 |
-| holds | 776 |
-| faces | 1 |
-| sync_status | 1 |
-
-### Fichiers
-
-| Type | Emplacement | Taille |
-|------|-------------|--------|
-| Image mur | `data/montoboard.jpg` | ~2 MB |
-| Base SQLite | `data/mastoc.db` | ~500 KB |
-| Pictos cache | `~/.mastoc/pictos/` | ~50 MB |
-
----
-
-## 5. Dépendances
-
-### Python packages
-
-```
-PyQt6>=6.4.0
-pyqtgraph>=0.13.0
-Pillow>=10.0.0
-requests>=2.28.0
-numpy>=1.24.0
+```toml
+dependencies = [
+    "PyQt6>=6.6.0",
+    "pyqtgraph>=0.13.0",
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
+    "python-dotenv>=1.0.0",
+]
 ```
 
-### Versions
+### Serveur
 
-| Composant | Version |
-|-----------|---------|
-| Python | 3.11+ |
-| PyQt6 | 6.4.0 |
-| SQLite | 3.x |
-
----
-
-## 6. Points forts
-
-1. **Architecture modulaire** : Séparation claire api/core/db/gui
-2. **Tests solides** : 225 tests, couverture >85%
-3. **Documentation** : TODOs structurés, timeline complète
-4. **Offline-first** : Toutes les données en local
-5. **Performance** : Chargement rapide, cache pictos
+```
+fastapi>=0.109.0
+uvicorn>=0.27.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+pydantic-settings>=2.1.0
+```
 
 ---
 
-## 7. Points d'amélioration
+## 7. Points forts
 
-1. **UI Python** : PyQt6 n'est pas idéal pour mobile
-2. **Pas de serveur custom** : Dépendance totale à Stokt
-3. **Single-user** : Pas de support multi-utilisateurs
+1. **Architecture modulaire** : Séparation claire api/core/db/gui + serveur
+2. **Tests solides** : 301 tests, couverture >85%
+3. **Documentation** : 6 ADRs, TODOs structurés, timeline complète
+4. **Offline-first** : Toutes les données en local (dual SQLite)
+5. **Indépendance Stokt** : Serveur Railway fonctionnel, BackendSwitch
+6. **Performance** : Chargement rapide, cache pictos et assets
+
+---
+
+## 8. Points d'amélioration
+
+1. **Sync inefficace** : Télécharge tout à chaque sync (TODO 15)
+2. **Pas d'auth utilisateur** : API Key partagée (TODO 17)
+3. **UI Python** : PyQt6 n'est pas idéal pour mobile
 4. **Pas d'export** : Données non portables
 
 ---
 
-## 8. Risques identifiés
+## 9. Risques identifiés
 
 | Risque | Probabilité | Impact | Mitigation |
 |--------|-------------|--------|------------|
-| API Stokt change | Moyenne | Élevé | Serveur personnel |
-| Ban compte Stokt | Faible | Critique | Backup local |
-| Perte données locales | Faible | Moyen | Export JSON |
-| PyQt6 obsolète | Faible | Moyen | Migration Compose |
+| API Stokt change | Moyenne | Moyen | Serveur Railway (backup) |
+| Ban compte Stokt | Faible | Moyen | Données déjà sur Railway |
+| Railway pricing | Faible | Faible | Migration possible vers VPS |
+| Perte données locales | Faible | Moyen | Sync Railway = backup |
 
 ---
 
-*Document généré le 2025-12-23*
+*Document mis à jour le 2025-12-31*
