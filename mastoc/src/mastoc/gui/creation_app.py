@@ -82,8 +82,9 @@ class CreationTestApp(QMainWindow):
     def _get_face_id(self) -> str:
         """Récupère le face_id depuis la base de données ou utilise le fallback."""
         if self.index.climbs:
-            # Utiliser le face_id du premier climb
-            return self.index.climbs[0].face_id
+            # Utiliser le face_id du premier climb (climbs est un dict)
+            first_climb = next(iter(self.index.climbs.values()))
+            return first_climb.face_id
         return MONTOBOARD_FACE_ID
 
     def _init_api(self):

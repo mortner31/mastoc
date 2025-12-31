@@ -1,6 +1,6 @@
 # STATUS - TODO 14 : Portage Client Railway
 
-**Progression** : 90%
+**Progression** : 95%
 
 ---
 
@@ -30,9 +30,9 @@
 
 ## Phase 3 : Migration GUI (100%)
 
-- [x] Adapter `app.py` - BackendSwitch + menu source
-- [x] Adapter `hold_selector.py` - BackendSwitch
-- [x] Adapter `creation_app.py` - BackendSwitch
+- [x] Adapter `app.py` - BackendSwitch + menu source + AppConfig
+- [x] Adapter `hold_selector.py` - BackendSwitch + AppConfig
+- [x] Adapter `creation_app.py` - BackendSwitch + AppConfig
 - [x] Login dialog - inchangé (spécifique Stokt)
 - [x] Tests (277 passent)
 
@@ -45,10 +45,10 @@
 - [x] POST /api/climbs - déjà existant
 - [x] MastocAPI.get_face_setup() adapté
 - [x] Tests serveur (test_faces.py)
-- [ ] Endpoints social (reporté)
-- [ ] Endpoints listes (reporté)
+- [ ] Endpoints social (reporté → TODO 16)
+- [ ] Endpoints listes (reporté → TODO 16)
 
-## Phase 5 : Sync et Données (80%)
+## Phase 5 : Sync et Données (100%)
 
 - [x] ADR-006 : Deux bases SQLite séparées (stokt.db + railway.db)
 - [x] RailwaySyncManager pour sync Railway → SQLite
@@ -56,17 +56,21 @@
 - [x] Sync holds (prises) automatique avec face_id
 - [x] Configuration persistante (API key + source) - `core/config.py`
 - [x] Tests config (10 tests)
-- [ ] Sync images (photos des faces)
-- [ ] Sync avatars utilisateurs
-- [ ] Sync users/setters
-- [ ] Gestion conflits (reporté → TODO 15)
-- [ ] Mode offline
+- [x] Intégration AppConfig dans toutes les apps GUI
 
 ## Phase 6 : Validation (100%)
 
 - [x] Synchronisation Railway testée : 1012 climbs, 776 prises
 - [x] Base railway.db créée et peuplée
 - [x] Config sauvegardée dans ~/.mastoc/config.json
+- [x] 3 apps fonctionnelles : app.py, hold_selector.py, creation_app.py
+
+## Phase 7 : Assets (À FAIRE - Prochaine session)
+
+- [ ] Sync image mur (face_full_hires.jpg) depuis Railway
+- [ ] Sync avatars utilisateurs
+- [ ] Stockage local dans ~/.mastoc/images/
+- [ ] Gestion cache/invalidation
 
 ---
 
