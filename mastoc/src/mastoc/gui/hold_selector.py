@@ -31,6 +31,7 @@ from mastoc.gui.widgets.climb_renderer import render_climb
 from mastoc.gui.widgets.social_panel import SocialPanel
 from mastoc.api.client import StoktAPI
 from mastoc.core.backend import BackendSwitch, BackendConfig, BackendSource, MONTOBOARD_GYM_ID
+from mastoc.core.config import AppConfig
 from mastoc.api.models import Climb
 from mastoc.gui.creation import CreationWizard
 
@@ -64,9 +65,16 @@ class HoldSelectorApp(QMainWindow):
         t0 = time.perf_counter()
         logger.info("Démarrage HoldSelectorApp...")
 
+        # Charger la configuration persistante
+        self._app_config = AppConfig.load()
+        self._current_source = BackendSource(self._app_config.source)
+        logger.info(f"  Config: source={self._current_source.value}")
+
+        # Base de données selon la source (ADR-006)
         t1 = time.perf_counter()
-        self.db = Database()
-        logger.info(f"  Database: {(time.perf_counter() - t1)*1000:.0f}ms")
+        db_path = self._get_db_path()
+        self.db = Database(db_path)
+        logger.info(f"  Database: {(time.perf_counter() - t1)*1000:.0f}ms ({db_path.name})")
 
         t1 = time.perf_counter()
         self.index = HoldClimbIndex.from_database(self.db)
@@ -116,24 +124,42 @@ class HoldSelectorApp(QMainWindow):
 
         logger.info(f"Total démarrage: {(time.perf_counter() - t0)*1000:.0f}ms")
 
+    def _get_db_path(self) -> Path:
+        """Retourne le chemin de la base SQLite selon la source (ADR-006)."""
+        base_dir = Path.home() / ".mastoc"
+        if self._current_source == BackendSource.RAILWAY:
+            return base_dir / "railway.db"
+        return base_dir / "stokt.db"
+
     def _init_api(self):
-        """Initialise le backend avec le token stocké."""
-        # Token Stokt stocké (TODO: dialog de login)
-        STOKT_TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
+        """Initialise le backend avec la config persistante."""
         try:
             self.backend = BackendSwitch(BackendConfig(
-                source=BackendSource.STOKT,
-                stokt_token=STOKT_TOKEN,
+                source=self._current_source,
+                railway_api_key=self._app_config.railway_api_key,
+                railway_url=self._app_config.railway_url,
+                stokt_token="dba723cbee34ff3cf049b12150a21dc8919c3cf8",  # Token Stokt legacy
             ))
-            # Alias pour compatibilité
-            self.api = self.backend.stokt.api if self.backend.stokt else None
 
-            if self.api:
-                # Vérifier que le token est valide
-                self.api.get_user_profile()
-                self.social_loader = SocialLoader(self.api)
-                self.social_loader.on_data_loaded = self._on_social_data_loaded
-                logger.info("Backend Stokt initialisé avec succès")
+            # Alias pour compatibilité selon la source
+            if self._current_source == BackendSource.RAILWAY and self.backend.railway:
+                self.api = self.backend.railway.api
+                logger.info("Backend Railway initialisé")
+            elif self.backend.stokt:
+                self.api = self.backend.stokt.api
+                # Vérifier que le token Stokt est valide
+                if self.api and hasattr(self.api, 'get_user_profile'):
+                    try:
+                        self.api.get_user_profile()
+                        self.social_loader = SocialLoader(self.api)
+                        self.social_loader.on_data_loaded = self._on_social_data_loaded
+                        logger.info("Backend Stokt initialisé avec succès")
+                    except Exception:
+                        logger.warning("Token Stokt invalide, social loader désactivé")
+                        self.social_loader = None
+            else:
+                self.api = None
+
         except Exception as e:
             logger.warning(f"Backend non disponible: {e}")
             self.backend = None

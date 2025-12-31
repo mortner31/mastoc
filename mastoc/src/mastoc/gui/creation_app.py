@@ -7,6 +7,7 @@ Usage:
 
 import sys
 import logging
+from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt6.QtCore import Qt
@@ -15,6 +16,7 @@ from mastoc.db import Database
 from mastoc.core.hold_index import HoldClimbIndex
 from mastoc.api.client import StoktAPI
 from mastoc.core.backend import BackendSwitch, BackendConfig, BackendSource, MONTOBOARD_GYM_ID
+from mastoc.core.config import AppConfig
 from mastoc.gui.creation import CreationWizard
 
 # Configuration du logging
@@ -25,7 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Face ID de Montoboard (récupéré via GET /api/gyms/{gymId}/walls)
+# Face ID de Montoboard (utilisé comme fallback)
 MONTOBOARD_FACE_ID = "61b42d14-c629-434a-8827-801512151a18"
 
 
@@ -36,13 +38,22 @@ class CreationTestApp(QMainWindow):
         super().__init__()
         logger.info("Démarrage CreationTestApp...")
 
-        # Charger les données
-        self.db = Database()
+        # Charger la configuration persistante
+        self._app_config = AppConfig.load()
+        self._current_source = BackendSource(self._app_config.source)
+        logger.info(f"Config: source={self._current_source.value}")
+
+        # Charger les données (base selon source ADR-006)
+        db_path = self._get_db_path()
+        self.db = Database(db_path)
         self.index = HoldClimbIndex.from_database(self.db)
-        logger.info(f"Index: {len(self.index.climbs)} climbs, {len(self.index.holds)} holds")
+        logger.info(f"Index: {len(self.index.climbs)} climbs, {len(self.index.holds)} holds ({db_path.name})")
 
         # Initialiser l'API
         self.api = self._init_api()
+
+        # Déterminer le face_id (depuis la DB ou fallback)
+        face_id = self._get_face_id()
 
         # Configurer la fenêtre
         self.setWindowTitle("mastoc - Création de bloc (TEST)")
@@ -52,7 +63,7 @@ class CreationTestApp(QMainWindow):
         self.wizard = CreationWizard(
             index=self.index,
             api=self.api,
-            face_id=MONTOBOARD_FACE_ID
+            face_id=face_id
         )
         self.wizard.climb_created.connect(self._on_climb_created)
         self.wizard.cancelled.connect(self._on_cancelled)
@@ -61,20 +72,45 @@ class CreationTestApp(QMainWindow):
 
         logger.info("CreationTestApp prêt")
 
-    def _init_api(self) -> StoktAPI | None:
-        """Initialise le backend avec le token stocké."""
-        STOKT_TOKEN = "dba723cbee34ff3cf049b12150a21dc8919c3cf8"
+    def _get_db_path(self) -> Path:
+        """Retourne le chemin de la base SQLite selon la source (ADR-006)."""
+        base_dir = Path.home() / ".mastoc"
+        if self._current_source == BackendSource.RAILWAY:
+            return base_dir / "railway.db"
+        return base_dir / "stokt.db"
+
+    def _get_face_id(self) -> str:
+        """Récupère le face_id depuis la base de données ou utilise le fallback."""
+        if self.index.climbs:
+            # Utiliser le face_id du premier climb
+            return self.index.climbs[0].face_id
+        return MONTOBOARD_FACE_ID
+
+    def _init_api(self):
+        """Initialise le backend avec la config persistante."""
         try:
             self.backend = BackendSwitch(BackendConfig(
-                source=BackendSource.STOKT,
-                stokt_token=STOKT_TOKEN,
+                source=self._current_source,
+                railway_api_key=self._app_config.railway_api_key,
+                railway_url=self._app_config.railway_url,
+                stokt_token="dba723cbee34ff3cf049b12150a21dc8919c3cf8",  # Token Stokt legacy
             ))
-            api = self.backend.stokt.api if self.backend.stokt else None
-            if api:
-                # Vérifier le token
-                api.get_user_profile()
-                logger.info("Backend Stokt initialisé avec succès")
-            return api
+
+            # Sélectionner l'API selon la source
+            if self._current_source == BackendSource.RAILWAY and self.backend.railway:
+                logger.info("Backend Railway initialisé")
+                return self.backend.railway.api
+            elif self.backend.stokt:
+                api = self.backend.stokt.api
+                if api and hasattr(api, 'get_user_profile'):
+                    try:
+                        api.get_user_profile()
+                        logger.info("Backend Stokt initialisé avec succès")
+                    except Exception:
+                        logger.warning("Token Stokt invalide")
+                return api
+            return None
+
         except Exception as e:
             logger.warning(f"Backend non disponible: {e}")
             self.backend = None
