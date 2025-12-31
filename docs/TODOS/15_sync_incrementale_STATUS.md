@@ -1,6 +1,6 @@
 # STATUS - TODO 15 : Synchronisation Incrémentale
 
-**Progression** : 60%
+**Progression** : 90%
 
 ## Phase 1 : Stokt - Quick Win (100%)
 
@@ -25,14 +25,16 @@
 - [x] `RailwaySyncManager.needs_sync()` ajouté
 - [x] Tests existants passent (300 tests)
 
-## Phase 4 : UI et Feedback (0%)
+## Phase 4 : UI et Feedback (100%)
 
-- [ ] Afficher mode sync (full vs incremental)
-- [ ] Indicateur climbs téléchargés vs total
-- [ ] Option "Forcer sync complète"
+- [x] Afficher mode sync (full vs incremental)
+- [x] Indicateur climbs téléchargés vs total
+- [x] Option "Forcer sync complète"
+- [x] `SyncDialog` créé dans `gui/dialogs/sync.py`
+- [x] `SyncResult` enrichi : mode, climbs_downloaded, total_climbs_local
 
-## Phase 5 : Documentation et Tests (0%)
+## Phase 5 : Documentation et Tests (50%)
 
-- [ ] Documenter stratégie (ADR ou doc)
-- [ ] Tests de performance
-- [ ] Mise à jour CHANGELOG
+- [x] **ADR-007** créé : Synchronisation Incrémentale
+- [ ] Tests de performance (optionnel)
+- [x] Mise à jour TIMELINE.md

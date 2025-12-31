@@ -40,6 +40,7 @@ from mastoc.core.sync import SyncManager, RailwaySyncManager
 from mastoc.gui.widgets.climb_list import ClimbListWidget
 from mastoc.gui.widgets.my_lists_panel import MyListsPanel
 from mastoc.gui.dialogs.login import LoginDialog, TokenExpiredDialog
+from mastoc.gui.dialogs.sync import SyncDialog
 
 
 # Couleurs pour les types de prises (comme dans l'app Stokt)
@@ -675,7 +676,7 @@ class MastockApp(QMainWindow):
             self._update_lists_panel_user()
 
     def sync_data(self):
-        """Synchronise les données depuis l'API."""
+        """Synchronise les données depuis l'API via le dialog de sync."""
         # Gestion de l'authentification selon la source
         if self._current_source == BackendSource.RAILWAY:
             # Railway utilise une API Key
@@ -707,54 +708,24 @@ class MastockApp(QMainWindow):
                 else:
                     return
 
-        # Dialog de progression
-        progress = QProgressDialog("Synchronisation...", "Annuler", 0, 100, self)
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
-        progress.setMinimumDuration(0)
-
-        def on_progress(current, total, message):
-            if total > 0:
-                progress.setValue(int(current / total * 100))
-            progress.setLabelText(message)
-            QApplication.processEvents()
-
-        try:
-            result = self.sync_manager.sync_full(callback=on_progress)
-
-            progress.close()
-
-            if result.success:
+        # Ouvrir le dialog de synchronisation
+        dialog = SyncDialog(self.sync_manager, self.db, self)
+        if dialog.exec():
+            result = dialog.get_result()
+            if result and result.success:
                 self.load_data()
                 self.refresh_list()
 
                 # Proposer de générer les pictos si nouveaux climbs
                 if result.climbs_added > 0:
                     reply = QMessageBox.question(
-                        self, "Synchronisation terminée",
-                        f"Climbs ajoutés: {result.climbs_added}\n"
-                        f"Prises: {result.holds_added}\n\n"
+                        self, "Nouveaux climbs",
+                        f"{result.climbs_added} nouveaux climbs ajoutés.\n\n"
                         "Voulez-vous générer les pictos pour les nouveaux blocs ?",
                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                     )
                     if reply == QMessageBox.StandardButton.Yes:
                         self.regenerate_pictos(force=False)
-                else:
-                    QMessageBox.information(
-                        self, "Synchronisation terminée",
-                        f"Climbs ajoutés: {result.climbs_added}\n"
-                        f"Prises: {result.holds_added}"
-                    )
-            else:
-                QMessageBox.warning(
-                    self, "Erreur de synchronisation",
-                    "\n".join(result.errors)
-                )
-
-        except AuthenticationError:
-            progress.close()
-            dialog = TokenExpiredDialog(self)
-            if dialog.show_login_dialog(self.api):
-                self.sync_data()
 
     def refresh_list(self):
         """Rafraîchit la liste des climbs."""

@@ -21,11 +21,15 @@ class SyncResult:
         self.holds_added = 0
         self.errors: list[str] = []
         self.success = True
+        # Informations sur le mode de synchronisation
+        self.mode: str = "full"  # "full" ou "incremental"
+        self.climbs_downloaded = 0  # Nombre de climbs téléchargés depuis l'API
+        self.total_climbs_local = 0  # Total de climbs en base après sync
 
     def __repr__(self):
         return (
-            f"SyncResult(added={self.climbs_added}, updated={self.climbs_updated}, "
-            f"holds={self.holds_added}, success={self.success})"
+            f"SyncResult(mode={self.mode}, added={self.climbs_added}, updated={self.climbs_updated}, "
+            f"holds={self.holds_added}, downloaded={self.climbs_downloaded}, success={self.success})"
         )
 
 
@@ -116,6 +120,7 @@ class SyncManager:
                     callback(current, total, f"Climbs: {current}/{total}")
 
             climbs = self.api.get_all_gym_climbs(self.gym_id, callback=climb_progress)
+            result.climbs_downloaded = len(climbs)
 
             # 4. Sauvegarder les climbs
             if callback:
@@ -130,6 +135,9 @@ class SyncManager:
 
             # 5. Mettre à jour la date de sync
             self.db.set_last_sync()
+
+            # 6. Statistiques finales
+            result.total_climbs_local = self.db.get_climb_count()
 
             if callback:
                 callback(len(climbs), len(climbs), "Synchronisation terminée!")
@@ -171,6 +179,7 @@ class SyncManager:
             SyncResult avec les statistiques
         """
         result = SyncResult()
+        result.mode = "incremental"
         last_sync = self.db.get_last_sync()
 
         if not last_sync:
@@ -194,6 +203,7 @@ class SyncManager:
                     callback(current, total, f"Téléchargement: {current}/{total}")
 
             all_climbs = self.api.get_all_gym_climbs(self.gym_id, max_age=max_age, callback=climb_progress)
+            result.climbs_downloaded = len(all_climbs)
 
             # Identifier les nouveaux et les mis à jour
             new_climbs = []
@@ -223,6 +233,9 @@ class SyncManager:
 
             # Mettre à jour la date de sync
             self.db.set_last_sync()
+
+            # Statistiques finales
+            result.total_climbs_local = self.db.get_climb_count()
 
             if callback:
                 msg = f"Sync terminée: {len(new_climbs)} ajoutés, {len(updated_climbs)} mis à jour"
@@ -329,6 +342,7 @@ class RailwaySyncManager:
                     callback(current, total, f"Téléchargement climbs: {current}/{total}")
 
             all_climbs = self.api.get_all_climbs(face_id=face_id, callback=climb_progress)
+            result.climbs_downloaded = len(all_climbs)
 
             if callback:
                 callback(0, len(all_climbs), f"Sauvegarde de {len(all_climbs)} climbs...")
@@ -368,6 +382,9 @@ class RailwaySyncManager:
 
             # 5. Mettre à jour la date de sync
             self.db.set_last_sync()
+
+            # 6. Statistiques finales
+            result.total_climbs_local = self.db.get_climb_count()
 
             if callback:
                 callback(len(face_ids), len(face_ids),
@@ -412,6 +429,7 @@ class RailwaySyncManager:
             SyncResult avec les statistiques
         """
         result = SyncResult()
+        result.mode = "incremental"
         last_sync = self.db.get_last_sync()
 
         if not last_sync:
@@ -439,6 +457,7 @@ class RailwaySyncManager:
                 since_created_at=since_date,
                 callback=climb_progress
             )
+            result.climbs_downloaded = len(new_climbs)
 
             if callback:
                 callback(0, len(new_climbs), f"Analyse de {len(new_climbs)} climbs récents...")
@@ -461,6 +480,9 @@ class RailwaySyncManager:
 
             # Mettre à jour la date de sync
             self.db.set_last_sync()
+
+            # Statistiques finales
+            result.total_climbs_local = self.db.get_climb_count()
 
             if callback:
                 callback(len(new_climbs), len(new_climbs),

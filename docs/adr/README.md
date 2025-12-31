@@ -12,6 +12,7 @@ Ce dossier contient les décisions architecturales du projet mastoc.
 | [004](004_client_pyqtgraph.md) | Client Python avec PyQtGraph + SQLite | Accepté |
 | [005](005_batch_import.md) | Batch Import pour Holds, Users et Climbs | Accepté |
 | [006](006_dual_sqlite_databases.md) | Deux Bases SQLite Séparées (Stokt + Railway) | Accepté |
+| [007](007_incremental_sync.md) | Synchronisation Incrémentale | Accepté |
 
 ## Format ADR
 

@@ -9,6 +9,14 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 15 avancé à 90%** - Sync Incrémentale (Phases 1-4 complétées)
+  - Phase 4 : UI et Feedback (100%)
+    - `SyncDialog` : Dialog avec choix full/incremental
+    - Statistiques affichées : climbs téléchargés, ajoutés, mis à jour, total
+    - Mode incrémental désactivé si première sync
+  - **ADR-007 créé** : Synchronisation Incrémentale
+  - 300 tests passent
+
 - **TODO 15 avancé à 60%** - Sync Incrémentale (Phases 1-3 complétées)
   - Phase 1 : Stokt `max_age` dynamique basé sur `last_sync`
   - Phase 2 : Railway serveur `since_created_at` + `since_synced_at`
