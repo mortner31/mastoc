@@ -1,4 +1,4 @@
-# TODO 15 - Outil de Synchronisation Bidirectionnelle mastoc <-> Stokt
+# TODO 16 - Outil de Synchronisation Bidirectionnelle mastoc <-> Stokt
 
 ## Objectif
 
