@@ -1,6 +1,6 @@
 # STATUS - TODO 14 : Portage Client Railway
 
-**Progression** : 80%
+**Progression** : 85%
 
 ---
 
@@ -48,10 +48,16 @@
 - [ ] Endpoints social (reporté)
 - [ ] Endpoints listes (reporté)
 
-## Phase 5 : Sync (0%)
+## Phase 5 : Sync et Données (50%)
 
-- [ ] Sync Railway → SQLite
-- [ ] Gestion conflits
+- [x] ADR-006 : Deux bases SQLite séparées (stokt.db + railway.db)
+- [x] RailwaySyncManager pour sync Railway → SQLite
+- [x] Basculement automatique de DB selon BackendSource
+- [ ] Sync holds (prises) automatique avec face_id
+- [ ] Sync images (photos des faces)
+- [ ] Sync avatars utilisateurs
+- [ ] Sync users/setters
+- [ ] Gestion conflits (reporté → TODO 15)
 - [ ] Mode offline
 
 ---
@@ -85,5 +91,11 @@ mastoc/tests/test_api_crud.py
 | GET /api/holds | ✅ |
 | GET /api/sync/stats | ✅ |
 | POST /api/sync/import/* | ✅ |
-| GET /api/faces/{id}/setup | ❌ À créer |
-| POST /api/climbs | ❌ À créer |
+| GET /api/faces | ✅ (nouveau) |
+| GET /api/faces/{id} | ✅ (nouveau) |
+| GET /api/faces/{id}/setup | ✅ (nouveau) |
+| POST /api/climbs | ✅ |
+| PATCH /api/climbs/{id} | ✅ |
+| DELETE /api/climbs/{id} | ✅ |
+| GET /api/users | ❌ À créer |
+| GET /api/users/{id}/avatar | ❌ À créer |
