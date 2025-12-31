@@ -9,6 +9,17 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2025-12-31
 
+- **TODO 15 avancé à 60%** - Sync Incrémentale (Phases 1-3 complétées)
+  - Phase 1 : Stokt `max_age` dynamique basé sur `last_sync`
+  - Phase 2 : Railway serveur `since_created_at` + `since_synced_at`
+  - Phase 3 : Client Railway `sync_incremental()` + `needs_sync()`
+  - 300 tests au total (+4 nouveaux)
+  - Rapport : `docs/reports/SESSION_2025-12-31_sync_incrementale.md`
+
+- **TODO 16 enrichi** - Stratégie sync sociale documentée
+  - Limitation TODO 15 : sync incrémentale ne détecte pas sends/comments/likes
+  - Solution Phase 2c : sync sociale dédiée avec 3 modes
+
 - **TODO 14 archivé** - Portage Client Railway (100%)
   - 7 phases complétées : Client API, Backend Switch, Migration GUI, Endpoints, Sync, Validation, Assets
   - 296 tests au total

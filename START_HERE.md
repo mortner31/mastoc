@@ -86,10 +86,10 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
+| **15** | **Sync Incrémentale (Optimisation)** | **60% - EN COURS** |
 | **17** | **Authentification & Users mastoc** | **0% - PLANIFIÉ** |
-| **15** | **Sync Incrémentale (Optimisation)** | **0% - PLANIFIÉ** |
 | **16** | **Sync Tool mastoc <-> Stokt** | **0% - PLANIFIÉ** |
-| 14 | Portage Client vers Railway | 100% - COMPLET |
+| 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
 | 09 | Listes Personnalisées | 70% - API OK |
@@ -126,20 +126,21 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 17** : Authentification & Users mastoc
-   - Email/password + JWT
-   - Rôles User/Admin
-   - Reset password par email
-2. **TODO 15** : Sync Incrémentale (Optimisation téléchargement)
-   - Stokt : utiliser `max_age` dynamique (quick win)
-   - Railway : exposer `since_created_at` via API
-   - Gain potentiel : ~99% de données en moins
-3. **TODO 16** : Sync Tool mastoc <-> Stokt
+1. **TODO 15** : Sync Incrémentale (60% - finir phases optionnelles)
+   - ✅ Phase 1 : Stokt `max_age` dynamique
+   - ✅ Phase 2 : Railway `since_created_at` API
+   - ✅ Phase 3 : Client Railway avec `sync_incremental()`
+   - ⏳ Phase 4-5 : UI feedback + documentation (optionnel)
+2. **TODO 16** : Sync Tool mastoc <-> Stokt
    - Diff Engine pour comparer stokt.db vs railway.db
    - Push/Import interactif
+   - **Sync sociale** : détecter sends/comments/likes (non captés par sync incrémentale)
+3. **TODO 17** : Authentification & Users mastoc
+   - Email/password + JWT
+   - Rôles User/Admin
 4. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
 
 ---
 
 **Dernière mise à jour** : 2025-12-31
-**Statut du projet** : TODO 14 COMPLET, TODO 15/16/17 planifiés
+**Statut du projet** : TODO 14 ARCHIVÉ, TODO 15 EN COURS (60%)
