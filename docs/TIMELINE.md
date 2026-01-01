@@ -9,6 +9,15 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 16 complété** - Tableau de Bord Sync
+  - Endpoint `/api/sync/stats` enrichi (climbs_synced, climbs_local)
+  - Paramètre `local_only` sur `/api/climbs`
+  - Module `mastoc/core/sync_stats.py`
+  - CLI `python -m mastoc.tools.sync_status`
+  - Dialog `SyncStatusDialog` (menu Outils > État synchronisation)
+
+- **TODO 15 archivé** - Sync Incrémentale (100%)
+
 - **TODO 17 archivé** - Authentification et Utilisateurs mastoc
   - Menu Compte ajouté dans app.py (connexion/profil/déconnexion)
   - Fix bug passlib/bcrypt : utilisation directe de bcrypt
