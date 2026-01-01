@@ -86,7 +86,7 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **18** | **Sync Données Sociales** | **0% - EN COURS** |
+| **18** | **Sync Données Sociales** | **100% - COMPLET** |
 | 19 | Renforcement Tests | 100% - ARCHIVÉ |
 | 17 | Authentification & Users mastoc | 100% - ARCHIVÉ |
 | 15/16 | Sync Incrémentale + Dashboard | 100% - ARCHIVÉ |
@@ -129,13 +129,13 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 18** : Sync Données Sociales (EN COURS)
-   - Refresh compteurs (climbed_by, likes, comments)
-   - Détection changements non captés par sync incrémentale
-2. **TODO 09** : Listes Personnalisées
+1. **TODO 09** : Listes Personnalisées
    - API OK (70%), UI à faire
+2. **Phase 3 TODO 18** : Approche Complète (optionnel)
+   - Tables `sends`/`comments` sur Railway
+   - Affichage liste des réalisations/commentaires
 
 ---
 
 **Dernière mise à jour** : 2026-01-01
-**Statut du projet** : TODO 12 ARCHIVÉ - 371 tests mastoc, prêt pour TODO 18
+**Statut du projet** : TODO 18 COMPLET - 375 tests mastoc

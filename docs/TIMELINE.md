@@ -9,12 +9,19 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
-- **TODO 18 avancé à 40%** - Sync Données Sociales
-  - Phase 1 complète : Refresh compteurs
-  - `get_climb_social_stats()` : appelle sends, comments, likes
-  - `refresh_social_counts()` : refresh unitaire
-  - `refresh_all_social_counts()` : batch avec throttling (1 req/sec)
-  - 4 tests ajoutés (375 total)
+- **TODO 18 complété à 100%** - Sync Données Sociales
+  - **Phase 1 (100%)** : Refresh compteurs (backend)
+    - `get_climb_social_stats()` : appelle sends, comments, likes
+    - `refresh_social_counts()` : refresh unitaire
+    - `refresh_all_social_counts()` : batch avec throttling (1 req/sec)
+    - 4 tests ajoutés
+  - **Phase 2 (100%)** : Intégration UI
+    - Bouton "↻" dans ClimbDetailPanel (stats sociales)
+    - Menu "Outils > Rafraîchir stats sociales (tous)..."
+    - Indicateur stale (> 7 jours) : bouton orange + tooltip
+    - Signal `refresh_social_requested` + callbacks
+  - **Phase 3 (0%)** : Reportée (tables sends/comments Railway)
+  - 375 tests passent
 
 - **TODO 12 archivé** - Hold Annotations (95%)
   - Backend : modèle HoldAnnotation + 4 endpoints REST + 16 tests

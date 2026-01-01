@@ -2,6 +2,7 @@
 Vue détaillée d'un bloc avec navigation Previous/Next.
 """
 
+from datetime import datetime
 from pathlib import Path
 from collections import Counter
 
@@ -17,6 +18,9 @@ from PIL import Image, ImageDraw
 from mastoc.api.models import Climb, Hold, HoldType
 from mastoc.core.social_loader import SocialLoader, SocialData
 from mastoc.gui.widgets.social_panel import SocialPanel
+
+# Seuil en jours pour considérer les stats comme "stale" (TODO 18)
+STALE_THRESHOLD_DAYS = 7
 
 
 # Couleurs pour les types de prises (comme dans l'app Stokt)
@@ -85,6 +89,7 @@ class ClimbDetailWidget(QWidget):
     close_requested = pyqtSignal()
     like_toggled = pyqtSignal(str, bool)  # climb_id, is_liked
     bookmark_toggled = pyqtSignal(str, bool)  # climb_id, is_bookmarked
+    refresh_social_requested = pyqtSignal(str)  # climb_id (TODO 18)
 
     def __init__(self, holds_map: dict[int, Hold], image_path: Path = None,
                  social_loader: Optional[SocialLoader] = None, parent=None):
@@ -105,6 +110,9 @@ class ClimbDetailWidget(QWidget):
             self.img_color = Image.open(image_path).convert('RGB')
 
         self.img_item = None
+
+        # Date de dernière sync pour indicateur stale (TODO 18)
+        self.last_sync_date: Optional[datetime] = None
 
         self.setup_ui()
 
@@ -161,6 +169,13 @@ class ClimbDetailWidget(QWidget):
         self.comments_label.setStyleSheet("font-size: 12px;")
         self.comments_label.setToolTip("Commentaires")
         stats_layout.addWidget(self.comments_label)
+
+        # Bouton rafraîchir stats sociales (TODO 18)
+        self.refresh_social_btn = QPushButton("↻")
+        self.refresh_social_btn.setMaximumWidth(30)
+        self.refresh_social_btn.setToolTip("Rafraîchir les stats sociales depuis Stokt")
+        self.refresh_social_btn.clicked.connect(self._on_refresh_social_clicked)
+        stats_layout.addWidget(self.refresh_social_btn)
 
         info_layout.addLayout(stats_layout)
 
@@ -470,3 +485,75 @@ class ClimbDetailWidget(QWidget):
             self.social_panel.bookmark_clicked.connect(self._on_bookmark_clicked)
             self.social_panel.setMaximumHeight(200)
             self.layout().addWidget(self.social_panel)
+
+    # =========================================================================
+    # Refresh social counts (TODO 18)
+    # =========================================================================
+
+    def _on_refresh_social_clicked(self):
+        """Émet le signal pour rafraîchir les stats sociales du climb actuel."""
+        if not self.climb:
+            return
+        self.refresh_social_btn.setEnabled(False)
+        self.refresh_social_btn.setText("...")
+        self.refresh_social_requested.emit(self.climb.id)
+
+    def on_social_refresh_done(self, climb_id: str, stats: dict):
+        """
+        Callback appelé quand le refresh est terminé.
+
+        Args:
+            climb_id: ID du climb rafraîchi
+            stats: Dict avec {climbed_by, total_likes, total_comments}
+        """
+        self.refresh_social_btn.setEnabled(True)
+        self.refresh_social_btn.setText("↻")
+
+        if self.climb and self.climb.id == climb_id:
+            # Mettre à jour les labels
+            self.ascensions_label.setText(f"👤 {stats.get('climbed_by', 0)}")
+            self.likes_label.setText(f"❤ {stats.get('total_likes', 0)}")
+            self.comments_label.setText(f"💬 {stats.get('total_comments', 0)}")
+
+    def on_social_refresh_error(self, climb_id: str, error: str):
+        """Callback appelé en cas d'erreur de refresh."""
+        self.refresh_social_btn.setEnabled(True)
+        self.refresh_social_btn.setText("↻")
+        self.refresh_social_btn.setToolTip(f"Erreur: {error}")
+
+    def set_last_sync_date(self, last_sync: Optional[datetime]):
+        """
+        Définit la date de dernière synchronisation (TODO 18).
+
+        Met à jour l'indicateur visuel si les stats sont périmées (> 7 jours).
+        """
+        self.last_sync_date = last_sync
+        self._update_stale_indicator()
+
+    def _update_stale_indicator(self):
+        """Met à jour l'indicateur visuel de stats périmées."""
+        if not self.last_sync_date:
+            # Pas de date de sync connue
+            self.refresh_social_btn.setStyleSheet("")
+            self.refresh_social_btn.setToolTip("Rafraîchir les stats sociales")
+            return
+
+        days_since_sync = (datetime.now() - self.last_sync_date).days
+
+        if days_since_sync > STALE_THRESHOLD_DAYS:
+            # Stats périmées : bouton orange avec warning
+            self.refresh_social_btn.setStyleSheet(
+                "background-color: #FFA500; color: white; font-weight: bold;"
+            )
+            self.refresh_social_btn.setToolTip(
+                f"⚠ Stats périmées ({days_since_sync} jours)\n"
+                f"Dernière sync : {self.last_sync_date.strftime('%Y-%m-%d %H:%M')}\n"
+                f"Cliquez pour rafraîchir"
+            )
+        else:
+            # Stats à jour
+            self.refresh_social_btn.setStyleSheet("")
+            self.refresh_social_btn.setToolTip(
+                f"Stats à jour\n"
+                f"Dernière sync : {self.last_sync_date.strftime('%Y-%m-%d %H:%M')}"
+            )

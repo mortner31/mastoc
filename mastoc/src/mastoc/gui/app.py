@@ -586,6 +586,13 @@ class MastockApp(QMainWindow):
         sync_status_action.triggered.connect(self.show_sync_status)
         tools_menu.addAction(sync_status_action)
 
+        tools_menu.addSeparator()
+
+        # Rafraîchir stats sociales (TODO 18)
+        refresh_social_action = QAction("Rafraîchir stats sociales (tous)...", self)
+        refresh_social_action.triggered.connect(self.refresh_all_social_stats)
+        tools_menu.addAction(refresh_social_action)
+
         # Menu Compte
         self.account_menu = menubar.addMenu("Compte")
 
@@ -768,6 +775,100 @@ class MastockApp(QMainWindow):
         """Affiche le dialog d'état de synchronisation."""
         dialog = SyncStatusDialog(self)
         dialog.exec()
+
+    def refresh_all_social_stats(self):
+        """
+        Rafraîchit les stats sociales de tous les climbs (TODO 18).
+
+        Utilise SyncManager.refresh_all_social_counts() avec throttling.
+        """
+        # Vérifier que c'est le backend Stokt (Railway n'a pas cette fonction)
+        if self._current_source != BackendSource.STOKT:
+            QMessageBox.information(
+                self, "Non disponible",
+                "Le rafraîchissement des stats sociales n'est disponible\n"
+                "que pour la source Stokt."
+            )
+            return
+
+        # Vérifier l'authentification
+        if not self.api.is_authenticated():
+            reply = QMessageBox.question(
+                self, "Connexion requise",
+                "Vous devez être connecté pour rafraîchir les stats.\n"
+                "Voulez-vous vous connecter ?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.show_login()
+                if not self.api.is_authenticated():
+                    return
+            else:
+                return
+
+        # Confirmation
+        climb_count = self.db.get_climb_count()
+        reply = QMessageBox.question(
+            self, "Rafraîchir stats sociales",
+            f"Cette opération va rafraîchir les stats sociales\n"
+            f"de {climb_count} climbs depuis Stokt.\n\n"
+            f"Cela peut prendre environ {climb_count} secondes\n"
+            f"(throttling 1 req/sec pour éviter le rate limiting).\n\n"
+            f"Continuer ?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # Dialog de progression
+        progress = QProgressDialog(
+            "Rafraîchissement des stats sociales...",
+            "Annuler", 0, climb_count, self
+        )
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+
+        cancelled = False
+
+        def on_progress(current, total, message):
+            nonlocal cancelled
+            progress.setValue(current)
+            progress.setLabelText(message)
+            QApplication.processEvents()
+            if progress.wasCanceled():
+                cancelled = True
+                raise InterruptedError("Annulé par l'utilisateur")
+
+        try:
+            result = self.sync_manager.refresh_all_social_counts(
+                callback=on_progress,
+                delay_seconds=1.0
+            )
+
+            progress.close()
+
+            if not cancelled:
+                msg = (
+                    f"Stats sociales rafraîchies !\n\n"
+                    f"• {result['updated']} / {result['total']} climbs mis à jour"
+                )
+                if result['errors']:
+                    msg += f"\n• {len(result['errors'])} erreurs"
+
+                QMessageBox.information(self, "Terminé", msg)
+                self.statusBar().showMessage(
+                    f"Stats sociales: {result['updated']}/{result['total']} mis à jour"
+                )
+
+        except InterruptedError:
+            progress.close()
+            self.statusBar().showMessage("Rafraîchissement annulé")
+
+        except Exception as e:
+            progress.close()
+            logger.error(f"Erreur refresh stats sociales: {e}")
+            QMessageBox.warning(self, "Erreur", str(e))
 
     def regenerate_pictos(self, force: bool = True):
         """Régénère tous les pictos."""
