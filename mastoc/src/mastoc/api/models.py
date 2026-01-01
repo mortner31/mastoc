@@ -479,3 +479,171 @@ def parse_holds_list(holds_str: str) -> list[ClimbHold]:
             except (ValueError, KeyError):
                 continue
     return holds
+
+
+# =============================================================================
+# Modèles pour les annotations de prises (TODO 12 / ADR-008)
+# =============================================================================
+
+class HoldGripType(Enum):
+    """Type de préhension de la prise."""
+    PLAT = "plat"
+    REGLETTE = "reglette"
+    BI_DOIGT = "bi_doigt"
+    TRI_DOIGT = "tri_doigt"
+    MONO_DOIGT = "mono_doigt"
+    PINCE = "pince"
+    COLONNETTE = "colonnette"
+    INVERSE = "inverse"
+    BAC = "bac"
+    PRISE_VOLUME = "prise_volume"
+    MICRO = "micro"
+    AUTRE = "autre"
+
+
+class HoldCondition(Enum):
+    """État de maintenance de la prise."""
+    OK = "ok"
+    A_BROSSER = "a_brosser"
+    SALE = "sale"
+    TOURNEE = "tournee"
+    USEE = "usee"
+    CASSEE = "cassee"
+
+
+class HoldRelativeDifficulty(Enum):
+    """Difficulté relative de la prise par rapport au bloc."""
+    FACILE = "facile"
+    NORMALE = "normale"
+    DURE = "dure"
+
+
+@dataclass
+class HoldAnnotation:
+    """Annotation d'une prise par l'utilisateur courant."""
+    hold_id: int
+    grip_type: Optional[HoldGripType] = None
+    condition: Optional[HoldCondition] = None
+    difficulty: Optional[HoldRelativeDifficulty] = None
+    notes: str = ""
+    created_at: str = ""
+    updated_at: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "HoldAnnotation":
+        """Crée une HoldAnnotation depuis la réponse API."""
+        grip_type = None
+        if data.get("grip_type"):
+            try:
+                grip_type = HoldGripType(data["grip_type"])
+            except ValueError:
+                pass
+
+        condition = None
+        if data.get("condition"):
+            try:
+                condition = HoldCondition(data["condition"])
+            except ValueError:
+                pass
+
+        difficulty = None
+        if data.get("difficulty"):
+            try:
+                difficulty = HoldRelativeDifficulty(data["difficulty"])
+            except ValueError:
+                pass
+
+        return cls(
+            hold_id=data.get("hold_id", 0),
+            grip_type=grip_type,
+            condition=condition,
+            difficulty=difficulty,
+            notes=data.get("notes", ""),
+            created_at=data.get("created_at", ""),
+            updated_at=data.get("updated_at"),
+        )
+
+
+@dataclass
+class HoldConsensus:
+    """Consensus communautaire pour une prise."""
+    hold_id: int
+    grip_type: Optional[HoldGripType] = None
+    grip_type_votes: int = 0
+    grip_type_confidence: float = 0.0
+    condition: Optional[HoldCondition] = None
+    condition_votes: int = 0
+    condition_confidence: float = 0.0
+    difficulty: Optional[HoldRelativeDifficulty] = None
+    difficulty_votes: int = 0
+    difficulty_confidence: float = 0.0
+    total_annotators: int = 0
+
+    @classmethod
+    def from_api(cls, data: dict) -> "HoldConsensus":
+        """Crée un HoldConsensus depuis la réponse API."""
+        consensus = data.get("consensus", data)
+
+        grip_type = None
+        if consensus.get("grip_type"):
+            try:
+                grip_type = HoldGripType(consensus["grip_type"])
+            except ValueError:
+                pass
+
+        condition = None
+        if consensus.get("condition"):
+            try:
+                condition = HoldCondition(consensus["condition"])
+            except ValueError:
+                pass
+
+        difficulty = None
+        if consensus.get("difficulty"):
+            try:
+                difficulty = HoldRelativeDifficulty(consensus["difficulty"])
+            except ValueError:
+                pass
+
+        return cls(
+            hold_id=data.get("hold_id", 0),
+            grip_type=grip_type,
+            grip_type_votes=consensus.get("grip_type_votes", 0),
+            grip_type_confidence=consensus.get("grip_type_confidence", 0.0),
+            condition=condition,
+            condition_votes=consensus.get("condition_votes", 0),
+            condition_confidence=consensus.get("condition_confidence", 0.0),
+            difficulty=difficulty,
+            difficulty_votes=consensus.get("difficulty_votes", 0),
+            difficulty_confidence=consensus.get("difficulty_confidence", 0.0),
+            total_annotators=consensus.get("total_annotators", 0),
+        )
+
+
+@dataclass
+class AnnotationData:
+    """Données d'annotation complètes pour une prise."""
+    hold_id: int
+    consensus: HoldConsensus
+    user_annotation: Optional[HoldAnnotation] = None
+    loaded: bool = False
+    error: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "AnnotationData":
+        """Crée un AnnotationData depuis la réponse API."""
+        hold_id = data.get("hold_id", 0)
+
+        consensus = HoldConsensus.from_api(data)
+
+        user_annotation = None
+        if data.get("user_annotation"):
+            user_annotation = HoldAnnotation.from_api(data["user_annotation"])
+            user_annotation.hold_id = hold_id
+
+        return cls(
+            hold_id=hold_id,
+            consensus=consensus,
+            user_annotation=user_annotation,
+            loaded=True,
+        )

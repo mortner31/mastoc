@@ -9,6 +9,7 @@ from mastoc_api.routers.faces import router as faces_router
 from mastoc_api.routers.sync import router as sync_router
 from mastoc_api.routers.auth import router as auth_router
 from mastoc_api.routers.users import router as users_router
+from mastoc_api.routers.hold_annotations import router as hold_annotations_router
 
 __all__ = [
     "health_router",
@@ -18,4 +19,5 @@ __all__ = [
     "sync_router",
     "auth_router",
     "users_router",
+    "hold_annotations_router",
 ]

@@ -18,9 +18,10 @@ from mastoc_api.routers import (
     sync_router,
     auth_router,
     users_router,
+    hold_annotations_router,
 )
 # Import des modèles pour créer les tables
-from mastoc_api.models import Gym, Face, Hold, Climb, User, IdMapping  # noqa: F401
+from mastoc_api.models import Gym, Face, Hold, Climb, User, IdMapping, HoldAnnotation  # noqa: F401
 
 
 settings = get_settings()
@@ -73,6 +74,7 @@ app.include_router(climbs_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(holds_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(faces_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(sync_router, prefix="/api", dependencies=api_dependencies)
+app.include_router(hold_annotations_router, prefix="/api", dependencies=api_dependencies)
 
 
 if __name__ == "__main__":

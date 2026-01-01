@@ -14,9 +14,41 @@ import pyqtgraph as pg
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QColor
 
-from mastoc.api.models import Hold
+from mastoc.api.models import Hold, HoldGripType, HoldCondition, HoldRelativeDifficulty, AnnotationData
 from mastoc.core.hold_index import HoldClimbIndex
 from mastoc.core.colormaps import Colormap, apply_colormap
+
+
+# Mapping des enums vers des valeurs normalisées [0, 1] pour les colormaps
+_GRIP_TYPE_VALUES = {
+    HoldGripType.BAC: 0.0,         # Facile (vert)
+    HoldGripType.PRISE_VOLUME: 0.08,
+    HoldGripType.PLAT: 0.17,
+    HoldGripType.PINCE: 0.25,
+    HoldGripType.COLONNETTE: 0.33,
+    HoldGripType.INVERSE: 0.42,
+    HoldGripType.REGLETTE: 0.50,   # Moyen (jaune)
+    HoldGripType.TRI_DOIGT: 0.58,
+    HoldGripType.BI_DOIGT: 0.67,
+    HoldGripType.MONO_DOIGT: 0.75,
+    HoldGripType.MICRO: 0.92,
+    HoldGripType.AUTRE: 1.0,       # Difficile (rouge)
+}
+
+_CONDITION_VALUES = {
+    HoldCondition.OK: 0.0,         # Bon (vert)
+    HoldCondition.A_BROSSER: 0.2,
+    HoldCondition.SALE: 0.4,
+    HoldCondition.TOURNEE: 0.6,
+    HoldCondition.USEE: 0.8,
+    HoldCondition.CASSEE: 1.0,     # Mauvais (rouge)
+}
+
+_DIFFICULTY_VALUES = {
+    HoldRelativeDifficulty.FACILE: 0.0,   # Vert
+    HoldRelativeDifficulty.NORMALE: 0.5,  # Jaune
+    HoldRelativeDifficulty.DURE: 1.0,     # Rouge
+}
 
 
 class ColorMode(Enum):
@@ -25,6 +57,10 @@ class ColorMode(Enum):
     MAX_GRADE = "max"    # Grade du bloc le plus difficile
     FREQUENCY = "freq"   # Fréquence d'utilisation (quantiles)
     RARE = "rare"        # Prises rares (0, 1, 2, 3+ utilisations)
+    # Modes annotations (ADR-008)
+    GRIP_TYPE = "grip"   # Couleur par type de préhension
+    CONDITION = "condition"  # Couleur par état de maintenance
+    DIFFICULTY = "difficulty"  # Couleur par difficulté relative
 
 
 def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
@@ -113,6 +149,9 @@ class HoldOverlay(QObject):
         # Cache du comptage pour le mode rare
         self._usage_count_cache: dict[int, int] = {}
 
+        # Cache des annotations (ADR-008)
+        self._annotation_cache: dict[int, AnnotationData] = {}
+
         # Items graphiques
         self.hold_items: dict[int, pg.PlotDataItem] = {}
         self.selection_items: dict[int, pg.PlotDataItem] = {}
@@ -183,6 +222,15 @@ class HoldOverlay(QObject):
     def set_colormap(self, cmap: Colormap):
         """Change la palette de couleurs."""
         self.colormap = cmap
+
+    def set_annotation_data(self, annotations: dict[int, AnnotationData]):
+        """
+        Définit les données d'annotations pour les modes GRIP_TYPE/CONDITION/DIFFICULTY.
+
+        Args:
+            annotations: Dict hold_id -> AnnotationData
+        """
+        self._annotation_cache = annotations
 
     def update_colors(
         self,
@@ -302,6 +350,25 @@ class HoldOverlay(QObject):
                 return 0.25  # 3 fois → peu visible
             else:
                 return 0.0   # 4+ fois → neutre
+
+        # Modes annotations (ADR-008)
+        elif self.color_mode == ColorMode.GRIP_TYPE:
+            annotation = self._annotation_cache.get(hold_id)
+            if not annotation or not annotation.consensus.grip_type:
+                return None
+            return _GRIP_TYPE_VALUES.get(annotation.consensus.grip_type, 0.5)
+
+        elif self.color_mode == ColorMode.CONDITION:
+            annotation = self._annotation_cache.get(hold_id)
+            if not annotation or not annotation.consensus.condition:
+                return None
+            return _CONDITION_VALUES.get(annotation.consensus.condition, 0.5)
+
+        elif self.color_mode == ColorMode.DIFFICULTY:
+            annotation = self._annotation_cache.get(hold_id)
+            if not annotation or not annotation.consensus.difficulty:
+                return None
+            return _DIFFICULTY_VALUES.get(annotation.consensus.difficulty, 0.5)
 
         return None
 

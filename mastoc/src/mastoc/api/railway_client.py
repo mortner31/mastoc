@@ -538,3 +538,109 @@ class MastocAPI:
         """
         response = self._request("get", "api/sync/stats")
         return response.json()
+
+    # =========================================================================
+    # Hold Annotations (ADR-008)
+    # =========================================================================
+
+    def get_hold_annotations(self, hold_id: int) -> "AnnotationData":
+        """
+        GET /api/holds/{hold_id}/annotations
+
+        Récupère le consensus et l'annotation de l'utilisateur courant.
+
+        Args:
+            hold_id: ID de la prise
+
+        Returns:
+            AnnotationData avec consensus et user_annotation
+        """
+        from mastoc.api.models import AnnotationData
+
+        response = self._request("get", f"api/holds/{hold_id}/annotations")
+        return AnnotationData.from_api(response.json())
+
+    def set_hold_annotation(
+        self,
+        hold_id: int,
+        grip_type: Optional[str] = None,
+        condition: Optional[str] = None,
+        difficulty: Optional[str] = None,
+        notes: str = "",
+    ) -> "HoldAnnotation":
+        """
+        PUT /api/holds/{hold_id}/annotations
+
+        Crée ou modifie l'annotation de l'utilisateur pour une prise.
+        Requiert authentification JWT.
+
+        Args:
+            hold_id: ID de la prise
+            grip_type: Type de préhension (ex: "reglette", "plat")
+            condition: État de maintenance (ex: "ok", "a_brosser")
+            difficulty: Difficulté relative (ex: "facile", "normale", "dure")
+            notes: Notes libres
+
+        Returns:
+            HoldAnnotation créée/modifiée
+        """
+        from mastoc.api.models import HoldAnnotation
+
+        data = {}
+        if grip_type is not None:
+            data["grip_type"] = grip_type
+        if condition is not None:
+            data["condition"] = condition
+        if difficulty is not None:
+            data["difficulty"] = difficulty
+        if notes is not None:
+            data["notes"] = notes
+
+        response = self._request("put", f"api/holds/{hold_id}/annotations", json=data)
+        annotation = HoldAnnotation.from_api(response.json())
+        annotation.hold_id = hold_id
+        return annotation
+
+    def delete_hold_annotation(self, hold_id: int) -> bool:
+        """
+        DELETE /api/holds/{hold_id}/annotations
+
+        Supprime l'annotation de l'utilisateur pour une prise.
+        Requiert authentification JWT.
+
+        Args:
+            hold_id: ID de la prise
+
+        Returns:
+            True si supprimée
+        """
+        self._request("delete", f"api/holds/{hold_id}/annotations")
+        return True
+
+    def get_hold_annotations_batch(self, hold_ids: list[int]) -> dict[int, "AnnotationData"]:
+        """
+        POST /api/holds/annotations/batch
+
+        Récupère les annotations pour plusieurs prises.
+
+        Args:
+            hold_ids: Liste des IDs de prises
+
+        Returns:
+            Dict hold_id -> AnnotationData
+        """
+        from mastoc.api.models import AnnotationData
+
+        response = self._request(
+            "post",
+            "api/holds/annotations/batch",
+            json={"hold_ids": hold_ids}
+        )
+        data = response.json()
+
+        result = {}
+        for hold_id_str, annotation_data in data.get("annotations", {}).items():
+            hold_id = int(hold_id_str)
+            result[hold_id] = AnnotationData.from_api(annotation_data)
+
+        return result
