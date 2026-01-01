@@ -9,6 +9,12 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 19 archivé** - Renforcement Couverture Tests (100%)
+  - +62 tests ajoutés (353 → 415 tests)
+  - Tests serveur : test_users.py, test_holds.py, test_permissions.py (+35)
+  - Tests mastoc : test_auth_manager.py, test_api_errors.py (+27)
+  - Documentation : docs/06_guide_tests.md
+
 - **TODO 16 complété** - Tableau de Bord Sync
   - Endpoint `/api/sync/stats` enrichi (climbs_synced, climbs_local)
   - Paramètre `local_only` sur `/api/climbs`

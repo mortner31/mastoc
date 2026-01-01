@@ -86,10 +86,10 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **17** | **Authentification & Users mastoc** | **100% - COMPLET** |
-| **15** | **Sync Incrémentale (Optimisation)** | **90% - EN COURS** |
-| **16** | **Tableau de Bord Sync** | **0% - PLANIFIÉ** |
+| **19** | **Renforcement Tests** | **100% - ARCHIVÉ** |
 | **18** | **Sync Données Sociales** | **0% - PLANIFIÉ** |
+| 17 | Authentification & Users mastoc | 100% - ARCHIVÉ |
+| 15/16 | Sync Incrémentale + Dashboard | 100% - ARCHIVÉ |
 | 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
 | 12 | Hold Annotations | 0% - À faire |
@@ -127,23 +127,15 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 17** : Authentification & Users mastoc (100% - COMPLET)
-   - ✅ Endpoints auth + users
-   - ✅ JWT + API Key coexistence
-   - ✅ Client AuthManager + dialogs PyQt
-   - ⏳ À déployer sur Railway + exécuter migration
-2. **TODO 15** : Sync Incrémentale (90% - finir documentation)
-   - ✅ Phase 1-4 : Complétées
-   - ⏳ Phase 5 : Documentation (optionnel)
-3. **TODO 16** : Tableau de Bord Sync
-   - Dashboard stats (climbs sync vs locaux)
-   - CLI + intégration GUI
-4. **TODO 18** : Sync Données Sociales
+1. **TODO 18** : Sync Données Sociales (0%)
    - Refresh compteurs (climbed_by, likes, comments)
    - Détection changements non captés par sync incrémentale
-5. **TODO 12** : Hold Annotations (tags crowd-sourcés pour les prises)
+2. **TODO 12** : Hold Annotations
+   - Tags crowd-sourcés pour les prises
+3. **TODO 09** : Listes Personnalisées
+   - API OK (70%), UI à faire
 
 ---
 
-**Dernière mise à jour** : 2025-12-31
-**Statut du projet** : TODO 17 COMPLET, TODO 15 EN COURS (90%)
+**Dernière mise à jour** : 2026-01-01
+**Statut du projet** : TODO 19 ARCHIVÉ - 415 tests, prêt pour TODO 18
