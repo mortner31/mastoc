@@ -12,10 +12,9 @@ from mastoc_api.models import Gym, Face, Hold
 
 @pytest.fixture
 def test_gym(db_session):
-    """Crée un gym de test."""
+    """Cree un gym de test."""
     gym = Gym(
         id=uuid.uuid4(),
-        name="Test Gym",
         display_name="Test Gym",
         location_string="Test Location",
     )
