@@ -274,6 +274,71 @@ class SyncManager:
         hours_since_sync = (datetime.now() - last_sync).total_seconds() / 3600
         return hours_since_sync > 24
 
+    # =========================================================================
+    # Refresh social counts (TODO 18)
+    # =========================================================================
+
+    def refresh_social_counts(self, climb_id: str) -> dict:
+        """
+        Rafraîchit les compteurs sociaux d'un climb depuis Stokt.
+
+        Args:
+            climb_id: ID du climb (Stokt UUID)
+
+        Returns:
+            Dict avec les nouveaux compteurs {climbed_by, total_likes, total_comments}
+        """
+        stats = self.api.get_climb_social_stats(climb_id)
+        self.climb_repo.update_social_counts(
+            climb_id,
+            climbed_by=stats["climbed_by"],
+            total_likes=stats["total_likes"],
+            total_comments=stats["total_comments"]
+        )
+        return stats
+
+    def refresh_all_social_counts(
+        self,
+        callback: Optional[ProgressCallback] = None,
+        delay_seconds: float = 1.0
+    ) -> dict:
+        """
+        Rafraîchit les compteurs sociaux de tous les climbs.
+
+        Args:
+            callback: Fonction (current, total, message) pour la progression
+            delay_seconds: Délai entre chaque requête (throttling)
+
+        Returns:
+            Dict avec {total, updated, errors}
+        """
+        import time
+
+        climbs = self.climb_repo.get_all_climbs()
+        total = len(climbs)
+        updated = 0
+        errors = []
+
+        for i, climb in enumerate(climbs):
+            try:
+                if callback:
+                    callback(i, total, f"Refresh {climb.name[:30]}...")
+
+                self.refresh_social_counts(climb.id)
+                updated += 1
+
+                # Throttling pour éviter le rate limiting
+                if i < total - 1:
+                    time.sleep(delay_seconds)
+
+            except Exception as e:
+                errors.append(f"{climb.id}: {e}")
+
+        if callback:
+            callback(total, total, f"Terminé: {updated}/{total} mis à jour")
+
+        return {"total": total, "updated": updated, "errors": errors}
+
 
 class RailwaySyncManager:
     """Gère la synchronisation Railway ↔ BD locale (ADR-006)."""

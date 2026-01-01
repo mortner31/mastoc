@@ -345,3 +345,116 @@ class TestSyncManager:
         mock_api.get_all_gym_climbs.assert_called_once()
         call_args = mock_api.get_all_gym_climbs.call_args
         assert call_args.kwargs.get('max_age') == 7  # min_days par défaut
+
+
+# =============================================================================
+# Tests Social Refresh (TODO 18)
+# =============================================================================
+
+class TestSocialRefresh:
+    """Tests pour le rafraîchissement des compteurs sociaux."""
+
+    def test_refresh_social_counts(self, temp_db, mock_api, sample_climbs, sample_face):
+        """Teste le rafraîchissement des compteurs d'un climb."""
+        # Setup: sauvegarder un climb avec des compteurs initiaux
+        hold_repo = HoldRepository(temp_db)
+        hold_repo.save_face(sample_face)
+
+        climb_repo = ClimbRepository(temp_db)
+        climb = sample_climbs[0]
+        climb_repo.save_climb(climb)
+
+        # Mock: API retourne de nouveaux compteurs
+        mock_api.get_climb_social_stats.return_value = {
+            "climbed_by": 15,
+            "total_likes": 25,
+            "total_comments": 5
+        }
+
+        manager = SyncManager(mock_api, temp_db)
+        stats = manager.refresh_social_counts(climb.id)
+
+        # Vérifier les stats retournées
+        assert stats["climbed_by"] == 15
+        assert stats["total_likes"] == 25
+        assert stats["total_comments"] == 5
+
+        # Vérifier que la BD a été mise à jour
+        updated_climb = climb_repo.get_climb(climb.id)
+        assert updated_climb.climbed_by == 15
+        assert updated_climb.total_likes == 25
+        assert updated_climb.total_comments == 5
+
+    def test_refresh_all_social_counts(self, temp_db, mock_api, sample_climbs, sample_face):
+        """Teste le rafraîchissement batch de tous les climbs."""
+        # Setup: sauvegarder plusieurs climbs
+        hold_repo = HoldRepository(temp_db)
+        hold_repo.save_face(sample_face)
+
+        climb_repo = ClimbRepository(temp_db)
+        for climb in sample_climbs[:3]:
+            climb_repo.save_climb(climb)
+
+        # Mock: API retourne des compteurs différents pour chaque climb
+        mock_api.get_climb_social_stats.return_value = {
+            "climbed_by": 10,
+            "total_likes": 20,
+            "total_comments": 3
+        }
+
+        manager = SyncManager(mock_api, temp_db)
+        result = manager.refresh_all_social_counts(delay_seconds=0)  # Pas de délai pour les tests
+
+        assert result["total"] == 3
+        assert result["updated"] == 3
+        assert result["errors"] == []
+
+        # Vérifier que l'API a été appelée 3 fois
+        assert mock_api.get_climb_social_stats.call_count == 3
+
+    def test_refresh_all_social_counts_with_error(self, temp_db, mock_api, sample_climbs, sample_face):
+        """Teste le refresh batch avec une erreur sur un climb."""
+        # Setup
+        hold_repo = HoldRepository(temp_db)
+        hold_repo.save_face(sample_face)
+
+        climb_repo = ClimbRepository(temp_db)
+        for climb in sample_climbs[:2]:
+            climb_repo.save_climb(climb)
+
+        # Mock: première réussite, deuxième échec
+        mock_api.get_climb_social_stats.side_effect = [
+            {"climbed_by": 10, "total_likes": 20, "total_comments": 3},
+            Exception("API error")
+        ]
+
+        manager = SyncManager(mock_api, temp_db)
+        result = manager.refresh_all_social_counts(delay_seconds=0)
+
+        assert result["total"] == 2
+        assert result["updated"] == 1
+        assert len(result["errors"]) == 1
+        assert "API error" in result["errors"][0]
+
+    def test_update_social_counts_repository(self, temp_db, sample_climbs, sample_face):
+        """Teste la mise à jour directe des compteurs via le repository."""
+        hold_repo = HoldRepository(temp_db)
+        hold_repo.save_face(sample_face)
+
+        climb_repo = ClimbRepository(temp_db)
+        climb = sample_climbs[0]
+        climb_repo.save_climb(climb)
+
+        # Mise à jour directe
+        climb_repo.update_social_counts(
+            climb.id,
+            climbed_by=100,
+            total_likes=50,
+            total_comments=10
+        )
+
+        # Vérifier
+        updated = climb_repo.get_climb(climb.id)
+        assert updated.climbed_by == 100
+        assert updated.total_likes == 50
+        assert updated.total_comments == 10

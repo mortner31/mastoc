@@ -249,6 +249,28 @@ class StoktAPI:
     # Interactions sociales (TODO 07)
     # =========================================================================
 
+    def get_climb_social_stats(self, climb_id: str) -> dict:
+        """
+        Récupère les statistiques sociales d'un climb (TODO 18).
+
+        Appelle sends, comments, likes et retourne les compteurs.
+
+        Args:
+            climb_id: ID du climb (Stokt UUID)
+
+        Returns:
+            Dict avec climbed_by, total_likes, total_comments
+        """
+        sends = self.get_climb_sends(climb_id, limit=9999)
+        comments = self.get_climb_comments(climb_id, limit=9999)
+        likes = self.get_climb_likes(climb_id)
+
+        return {
+            "climbed_by": len(sends),
+            "total_likes": len(likes),
+            "total_comments": len(comments),
+        }
+
     def get_climb_sends(self, climb_id: str, limit: int = 20) -> list[Effort]:
         """
         GET api/climbs/{climbId}/latest-sends

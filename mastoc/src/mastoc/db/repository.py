@@ -154,6 +154,31 @@ class ClimbRepository:
             )
             return [(row[0], row[1]) for row in cursor.fetchall()]
 
+    def update_social_counts(
+        self,
+        climb_id: str,
+        climbed_by: int,
+        total_likes: int,
+        total_comments: int
+    ):
+        """
+        Met à jour les compteurs sociaux d'un climb (TODO 18).
+
+        Args:
+            climb_id: ID du climb
+            climbed_by: Nombre de personnes ayant réalisé le climb
+            total_likes: Nombre de likes
+            total_comments: Nombre de commentaires
+        """
+        now = datetime.now().isoformat()
+        with self.db.connection() as conn:
+            conn.execute(
+                """UPDATE climbs
+                   SET climbed_by = ?, total_likes = ?, total_comments = ?, updated_at = ?
+                   WHERE id = ?""",
+                (climbed_by, total_likes, total_comments, now, climb_id)
+            )
+
     def _row_to_climb(self, row: dict) -> Climb:
         """Convertit une ligne SQLite en Climb."""
         from mastoc.api.models import ClimbSetter, Grade
