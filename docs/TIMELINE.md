@@ -7,6 +7,14 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2026-01-01
+
+- **TODO 17 archivé** - Authentification et Utilisateurs mastoc
+  - Menu Compte ajouté dans app.py (connexion/profil/déconnexion)
+  - Fix bug passlib/bcrypt : utilisation directe de bcrypt
+  - 15 tests JWT automatisés (test_jwt_auth.py)
+  - Déployé sur Railway
+
 ## 2025-12-31
 
 - **TODO 17 complété à 100%** - Système d'Authentification et Utilisateurs mastoc
