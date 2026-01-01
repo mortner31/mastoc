@@ -3,9 +3,11 @@ Application FastAPI principale pour mastoc-api.
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from mastoc_api.config import get_settings
 from mastoc_api.database import Base, engine
@@ -75,6 +77,11 @@ app.include_router(holds_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(faces_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(sync_router, prefix="/api", dependencies=api_dependencies)
 app.include_router(hold_annotations_router, prefix="/api", dependencies=api_dependencies)
+
+# Montage des fichiers statiques (images des murs)
+static_dir = Path(__file__).parent.parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 if __name__ == "__main__":
