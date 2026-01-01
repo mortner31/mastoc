@@ -123,6 +123,6 @@ PYTHONPATH=src python scripts/migrate_user_auth.py
 
 1. ~~Déployer sur Railway~~ ✅ Migration exécutée
 2. ~~Exécuter la migration~~ ✅
-3. Intégrer menu "Compte" dans app.py principale
+3. ~~Intégrer menu "Compte" dans app.py principale~~ ✅
 4. Tester inscription/connexion/profil via Swagger
 5. Push git pour déployer le code sur Railway

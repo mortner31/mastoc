@@ -41,6 +41,8 @@ from mastoc.gui.widgets.climb_list import ClimbListWidget
 from mastoc.gui.widgets.my_lists_panel import MyListsPanel
 from mastoc.gui.dialogs.login import LoginDialog, TokenExpiredDialog
 from mastoc.gui.dialogs.sync import SyncDialog
+from mastoc.gui.dialogs.mastoc_auth import MastocLoginDialog, ProfileDialog
+from mastoc.core.auth import AuthManager
 
 
 # Couleurs pour les types de prises (comme dans l'app Stokt)
@@ -447,6 +449,12 @@ class MastockApp(QMainWindow):
         # Charger la configuration persistante
         self._app_config = AppConfig.load()
 
+        # AuthManager pour l'authentification mastoc (JWT)
+        self.auth_manager = AuthManager(
+            base_url=self._app_config.railway_url or "https://mastoc-production.up.railway.app"
+        )
+        self.auth_manager.set_on_auth_change(self._on_auth_changed)
+
         # Backend avec fallback Stokt → Railway
         self._current_source = BackendSource(self._app_config.source)
         self.backend = BackendSwitch(BackendConfig(
@@ -572,6 +580,26 @@ class MastockApp(QMainWindow):
         regen_pictos_action = QAction("Régénérer pictos...", self)
         regen_pictos_action.triggered.connect(self.regenerate_pictos)
         tools_menu.addAction(regen_pictos_action)
+
+        # Menu Compte
+        self.account_menu = menubar.addMenu("Compte")
+
+        self.login_mastoc_action = QAction("Connexion mastoc...", self)
+        self.login_mastoc_action.triggered.connect(self.show_mastoc_login)
+        self.account_menu.addAction(self.login_mastoc_action)
+
+        self.profile_action = QAction("Mon profil...", self)
+        self.profile_action.triggered.connect(self.show_profile)
+        self.account_menu.addAction(self.profile_action)
+
+        self.account_menu.addSeparator()
+
+        self.logout_mastoc_action = QAction("Déconnexion", self)
+        self.logout_mastoc_action.triggered.connect(self.do_mastoc_logout)
+        self.account_menu.addAction(self.logout_mastoc_action)
+
+        # Mettre à jour l'état initial du menu Compte
+        self._update_account_menu()
 
     def _load_face_image(self) -> Path | None:
         """
@@ -831,6 +859,70 @@ class MastockApp(QMainWindow):
         source_name = "Stokt" if source == BackendSource.STOKT else "Railway"
         self.statusBar().showMessage(f"Source: {source_name}")
         logger.info(f"Backend changé vers: {source_name}")
+
+    # =========================================================================
+    # Menu Compte (authentification mastoc)
+    # =========================================================================
+
+    def _update_account_menu(self):
+        """Met à jour le menu Compte selon l'état d'authentification."""
+        is_auth = self.auth_manager.is_authenticated
+        user = self.auth_manager.current_user
+
+        # Visible si non connecté
+        self.login_mastoc_action.setVisible(not is_auth)
+
+        # Visible si connecté
+        self.profile_action.setVisible(is_auth)
+        self.logout_mastoc_action.setVisible(is_auth)
+
+        # Mettre à jour le titre du menu si connecté
+        if is_auth and user:
+            self.account_menu.setTitle(f"Compte ({user.full_name})")
+        else:
+            self.account_menu.setTitle("Compte")
+
+    def _on_auth_changed(self, is_authenticated: bool):
+        """Callback appelé quand l'état d'authentification change."""
+        self._update_account_menu()
+
+        if is_authenticated:
+            user = self.auth_manager.current_user
+            if user:
+                self.statusBar().showMessage(f"Connecté : {user.full_name}")
+                logger.info(f"Utilisateur connecté : {user.email}")
+        else:
+            self.statusBar().showMessage("Déconnecté")
+            logger.info("Utilisateur déconnecté")
+
+    def show_mastoc_login(self):
+        """Affiche le dialog de connexion mastoc."""
+        dialog = MastocLoginDialog(self.auth_manager, self)
+        if dialog.exec():
+            self.statusBar().showMessage(f"Connecté : {self.auth_manager.current_user.full_name}")
+
+    def show_profile(self):
+        """Affiche le dialog de profil utilisateur."""
+        if not self.auth_manager.is_authenticated:
+            QMessageBox.warning(self, "Non connecté", "Vous devez être connecté pour accéder à votre profil.")
+            return
+
+        dialog = ProfileDialog(self.auth_manager, self)
+        dialog.exec()
+        # Mettre à jour le menu après fermeture (au cas où déconnexion)
+        self._update_account_menu()
+
+    def do_mastoc_logout(self):
+        """Déconnexion mastoc."""
+        reply = QMessageBox.question(
+            self,
+            "Déconnexion",
+            "Voulez-vous vraiment vous déconnecter ?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.auth_manager.logout()
 
     def _configure_railway_key(self):
         """Configure l'API Key Railway."""

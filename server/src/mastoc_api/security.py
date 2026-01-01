@@ -6,15 +6,11 @@ from datetime import datetime, timedelta
 from typing import Optional
 import uuid
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from mastoc_api.config import get_settings
-
-
-# Configuration bcrypt pour le hashing des mots de passe
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Algorithme JWT
 ALGORITHM = "HS256"
@@ -37,12 +33,16 @@ class Token(BaseModel):
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Vérifie un mot de passe contre son hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode('utf-8'),
+        hashed_password.encode('utf-8')
+    )
 
 
 def get_password_hash(password: str) -> str:
     """Hash un mot de passe."""
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
 def create_access_token(
