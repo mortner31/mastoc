@@ -1,8 +1,8 @@
 # Plan de Développement mastoc - Vue d'ensemble
 
-**Version** : 2.0
-**Date** : 2025-12-31
-**Statut** : Document de référence (mis à jour post-TODO 14)
+**Version** : 3.0
+**Date** : 2026-01-01
+**Statut** : Document de référence (mis à jour post-TODO 19, pré-Android)
 
 ---
 
@@ -32,9 +32,9 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| Lignes de code | ~12 000 |
-| Tests | **301** (passent) |
-| ADRs | 6 |
+| Lignes de code | ~15 000 |
+| Tests | **375+** (passent) |
+| ADRs | 8 |
 | Données | 1012 climbs, 776 prises |
 
 ### Fonctionnalités implémentées
@@ -52,14 +52,14 @@
 
 | TODO | Description | Statut |
 |------|-------------|--------|
+| **20** | **App Android Kotlin (Lecture Seule)** | **0% - PRIORITÉ** |
 | 09 | Listes Personnalisées | 70% - API OK |
-| 12 | Hold Annotations | 0% - À faire |
-| **15** | **Sync Incrémentale** | **0% - PRIORITÉ** |
-| 16 | Sync Tool mastoc ↔ Stokt | 0% - Planifié |
-| **17** | **Authentification & Users** | **0% - PRIORITÉ** |
-| ~~10~~ | ~~Création de Blocs~~ | ✅ Archivé |
-| ~~13~~ | ~~Serveur Railway~~ | ✅ Archivé |
-| ~~14~~ | ~~Portage Client Railway~~ | ✅ Archivé |
+| ~~12~~ | ~~Hold Annotations~~ | ✅ 95% Archivé |
+| ~~15~~ | ~~Sync Incrémentale~~ | ✅ Archivé |
+| ~~16~~ | ~~Dashboard Sync~~ | ✅ Archivé |
+| ~~17~~ | ~~Authentification & Users~~ | ✅ Archivé |
+| ~~18~~ | ~~Sync Données Sociales~~ | ✅ Archivé |
+| ~~19~~ | ~~Renforcement Tests~~ | ✅ Archivé |
 
 ---
 
@@ -87,12 +87,14 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Optimisation et authentification (Priorité actuelle)
+### 2. ✅ Optimisation et authentification - COMPLÉTÉ
 
-- **TODO 15** : Sync incrémentale (réduire bande passante de ~99%)
-- **TODO 17** : Authentification utilisateurs (email/password + JWT)
+- **TODO 15** : Sync incrémentale ✅ (gain ~99% bande passante)
+- **TODO 17** : Authentification JWT ✅
+- **TODO 12** : Hold Annotations ✅ (95%)
+- **TODO 18** : Sync Données Sociales ✅
 
-### 3. Migration mobile Android (À venir)
+### 3. Migration mobile Android (Priorité actuelle)
 
 Portage vers application native Android :
 - Stack : Kotlin + Jetpack Compose + Room
@@ -112,12 +114,12 @@ Portage vers application native Android :
 ```
                      2025 Q4              2026 Q1              2026 Q2
                   ──────────────────  ──────────────────  ──────────────────
-Court terme       │ ✅ TODO 10,13,14 │ TODO 15,17        │                  │
-(1-3 mois)        │ ✅ Serveur Rail. │ Sync incrémental  │                  │
-                  │ ✅ BackendSwitch │ Auth utilisateurs │                  │
+Court terme       │ ✅ TODO 10-19    │ TODO 20 Android  │                  │
+(1-3 mois)        │ ✅ Serveur Rail. │ Kotlin Lecture   │                  │
+                  │ ✅ Auth+Sync+Ann │ Seule            │                  │
                   ──────────────────────────────────────────────────────────
-Moyen terme                          │ App Android MVP  │ Sync bidirect.   │
-(3-6 mois)                           │ Hold Annotations │ Pan personnel    │
+Moyen terme                          │ Android écriture │ Sync bidirect.   │
+(3-6 mois)                           │ Auth Android     │ Pan personnel    │
                   ──────────────────────────────────────────────────────────
 Long terme                                               │ Multi-users      │
 (6-12 mois)                                              │ Stats avancées   │
@@ -151,4 +153,4 @@ Long terme                                               │ Multi-users      �
 
 ---
 
-*Plan de développement mis à jour le 2025-12-31*
+*Plan de développement mis à jour le 2026-01-01*

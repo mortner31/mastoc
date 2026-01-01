@@ -1,7 +1,7 @@
 # Plan Court Terme (1-3 mois)
 
 **Période** : Décembre 2025 - Mars 2026
-**Mise à jour** : 2025-12-31
+**Mise à jour** : 2026-01-01
 
 ---
 
@@ -10,9 +10,12 @@
 1. ~~Finaliser le prototype Python (TODO 10)~~ ✅ COMPLET
 2. ~~Déployer le serveur personnel Railway~~ ✅ COMPLET
 3. ~~Portage client vers Railway (TODO 14)~~ ✅ COMPLET
-4. **Implémenter Sync Incrémentale (TODO 15)** ← PRIORITÉ
-5. **Implémenter Authentification (TODO 17)** ← PRIORITÉ
-6. Implémenter Hold Annotations (TODO 12)
+4. ~~Implémenter Sync Incrémentale (TODO 15)~~ ✅ COMPLET
+5. ~~Implémenter Authentification (TODO 17)~~ ✅ COMPLET
+6. ~~Implémenter Hold Annotations (TODO 12)~~ ✅ COMPLET (95%)
+7. ~~Sync Données Sociales (TODO 18)~~ ✅ COMPLET
+8. ~~Renforcement Tests (TODO 19)~~ ✅ COMPLET
+9. **Application Android Kotlin (TODO 20)** ← PRIORITÉ ACTUELLE
 
 ---
 
@@ -72,96 +75,131 @@ Client Python porté vers Railway avec BackendSwitch.
 
 ---
 
-## Phase 3 : Sync Incrémentale (TODO 15) - À FAIRE
+## ✅ Phase 3 : Sync Incrémentale (TODO 15) - COMPLÉTÉ
 
-### État : 0%
+### État : 100% - Archivé le 2026-01-01
 
-Objectif : Réduire le volume de données téléchargées de ~99%.
+Gain de ~99% sur la bande passante sync.
 
-### Contexte
+### Livrables complétés
 
-| Scénario | Actuel | Avec filtrage | Gain |
-|----------|--------|--------------|------|
-| Sync quotidienne | ~1000 climbs | ~5-10 climbs | **~99%** |
-| Sync hebdomadaire | ~1000 climbs | ~50-70 climbs | **~93%** |
-
-### Tâches
-
-| Phase | Description | Effort |
-|-------|-------------|--------|
-| **Phase 1** | Stokt quick win (`max_age` dynamique) | 4h |
-| **Phase 2** | Railway serveur (`since_created_at`) | 4h |
-| **Phase 3** | Railway client (utiliser le filtre) | 4h |
-| Phase 4 | UI et feedback | 2h |
-| Phase 5 | Tests et documentation | 2h |
-
-### Critères de complétion
-
-- [ ] `max_age` calculé dynamiquement (Stokt)
-- [ ] Endpoint avec `since_created_at` (Railway)
-- [ ] Client utilise les filtres
-- [ ] Tests de performance
+- [x] `max_age` dynamique (Stokt)
+- [x] Endpoints `since_created_at`, `since_synced_at` (Railway)
+- [x] Client Railway `sync_incremental()` + `needs_sync()`
+- [x] SyncDialog avec choix full/incremental
+- [x] ADR-007 créé
 
 ---
 
-## Phase 4 : Authentification (TODO 17) - À FAIRE
+## ✅ Phase 4 : Authentification (TODO 17) - COMPLÉTÉ
 
-### État : 0%
+### État : 100% - Archivé le 2026-01-01
 
-Objectif : Système d'authentification natif mastoc.
+Système d'authentification natif mastoc avec JWT.
 
-### Décisions
+### Livrables complétés
 
-| Aspect | Décision |
-|--------|----------|
-| Auth type | Email/password + JWT |
-| Rôles | User + Admin |
-| Reset password | Oui (par email) |
-
-### Tâches
-
-| Phase | Description | Effort |
-|-------|-------------|--------|
-| **Phase 1** | Extension modèle User (serveur) | 4h |
-| **Phase 2** | Endpoints auth (register, login, refresh) | 8h |
-| **Phase 3** | Endpoints users (me, profil, avatar) | 4h |
-| **Phase 4** | Middleware JWT | 4h |
-| **Phase 5** | Client AuthManager | 4h |
-| **Phase 6** | UI (dialogs login/register) | 4h |
-| Phase 7 | Traçabilité (`created_by_id`) | 2h |
-
-### Critères de complétion
-
-- [ ] Inscription/Connexion fonctionnels
-- [ ] JWT valide
-- [ ] UI intégrée dans le client
-- [ ] Tests sécurité
+- [x] Extension modèle User (email, password_hash, role)
+- [x] Endpoints auth (register, login, refresh, reset-password)
+- [x] Endpoints users (me, profil, avatar)
+- [x] Middleware JWT + coexistence API Key
+- [x] Client AuthManager + MastocAPI intégré
+- [x] UI (MastocLoginDialog, ProfileDialog, PasswordResetDialog)
+- [x] Traçabilité (created_by_id, updated_by_id)
+- [x] 15 tests JWT automatisés
 
 ---
 
-## Phase 5 : Hold Annotations (TODO 12) - À FAIRE
+## ✅ Phase 5 : Hold Annotations (TODO 12) - COMPLÉTÉ
+
+### État : 95% - Archivé le 2026-01-01
+
+Système d'annotations de prises crowd-sourcé.
+
+### Livrables complétés
+
+- [x] Backend : modèle HoldAnnotation + 4 endpoints REST + 16 tests
+- [x] Client : enums, dataclasses, API methods, AnnotationLoader
+- [x] GUI : 3 ColorModes (GRIP_TYPE, CONDITION, DIFFICULTY)
+- [x] AnnotationPanel complet
+- [x] ADR-008 créé
+- [x] 43 tests client
+
+### Optionnel (non bloquant)
+
+- [ ] Intégration hold_selector
+- [ ] Filtres par tags annotations
+
+---
+
+## ✅ Phase 6 : Sync Données Sociales (TODO 18) - COMPLÉTÉ
+
+### État : 100% - Complété le 2026-01-01
+
+Refresh des compteurs sociaux depuis Stokt.
+
+### Livrables complétés
+
+- [x] `get_climb_social_stats()` : sends, comments, likes
+- [x] `refresh_social_counts()` : refresh unitaire
+- [x] `refresh_all_social_counts()` : batch avec throttling 1 req/sec
+- [x] Bouton "↻" dans ClimbDetailPanel
+- [x] Menu "Outils > Rafraîchir stats sociales"
+- [x] Indicateur stale (> 7 jours) avec style orange
+
+---
+
+## ✅ Phase 7 : Renforcement Tests (TODO 19) - COMPLÉTÉ
+
+### État : 100% - Archivé le 2026-01-01
+
++62 tests ajoutés (353 → 415 tests).
+
+### Livrables complétés
+
+- [x] Tests serveur : test_users.py, test_holds.py, test_permissions.py (+35)
+- [x] Tests mastoc : test_auth_manager.py, test_api_errors.py (+27)
+- [x] Documentation : docs/06_guide_tests.md
+
+---
+
+## Phase 8 : Application Android Kotlin (TODO 20) - EN COURS
 
 ### État : 0%
 
-Permettre aux grimpeurs d'annoter les prises.
+Première version Android en **lecture seule**.
 
-### Dépendances
+### Scope
 
-- [x] Serveur Railway déployé ✅
-- [ ] Authentification utilisateurs (TODO 17)
+| Inclus | Exclus |
+|--------|--------|
+| Liste climbs + filtres | Création/édition blocs |
+| Visualisation Canvas | Authentification |
+| Recherche par prises | Sync bidirectionnelle |
+| Heatmaps | Mode offline complet |
 
-### Tâches
+### Stack
 
-| Tâche | Priorité | Effort |
-|-------|----------|--------|
-| Modèles Python (enums, dataclasses) | Haute | 2h |
-| Client API annotations | Haute | 4h |
-| API serveur annotations | Haute | 4h |
-| Loader async avec cache | Moyenne | 4h |
-| Panel d'annotation UI | Haute | 8h |
-| Nouveaux ColorModes | Moyenne | 4h |
-| Filtres par annotations | Moyenne | 4h |
-| Tests | Haute | 4h |
+| Composant | Technologie |
+|-----------|-------------|
+| UI | Jetpack Compose |
+| Architecture | MVVM + Clean Architecture |
+| DB | Room |
+| Réseau | Retrofit |
+| DI | Hilt |
+
+### Phases
+
+| Phase | Description |
+|-------|-------------|
+| Phase 1 | Setup projet (Gradle, Hilt, Retrofit, Room) |
+| Phase 2 | Data Layer (DTOs, Entities, Repository) |
+| Phase 3 | Domain Layer (Models, UseCases) |
+| Phase 4 | Écran Liste Climbs |
+| Phase 5 | Écran Détail (Canvas + polygones) |
+| Phase 6 | Recherche par prises |
+| Phase 7 | Heatmaps |
+| Phase 8 | Tests + Polish |
 
 ---
 
@@ -170,35 +208,46 @@ Permettre aux grimpeurs d'annoter les prises.
 ```
 ✅ Semaine 1 (Déc 23-29)     : TODO 10 finalisé - FAIT
 ✅ Semaine 2 (Déc 30-31)     : TODO 13+14 complétés - FAIT
+✅ Semaine 3 (Jan 1)         : TODO 15+16+17+18+19 complétés - FAIT
 ───────────────────────────────────────────────────────────
-   Semaine 3 (Jan 6-12)      : TODO 15 - Sync Incrémentale
-   Semaine 4 (Jan 13-19)     : TODO 17 - Auth Phase 1-3
-   Semaine 5 (Jan 20-26)     : TODO 17 - Auth Phase 4-6
-   Semaine 6 (Jan 27-Fév 2)  : TODO 12 - Hold Annotations Backend
-   Semaine 7 (Fév 3-9)       : TODO 12 - Hold Annotations Client
-   Semaine 8 (Fév 10-16)     : Tests + Polish
+   Semaine 4 (Jan 6-12)      : TODO 20 - Setup Android + Data Layer
+   Semaine 5 (Jan 13-19)     : TODO 20 - Domain + Liste Climbs
+   Semaine 6 (Jan 20-26)     : TODO 20 - Détail + Canvas
+   Semaine 7 (Jan 27-Fév 2)  : TODO 20 - Recherche prises
+   Semaine 8 (Fév 3-9)       : TODO 20 - Heatmaps + Tests
+   Semaine 9 (Fév 10-16)     : Polish + Release beta
 ```
 
 ---
 
 ## Critères de succès Phase Court Terme
 
-### Technique
+### Technique (Python) - TOUS ATTEINTS ✅
 
 - [x] TODO 10 archivé (100%) ✅
 - [x] Serveur Railway opérationnel ✅
 - [x] Client porté vers Railway ✅
-- [ ] Sync incrémentale fonctionnelle (TODO 15)
-- [ ] Authentification utilisateurs (TODO 17)
-- [ ] Hold Annotations fonctionnel (TODO 12)
-- [x] 300+ tests passent ✅
+- [x] Sync incrémentale fonctionnelle (TODO 15) ✅
+- [x] Authentification utilisateurs (TODO 17) ✅
+- [x] Hold Annotations fonctionnel (TODO 12) ✅
+- [x] Sync Données Sociales (TODO 18) ✅
+- [x] 375+ tests passent ✅
+
+### Technique (Android) - EN COURS
+
+- [ ] App Android installable (API 24+)
+- [ ] Liste climbs avec filtres
+- [ ] Visualisation Canvas polygones
+- [ ] Recherche par prises
+- [ ] 20+ tests unitaires
 
 ### Fonctionnel
 
 - [x] Création de blocs complète et stable ✅
 - [x] BackendSwitch Stokt/Railway ✅
-- [ ] Sync optimisée (<100 climbs par sync quotidienne)
-- [ ] Login/Register utilisateurs
+- [x] Sync optimisée (~99% gain bande passante) ✅
+- [x] Login/Register utilisateurs ✅
+- [ ] App Android lecture seule
 
 ### Business
 
@@ -212,9 +261,9 @@ Permettre aux grimpeurs d'annoter les prises.
 | Risque | Mitigation |
 |--------|------------|
 | Railway pricing change | Prévoir migration Render/VPS |
-| API Stokt rate limit | Throttling + cache agressif |
-| Complexité JWT | Utiliser bibliothèques standard (python-jose) |
-| Complexité annotations | MVP simple puis itérer |
+| Complexité Compose Canvas | POC polygones en premier |
+| Performance rendu prises | Lazy loading, cache bitmap |
+| Courbe apprentissage Kotlin | Référence code Python existant |
 
 ---
 
@@ -228,4 +277,4 @@ Permettre aux grimpeurs d'annoter les prises.
 
 ---
 
-*Plan court terme mis à jour le 2025-12-31*
+*Plan court terme mis à jour le 2026-01-01*

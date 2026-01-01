@@ -14,6 +14,7 @@ Ce dossier contient les décisions architecturales du projet mastoc.
 | [006](006_dual_sqlite_databases.md) | Deux Bases SQLite Séparées (Stokt + Railway) | Accepté |
 | [007](007_incremental_sync.md) | Synchronisation Incrémentale | Accepté |
 | [008](008_hold_annotations.md) | Hold Annotations (Annotations Crowd-Sourcées) | Accepté |
+| [009](009_climb_rendering_system.md) | Système de Rendu des Blocs (Climb Rendering) | Accepté |
 
 ## Format ADR
 

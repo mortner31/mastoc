@@ -86,14 +86,13 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **18** | **Sync Données Sociales** | **100% - COMPLET** |
-| 19 | Renforcement Tests | 100% - ARCHIVÉ |
-| 17 | Authentification & Users mastoc | 100% - ARCHIVÉ |
-| 15/16 | Sync Incrémentale + Dashboard | 100% - ARCHIVÉ |
-| 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
-| 13 | Serveur Railway mastoc-api | 100% - COMPLET |
-| 12 | Hold Annotations | 95% - ARCHIVÉ |
+| **20** | **App Android Kotlin (Lecture Seule)** | **100% - COMPLET** |
 | 09 | Listes Personnalisées | 70% - API OK |
+| ~~19~~ | ~~Renforcement Tests~~ | ✅ 100% - ARCHIVÉ |
+| ~~18~~ | ~~Sync Données Sociales~~ | ✅ 100% - ARCHIVÉ |
+| ~~17~~ | ~~Authentification & Users~~ | ✅ 100% - ARCHIVÉ |
+| ~~15/16~~ | ~~Sync Incrémentale + Dashboard~~ | ✅ 100% - ARCHIVÉ |
+| ~~12~~ | ~~Hold Annotations~~ | ✅ 95% - ARCHIVÉ |
 
 ## Documentation clé
 
@@ -129,13 +128,45 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 09** : Listes Personnalisées
+1. **TODO 20** : App Android Kotlin (Lecture Seule) ← **COMPLET (100%)**
+   - ✅ Phase 1-2 : Setup + Data Layer
+   - ✅ Phase 3 : Liste Climbs - filtres, tri, pictos S/O/F/T
+   - ✅ Phase 4 : Détail Climb - START/TOP/FEET rendu fidèle Python
+   - ✅ Phase 5 : Recherche par Prises
+   - ✅ Phase 6 : Heatmaps - RARE, MAGMA, CIVIDIS, LUT 256 niveaux
+   - ✅ Phase 7 : Tests + Splash screen
+   - Voir `/docs/TODOS/20_android_kotlin_readonly_STATUS.md`
+
+2. **TODO 09** : Listes Personnalisées (optionnel)
    - API OK (70%), UI à faire
-2. **Phase 3 TODO 18** : Approche Complète (optionnel)
-   - Tables `sends`/`comments` sur Railway
-   - Affichage liste des réalisations/commentaires
+
+## Commandes Android
+
+```bash
+cd /media/veracrypt1/Repositories/mastock/android
+./gradlew build           # Build
+./gradlew installDebug    # Install sur device
+```
+
+## Structure Android
+
+```
+android/app/src/main/java/com/mastoc/app/
+├── MainActivity.kt
+├── data/
+│   ├── api/          # MastocApiService, ApiClient, DTOs
+│   ├── local/        # Room (Entities, DAOs, Database)
+│   ├── model/        # Domain models (Climb, Hold, Face)
+│   └── repository/   # ClimbRepository
+├── ui/
+│   ├── components/   # ClimbCard, HoldOverlay, ColorMode
+│   ├── navigation/   # NavGraph, Screen
+│   ├── screens/      # ClimbList, ClimbDetail, HoldSelector
+│   └── theme/        # Material 3 theme
+└── viewmodel/        # ViewModels + Factories
+```
 
 ---
 
 **Dernière mise à jour** : 2026-01-01
-**Statut du projet** : TODO 18 COMPLET - 375 tests mastoc
+**Statut du projet** : Client Python COMPLET (375+ tests) - Android COMPLET (7 phases)

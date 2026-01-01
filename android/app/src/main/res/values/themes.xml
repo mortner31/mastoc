@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme principal de l'app -->
+    <style name="Theme.Mastoc" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/primary</item>
+    </style>
+
+    <!-- Theme splash screen (Android 12+) -->
+    <style name="Theme.Mastoc.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="postSplashScreenTheme">@style/Theme.Mastoc</item>
+    </style>
+</resources>

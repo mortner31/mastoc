@@ -9,6 +9,113 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 21 avancé à 80%** - Conformité UX/Design Android
+  - **P0 - Critique (100%)** :
+    - NAV-01 : Bottom Navigation Bar (5 destinations)
+    - NAV-02 : Accès Recherche Avancée intégré
+    - IMG-01/02 : Correction alignement overlay/image (ContentScale.Fit)
+  - **P1 - Majeur (100%)** :
+    - SETTINGS-01 à 05 : Écran Paramètres complet
+    - 3 thèmes (Coloré/Bleu/Gris) avec persistance DataStore
+    - Bouton engrenage dans TopAppBar
+  - **P2 - Mineur (33%)** :
+    - CARD-01 : Suppression "X prises"
+  - **7 fichiers créés** : SyncScreen, CreateScreen, ProfileScreen, AdvancedSearchScreen, SettingsScreen, SettingsDataStore
+  - **10 fichiers modifiés** : Navigation, Thèmes, MainActivity, build.gradle
+  - Build SUCCESS, APK installé
+  - Rapport : `docs/reports/SESSION_2026-01-01_todo21_ux_conformite.md`
+
+- **TODO 21 créé** - Conformité UX/Design Android
+  - Analyse approfondie des écarts avec specs 03_ergonomie_ui_ux.md et 05_theme_design_system.md
+  - **9 catégories d'écarts identifiées** :
+    | # | Catégorie | Sévérité |
+    |---|-----------|----------|
+    | 1 | Navigation | CRITIQUE - Pas de Bottom Nav, 1 seule page |
+    | 2 | Pictos | MAJEUR - Pas de miniatures dans ClimbCard |
+    | 3 | Synthèse | MINEUR - "X prises" inutile |
+    | 4 | Recherche prises | CRITIQUE - HoldSelector inaccessible |
+    | 5 | Auth | CRITIQUE - Pas de login, API Key hardcodée |
+    | 6 | Image détail | FONCTIONNEL - À vérifier |
+    | 7 | Paramètres | MAJEUR - Pas de Bottom Sheet contrôles |
+    | 8 | Rotation X/Y | CRITIQUE - Coordonnées possiblement inversées |
+    | 9 | Couleurs | DESIGN - Bleu #1976D2 attendu |
+  - 13 tâches identifiées (P0-P3)
+  - Statut : Analyse complète (0%)
+
+- **TODO 20 COMPLET (100%)** - Application Android Kotlin
+  - **Session 2** : Phases 4, 6, 3, 7 complétées (fidélité Python)
+    - **Phase 4** : Détail Climb fidèle Python
+      - HoldType enum (S/O/F/T), ClimbHold data class
+      - ClimbHoldOverlay avec START tapes, TOP double contour, FEET bleu
+      - Champs tape dans Hold/HoldEntity (center/left/right)
+    - **Phase 6** : Heatmaps complets
+      - Mode RARE (0=1.0, 1=0.75, 2=0.5, 3=0.25, 4+=0.0)
+      - Palettes MAGMA et CIVIDIS ajoutées (7 total)
+      - ColorLut avec LUT 256 niveaux + cache
+      - PalettePreview composable
+    - **Phase 3** : Liste Climbs avec filtres
+      - SortOption enum (7 options de tri)
+      - RangeSlider grade (IRCRA → Fontainebleau)
+      - ExposedDropdownMenuBox setter
+      - FilterPanel avec AnimatedVisibility
+      - HoldTypeIndicators (pastilles S/O/F/T colorées)
+    - **Phase 7** : Polish & Tests
+      - 4 fichiers de tests (24 tests unitaires)
+      - Splash screen avec androidx.core.splashscreen
+      - Theme.Mastoc.Splash
+  - Build : `./gradlew build` SUCCESS
+  - Rapport : `docs/reports/SESSION_2026-01-01_android_phase4-7.md`
+
+- **TODO 20 avancé à 85%** - Phases 2-6 complétées
+  - **Phase 2 (100%)** : Data Layer
+    - DTOs : ClimbDto, HoldDto, FaceDto, FaceSetupDto, PictureDto
+    - Entities Room : ClimbEntity, HoldEntity, FaceEntity
+    - DAOs : ClimbDao, HoldDao, FaceDao
+    - MastocDatabase (Room singleton)
+    - MastocApiService (Retrofit) + ApiKeyInterceptor + ApiClient
+    - Domain Models : Climb, Hold, Face, FaceWithHolds
+    - Mappers (DTO → Entity → Domain)
+    - ClimbRepository
+  - **Phase 3 (100%)** : Écran Liste Climbs
+    - ClimbListViewModel (StateFlow, refresh, search)
+    - ClimbListScreen (Scaffold, TopAppBar, LazyColumn)
+    - ClimbCard (nom, grade, setter, stats)
+    - SearchBar + bouton refresh
+    - Navigation vers détail
+  - **Phase 4 (100%)** : Écran Détail Climb
+    - ClimbDetailViewModel + Factory
+    - ClimbDetailScreen (Scaffold, TopAppBar, navigation)
+    - WallImageWithOverlay (Coil AsyncImage + Canvas)
+    - HoldOverlay (polygones des prises)
+    - Zoom/Pan avec detectTransformGestures
+    - Mise en surbrillance des prises du climb
+  - **Phase 5 (100%)** : Recherche par Prises
+    - HoldSelectorViewModel + Factory
+    - HoldSelectorScreen (image + liste résultats)
+    - Tap sélection avec détection polygone (ray casting algorithm)
+    - Filtrage par prises (logique ET)
+    - Navigation complète (Screen.kt, NavGraph.kt)
+  - **Phase 6 (100%)** : Heatmaps
+    - ColorMode enum (NONE, MIN_GRADE, MAX_GRADE, FREQUENCY)
+    - ColorPalette enum (VIRIDIS, PLASMA, INFERNO, TURBO, COOLWARM)
+    - Interpolation linéaire de couleurs
+  - Build : `./gradlew build` SUCCESS
+  - Reste Phase 7 : Polish & Tests
+
+- **TODO 20 Phase 1 complétée** - Setup Projet Android
+  - Package : `com.mastoc.app`
+  - Build fonctionnel : `./gradlew build` SUCCESS
+  - Thème Material 3 avec couleurs icône (rouge/vert/jaune)
+  - Dépendances : Room, Retrofit, Coil, Navigation Compose
+  - APK debug : 38 MB
+  - Rapport : `docs/reports/SESSION_2026-01-01_android_setup.md`
+
+- **TODO 20 créé** - Application Android Kotlin (Lecture Seule)
+  - Scope : liste climbs, visualisation Canvas, recherche par prises, heatmaps
+  - Exclus : création/édition, authentification, sync bidirectionnelle
+  - Stack : Kotlin, Jetpack Compose, Room, Retrofit
+  - 7 phases planifiées
+
 - **TODO 18 complété à 100%** - Sync Données Sociales
   - **Phase 1 (100%)** : Refresh compteurs (backend)
     - `get_climb_social_stats()` : appelle sends, comments, likes
