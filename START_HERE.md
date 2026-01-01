@@ -86,13 +86,13 @@ python -m mastoc.gui.creation_app
 
 | TODO | Description | Statut |
 |------|-------------|--------|
-| **19** | **Renforcement Tests** | **100% - ARCHIVÉ** |
-| **18** | **Sync Données Sociales** | **0% - PLANIFIÉ** |
+| **18** | **Sync Données Sociales** | **0% - EN COURS** |
+| 19 | Renforcement Tests | 100% - ARCHIVÉ |
 | 17 | Authentification & Users mastoc | 100% - ARCHIVÉ |
 | 15/16 | Sync Incrémentale + Dashboard | 100% - ARCHIVÉ |
 | 14 | Portage Client vers Railway | 100% - ARCHIVÉ |
 | 13 | Serveur Railway mastoc-api | 100% - COMPLET |
-| 12 | Hold Annotations | 0% - À faire |
+| 12 | Hold Annotations | 95% - ARCHIVÉ |
 | 09 | Listes Personnalisées | 70% - API OK |
 
 ## Documentation clé
@@ -107,6 +107,8 @@ python -m mastoc.gui.creation_app
 | [004](docs/adr/004_client_pyqtgraph.md) | Client PyQtGraph + SQLite |
 | [005](docs/adr/005_batch_import.md) | Batch Import pour Holds, Users et Climbs |
 | [006](docs/adr/006_dual_sqlite_databases.md) | Deux Bases SQLite Séparées (Stokt + Railway) |
+| [007](docs/adr/007_sync_incrementale.md) | Synchronisation Incrémentale |
+| [008](docs/adr/008_hold_annotations.md) | Hold Annotations (Crowd-Sourcées) |
 
 ### Autres documents
 
@@ -127,15 +129,13 @@ python -m mastoc.gui.creation_app
 
 ## Prochaines étapes
 
-1. **TODO 18** : Sync Données Sociales (0%)
+1. **TODO 18** : Sync Données Sociales (EN COURS)
    - Refresh compteurs (climbed_by, likes, comments)
    - Détection changements non captés par sync incrémentale
-2. **TODO 12** : Hold Annotations
-   - Tags crowd-sourcés pour les prises
-3. **TODO 09** : Listes Personnalisées
+2. **TODO 09** : Listes Personnalisées
    - API OK (70%), UI à faire
 
 ---
 
 **Dernière mise à jour** : 2026-01-01
-**Statut du projet** : TODO 19 ARCHIVÉ - 415 tests, prêt pour TODO 18
+**Statut du projet** : TODO 12 ARCHIVÉ - 371 tests mastoc, prêt pour TODO 18

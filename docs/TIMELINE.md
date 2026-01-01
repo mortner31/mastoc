@@ -9,6 +9,14 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 12 archivé** - Hold Annotations (95%)
+  - Backend : modèle HoldAnnotation + 4 endpoints REST + 16 tests
+  - Client : enums, dataclasses, API methods, AnnotationLoader
+  - GUI : 3 ColorModes (GRIP_TYPE, CONDITION, DIFFICULTY) + AnnotationPanel
+  - Tests : 43 tests client (371 total)
+  - ADR-008 créé
+  - Reste optionnel : intégration hold_selector, filtres par tags
+
 - **TODO 19 archivé** - Renforcement Couverture Tests (100%)
   - +62 tests ajoutés (353 → 415 tests)
   - Tests serveur : test_users.py, test_holds.py, test_permissions.py (+35)
