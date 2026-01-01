@@ -157,6 +157,7 @@ class MastocAPI:
         search: Optional[str] = None,
         source: Optional[str] = None,
         since_created_at: Optional[datetime] = None,
+        local_only: bool = False,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Climb], int]:
@@ -171,6 +172,7 @@ class MastocAPI:
             search: Recherche par nom
             source: Filtrer par source ("stokt", "mastoc")
             since_created_at: Retourne uniquement les climbs créés après cette date
+            local_only: Si True, retourne uniquement les climbs locaux (stokt_id=NULL)
             page: Page (1-indexed)
             page_size: Nombre par page (max 500)
 
@@ -195,6 +197,8 @@ class MastocAPI:
             params["source"] = source
         if since_created_at:
             params["since_created_at"] = since_created_at.isoformat()
+        if local_only:
+            params["local_only"] = "true"
 
         response = self._request("get", "api/climbs", params=params)
         data = response.json()
@@ -517,3 +521,20 @@ class MastocAPI:
             path_str="",
             centroid_str=centroid_str,
         )
+
+    # =========================================================================
+    # Sync Stats
+    # =========================================================================
+
+    def get_sync_stats(self) -> dict:
+        """
+        GET /api/sync/stats
+
+        Récupère les statistiques de synchronisation.
+
+        Returns:
+            Dict avec gyms, faces, holds, climbs, users,
+            climbs_synced (avec stokt_id), climbs_local (sans stokt_id)
+        """
+        response = self._request("get", "api/sync/stats")
+        return response.json()

@@ -85,6 +85,7 @@ def list_climbs(
     source: Optional[str] = None,
     since_created_at: Optional[datetime] = None,
     since_synced_at: Optional[datetime] = None,
+    local_only: bool = Query(False, description="Uniquement les climbs créés localement (sans stokt_id)"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -94,6 +95,7 @@ def list_climbs(
     Args:
         since_created_at: Retourne uniquement les climbs créés après cette date
         since_synced_at: Retourne uniquement les climbs synchronisés après cette date
+        local_only: Si True, retourne uniquement les climbs avec stokt_id=NULL
     """
     query = select(Climb)
 
@@ -109,6 +111,8 @@ def list_climbs(
         query = query.where(Climb.created_at >= since_created_at)
     if since_synced_at:
         query = query.where(Climb.synced_at >= since_synced_at)
+    if local_only:
+        query = query.where(Climb.stokt_id.is_(None))
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())

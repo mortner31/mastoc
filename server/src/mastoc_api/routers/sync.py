@@ -24,6 +24,9 @@ class SyncStats(BaseModel):
     holds: int
     climbs: int
     users: int
+    # Détail climbs (synced = avec stokt_id, local = sans)
+    climbs_synced: int = 0
+    climbs_local: int = 0
 
 
 class ImportClimbRequest(BaseModel):
@@ -107,12 +110,18 @@ class ImportGymRequest(BaseModel):
 @router.get("/stats", response_model=SyncStats)
 def get_sync_stats(db: Session = Depends(get_db)):
     """Retourne les statistiques de la base."""
+    total_climbs = db.query(Climb).count()
+    synced_climbs = db.query(Climb).filter(Climb.stokt_id.isnot(None)).count()
+    local_climbs = total_climbs - synced_climbs
+
     return SyncStats(
         gyms=db.query(Gym).count(),
         faces=db.query(Face).count(),
         holds=db.query(Hold).count(),
-        climbs=db.query(Climb).count(),
+        climbs=total_climbs,
         users=db.query(User).count(),
+        climbs_synced=synced_climbs,
+        climbs_local=local_climbs,
     )
 
 

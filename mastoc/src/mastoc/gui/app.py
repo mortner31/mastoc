@@ -41,6 +41,7 @@ from mastoc.gui.widgets.climb_list import ClimbListWidget
 from mastoc.gui.widgets.my_lists_panel import MyListsPanel
 from mastoc.gui.dialogs.login import LoginDialog, TokenExpiredDialog
 from mastoc.gui.dialogs.sync import SyncDialog
+from mastoc.gui.dialogs.sync_status import SyncStatusDialog
 from mastoc.gui.dialogs.mastoc_auth import MastocLoginDialog, ProfileDialog
 from mastoc.core.auth import AuthManager
 
@@ -581,6 +582,10 @@ class MastockApp(QMainWindow):
         regen_pictos_action.triggered.connect(self.regenerate_pictos)
         tools_menu.addAction(regen_pictos_action)
 
+        sync_status_action = QAction("État synchronisation...", self)
+        sync_status_action.triggered.connect(self.show_sync_status)
+        tools_menu.addAction(sync_status_action)
+
         # Menu Compte
         self.account_menu = menubar.addMenu("Compte")
 
@@ -758,6 +763,11 @@ class MastockApp(QMainWindow):
     def refresh_list(self):
         """Rafraîchit la liste des climbs."""
         self.climb_list.refresh()
+
+    def show_sync_status(self):
+        """Affiche le dialog d'état de synchronisation."""
+        dialog = SyncStatusDialog(self)
+        dialog.exec()
 
     def regenerate_pictos(self, force: bool = True):
         """Régénère tous les pictos."""
