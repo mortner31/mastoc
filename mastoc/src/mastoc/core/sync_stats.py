@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from mastoc.api.railway_client import MastocAPI
+from mastoc.api.railway_client import MastocAPI, RailwayConfig
 from mastoc.core.config import AppConfig
 
 
@@ -52,11 +52,12 @@ def get_sync_stats(api: Optional[MastocAPI] = None) -> SyncStats:
         SyncStats avec les compteurs
     """
     if api is None:
-        config = AppConfig.load()
-        api = MastocAPI(
-            base_url=config.railway_url or "https://mastoc-production.up.railway.app",
-            api_key=config.railway_api_key
+        app_config = AppConfig.load()
+        config = RailwayConfig(
+            base_url=app_config.railway_url or "https://mastoc-production.up.railway.app",
+            api_key=app_config.railway_api_key
         )
+        api = MastocAPI(config=config)
 
     stats = api.get_sync_stats()
 
@@ -80,11 +81,12 @@ def get_local_climbs(api: Optional[MastocAPI] = None) -> list[LocalClimb]:
         Liste de LocalClimb
     """
     if api is None:
-        config = AppConfig.load()
-        api = MastocAPI(
-            base_url=config.railway_url or "https://mastoc-production.up.railway.app",
-            api_key=config.railway_api_key
+        app_config = AppConfig.load()
+        config = RailwayConfig(
+            base_url=app_config.railway_url or "https://mastoc-production.up.railway.app",
+            api_key=app_config.railway_api_key
         )
+        api = MastocAPI(config=config)
 
     # Utiliser le paramètre local_only=true
     climbs_list, _ = api.get_climbs(local_only=True, page_size=100)
