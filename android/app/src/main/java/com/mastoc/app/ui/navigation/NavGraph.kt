@@ -85,8 +85,8 @@ fun MastocNavGraph(navController: NavHostController) {
 
             composable(Screen.Simple.route) {
                 ClimbListScreen(
-                    onClimbClick = { climbId ->
-                        navController.navigate(Screen.ClimbDetail.createRoute(climbId))
+                    onClimbClick = { climbIds, index ->
+                        navController.navigate(Screen.ClimbDetail.createRoute(climbIds, index))
                     },
                     onSettingsClick = {
                         navController.navigate(Screen.Settings.route)
@@ -114,12 +114,16 @@ fun MastocNavGraph(navController: NavHostController) {
             composable(
                 route = Screen.ClimbDetail.route,
                 arguments = listOf(
-                    navArgument("climbId") { type = NavType.StringType }
+                    navArgument("climbIds") { type = NavType.StringType },
+                    navArgument("initialIndex") { type = NavType.IntType }
                 )
             ) { backStackEntry ->
-                val climbId = backStackEntry.arguments?.getString("climbId") ?: return@composable
+                val climbIdsStr = backStackEntry.arguments?.getString("climbIds") ?: return@composable
+                val initialIndex = backStackEntry.arguments?.getInt("initialIndex") ?: 0
+                val climbIds = climbIdsStr.split(",")
                 ClimbDetailScreen(
-                    climbId = climbId,
+                    climbIds = climbIds,
+                    initialIndex = initialIndex,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -133,8 +137,8 @@ fun MastocNavGraph(navController: NavHostController) {
             // Legacy routes for compatibility
             composable(Screen.ClimbList.route) {
                 ClimbListScreen(
-                    onClimbClick = { climbId ->
-                        navController.navigate(Screen.ClimbDetail.createRoute(climbId))
+                    onClimbClick = { climbIds, index ->
+                        navController.navigate(Screen.ClimbDetail.createRoute(climbIds, index))
                     },
                     onSettingsClick = {
                         navController.navigate(Screen.Settings.route)

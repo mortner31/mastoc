@@ -61,7 +61,7 @@ import com.mastoc.app.viewmodel.SortOption
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClimbListScreen(
-    onClimbClick: (String) -> Unit,
+    onClimbClick: (climbIds: List<String>, index: Int) -> Unit,
     onSettingsClick: () -> Unit = {},
     viewModel: ClimbListViewModel = viewModel()
 ) {
@@ -181,13 +181,15 @@ fun ClimbListScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val climbIds = uiState.filteredClimbs.map { it.id }
                         items(
                             items = uiState.filteredClimbs,
                             key = { it.id }
                         ) { climb ->
+                            val index = climbIds.indexOf(climb.id)
                             ClimbCard(
                                 climb = climb,
-                                onClick = { onClimbClick(climb.id) }
+                                onClick = { onClimbClick(climbIds, index) }
                             )
                         }
                         // Espace en bas

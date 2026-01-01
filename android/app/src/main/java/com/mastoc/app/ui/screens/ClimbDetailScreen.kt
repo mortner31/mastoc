@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -64,44 +67,42 @@ import com.mastoc.app.ui.components.RenderSettingsSheet
 import com.mastoc.app.viewmodel.ClimbDetailViewModel
 import com.mastoc.app.viewmodel.ClimbDetailViewModelFactory
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Écran de détail avec navigation swipe vertical entre les blocs.
+ * Le swipe est désactivé quand l'image est zoomée (scale > 1).
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ClimbDetailScreen(
-    climbId: String,
+    climbIds: List<String>,
+    initialIndex: Int,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val viewModel: ClimbDetailViewModel = viewModel(
-        factory = ClimbDetailViewModelFactory(
-            application = context.applicationContext as android.app.Application,
-            climbId = climbId
-        )
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex.coerceIn(0, (climbIds.size - 1).coerceAtLeast(0)),
+        pageCount = { climbIds.size }
     )
 
-    val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    // État du zoom partagé pour désactiver le swipe
+    var currentZoom by remember { mutableFloatStateOf(1f) }
 
-    // Paramètres de rendu
+    // Paramètres de rendu partagés
     val settingsDataStore = remember { SettingsDataStore(context) }
     val renderSettings by settingsDataStore.renderSettings.collectAsState(initial = RenderSettings.DEFAULT)
     var showRenderSettings by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    // Afficher les erreurs
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-            viewModel.clearError()
-        }
-    }
+    // Titre dynamique selon la page courante
+    val currentClimbId = climbIds.getOrNull(pagerState.currentPage)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = uiState.climb?.name ?: "Détail",
+                        text = "${pagerState.currentPage + 1}/${climbIds.size}",
                         maxLines = 1
                     )
                 },
@@ -128,53 +129,29 @@ fun ClimbDetailScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
-        Box(
+        VerticalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (uiState.climb != null) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Info climb
-                    ClimbInfoHeader(
-                        climb = uiState.climb!!,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
+                .padding(paddingValues),
+            // Désactiver le swipe si zoomé
+            userScrollEnabled = currentZoom <= 1.01f,
+            // Éviter le préchargement excessif
+            beyondBoundsPageCount = 1
+        ) { pageIndex ->
+            val climbId = climbIds[pageIndex]
 
-                    // Image avec overlay
-                    if (uiState.face != null && uiState.climb != null) {
-                        WallImageWithClimbOverlay(
-                            pictureUrl = uiState.face!!.pictureUrl,
-                            imageWidth = uiState.face!!.pictureWidth?.toFloat() ?: 1000f,
-                            imageHeight = uiState.face!!.pictureHeight?.toFloat() ?: 1500f,
-                            climb = uiState.climb!!,
-                            holdsMap = uiState.holdsMap,
-                            renderSettings = renderSettings,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Chargement de l'image...")
-                        }
+            ClimbDetailPage(
+                climbId = climbId,
+                renderSettings = renderSettings,
+                onZoomChanged = { zoom ->
+                    if (pageIndex == pagerState.currentPage) {
+                        currentZoom = zoom
                     }
                 }
-            }
+            )
         }
     }
 
@@ -190,6 +167,70 @@ fun ClimbDetailScreen(
             },
             onDismiss = { showRenderSettings = false }
         )
+    }
+}
+
+/**
+ * Contenu d'une page de détail (un bloc).
+ */
+@Composable
+private fun ClimbDetailPage(
+    climbId: String,
+    renderSettings: RenderSettings,
+    onZoomChanged: (Float) -> Unit
+) {
+    val context = LocalContext.current
+    val viewModel: ClimbDetailViewModel = viewModel(
+        key = climbId,  // Clé unique pour chaque bloc
+        factory = ClimbDetailViewModelFactory(
+            application = context.applicationContext as android.app.Application,
+            climbId = climbId
+        )
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (uiState.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        } else if (uiState.climb != null) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Info climb
+                ClimbInfoHeader(
+                    climb = uiState.climb!!,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+
+                // Image avec overlay
+                if (uiState.face != null) {
+                    WallImageWithClimbOverlay(
+                        pictureUrl = uiState.face!!.pictureUrl,
+                        imageWidth = uiState.face!!.pictureWidth?.toFloat() ?: 1000f,
+                        imageHeight = uiState.face!!.pictureHeight?.toFloat() ?: 1500f,
+                        climb = uiState.climb!!,
+                        holdsMap = uiState.holdsMap,
+                        renderSettings = renderSettings,
+                        onZoomChanged = onZoomChanged,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Chargement de l'image...")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -335,6 +376,7 @@ private fun WallImageWithClimbOverlay(
     climb: com.mastoc.app.data.model.Climb,
     holdsMap: Map<Int, com.mastoc.app.data.model.Hold>,
     renderSettings: RenderSettings,
+    onZoomChanged: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
@@ -342,6 +384,11 @@ private fun WallImageWithClimbOverlay(
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     val context = LocalContext.current
     val density = context.resources.displayMetrics.density
+
+    // Notifier le parent du changement de zoom
+    LaunchedEffect(scale) {
+        onZoomChanged(scale)
+    }
 
     Box(
         modifier = modifier

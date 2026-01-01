@@ -20,8 +20,18 @@ sealed class Screen(val route: String) {
     data object Profile : Screen("profile")
 
     // Sub-routes (not in bottom nav)
-    data object ClimbDetail : Screen("climb_detail/{climbId}") {
-        fun createRoute(climbId: String) = "climb_detail/$climbId"
+    data object ClimbDetail : Screen("climb_detail/{climbIds}/{initialIndex}") {
+        /**
+         * Crée la route avec la liste des IDs et l'index initial.
+         * Permet le swipe vertical entre les blocs.
+         */
+        fun createRoute(climbIds: List<String>, initialIndex: Int): String {
+            val encodedIds = climbIds.joinToString(",")
+            return "climb_detail/$encodedIds/$initialIndex"
+        }
+
+        /** Route legacy avec un seul ID (redirige vers index 0). */
+        fun createRoute(climbId: String) = "climb_detail/$climbId/0"
     }
 
     data object Settings : Screen("settings")
