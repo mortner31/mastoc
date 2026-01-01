@@ -1,6 +1,6 @@
 # STATUS - TODO 12 : Hold Annotations
 
-**Progression** : 85%
+**Progression** : 95%
 
 ---
 
@@ -37,19 +37,18 @@
 ### GUI
 - [x] ColorModes : GRIP_TYPE, CONDITION, DIFFICULTY dans hold_overlay.py
 - [x] annotation_panel.py (widget édition)
-- [ ] Intégration dans hold_selector.py (en cours)
+- [ ] Intégration dans hold_selector.py (optionnel)
 
 ### Tests
-- [ ] Tests unitaires annotation_loader
-- [ ] Tests annotation_panel
+- [x] Tests unitaires annotation_loader (24 tests)
+- [x] Tests annotation_panel (19 tests)
 
 ---
 
 ## Reste à faire
 
-1. Intégration hold_selector.py (connecter panel, charger annotations)
-2. Tests client annotation_loader et annotation_panel
-3. Filtres par tags dans hold_index.py (optionnel)
+1. Intégration hold_selector.py (optionnel - peut être fait dans TODO 18)
+2. Filtres par tags dans hold_index.py (optionnel)
 
 ---
 
@@ -69,6 +68,8 @@
 - `mastoc/src/mastoc/core/annotation_loader.py` (nouveau)
 - `mastoc/src/mastoc/gui/widgets/hold_overlay.py` (+3 ColorModes)
 - `mastoc/src/mastoc/gui/widgets/annotation_panel.py` (nouveau)
+- `mastoc/tests/test_annotation_loader.py` (nouveau, 24 tests)
+- `mastoc/tests/test_annotation_panel.py` (nouveau, 19 tests)
 
 ### Documentation
 - `docs/adr/008_hold_annotations.md` (nouveau)

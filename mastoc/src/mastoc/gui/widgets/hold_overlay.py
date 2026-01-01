@@ -20,7 +20,7 @@ from mastoc.core.colormaps import Colormap, apply_colormap
 
 
 # Mapping des enums vers des valeurs normalisées [0, 1] pour les colormaps
-_GRIP_TYPE_VALUES = {
+GRIP_TYPE_VALUES = {
     HoldGripType.BAC: 0.0,         # Facile (vert)
     HoldGripType.PRISE_VOLUME: 0.08,
     HoldGripType.PLAT: 0.17,
@@ -35,7 +35,7 @@ _GRIP_TYPE_VALUES = {
     HoldGripType.AUTRE: 1.0,       # Difficile (rouge)
 }
 
-_CONDITION_VALUES = {
+CONDITION_VALUES = {
     HoldCondition.OK: 0.0,         # Bon (vert)
     HoldCondition.A_BROSSER: 0.2,
     HoldCondition.SALE: 0.4,
@@ -44,7 +44,7 @@ _CONDITION_VALUES = {
     HoldCondition.CASSEE: 1.0,     # Mauvais (rouge)
 }
 
-_DIFFICULTY_VALUES = {
+DIFFICULTY_VALUES = {
     HoldRelativeDifficulty.FACILE: 0.0,   # Vert
     HoldRelativeDifficulty.NORMALE: 0.5,  # Jaune
     HoldRelativeDifficulty.DURE: 1.0,     # Rouge
@@ -356,19 +356,19 @@ class HoldOverlay(QObject):
             annotation = self._annotation_cache.get(hold_id)
             if not annotation or not annotation.consensus.grip_type:
                 return None
-            return _GRIP_TYPE_VALUES.get(annotation.consensus.grip_type, 0.5)
+            return GRIP_TYPE_VALUES.get(annotation.consensus.grip_type, 0.5)
 
         elif self.color_mode == ColorMode.CONDITION:
             annotation = self._annotation_cache.get(hold_id)
             if not annotation or not annotation.consensus.condition:
                 return None
-            return _CONDITION_VALUES.get(annotation.consensus.condition, 0.5)
+            return CONDITION_VALUES.get(annotation.consensus.condition, 0.5)
 
         elif self.color_mode == ColorMode.DIFFICULTY:
             annotation = self._annotation_cache.get(hold_id)
             if not annotation or not annotation.consensus.difficulty:
                 return None
-            return _DIFFICULTY_VALUES.get(annotation.consensus.difficulty, 0.5)
+            return DIFFICULTY_VALUES.get(annotation.consensus.difficulty, 0.5)
 
         return None
 
