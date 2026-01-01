@@ -9,6 +9,13 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 18 avancé à 40%** - Sync Données Sociales
+  - Phase 1 complète : Refresh compteurs
+  - `get_climb_social_stats()` : appelle sends, comments, likes
+  - `refresh_social_counts()` : refresh unitaire
+  - `refresh_all_social_counts()` : batch avec throttling (1 req/sec)
+  - 4 tests ajoutés (375 total)
+
 - **TODO 12 archivé** - Hold Annotations (95%)
   - Backend : modèle HoldAnnotation + 4 endpoints REST + 16 tests
   - Client : enums, dataclasses, API methods, AnnotationLoader
