@@ -366,3 +366,72 @@ def update_stokt_id(
     db.commit()
 
     return {"message": "stokt_id updated", "stokt_id": str(stokt_id)}
+
+
+class DateUpdateRequest(BaseModel):
+    """Mise à jour de date created_at."""
+    created_at: str
+
+
+@router.patch("/{climb_id}/date")
+def update_climb_date(
+    climb_id: UUID,
+    data: DateUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    """Met à jour la date created_at d'un climb."""
+    climb = db.get(Climb, climb_id)
+    if not climb:
+        raise HTTPException(status_code=404, detail="Climb not found")
+
+    try:
+        # Parser la date ISO
+        new_date = datetime.fromisoformat(data.created_at.replace("Z", "+00:00"))
+        climb.created_at = new_date
+        db.commit()
+        return {"message": "date updated", "created_at": climb.created_at.isoformat()}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {e}")
+
+
+class BulkDateUpdate(BaseModel):
+    """Mise à jour en masse des dates."""
+    updates: list[dict]  # [{"stokt_id": "...", "created_at": "..."}]
+
+
+@router.patch("/bulk/dates")
+def bulk_update_dates(
+    data: BulkDateUpdate,
+    db: Session = Depends(get_db),
+):
+    """Met à jour les dates created_at en masse par stokt_id."""
+    updated = 0
+    errors = 0
+
+    for item in data.updates:
+        try:
+            stokt_id = item.get("stokt_id")
+            created_at_str = item.get("created_at")
+
+            if not stokt_id or not created_at_str:
+                errors += 1
+                continue
+
+            # Trouver le climb par stokt_id
+            query = select(Climb).where(Climb.stokt_id == stokt_id)
+            climb = db.execute(query).scalar_one_or_none()
+
+            if not climb:
+                errors += 1
+                continue
+
+            # Parser et mettre à jour la date
+            new_date = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+            climb.created_at = new_date
+            updated += 1
+
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return {"updated": updated, "errors": errors, "total": len(data.updates)}
