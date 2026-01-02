@@ -17,7 +17,8 @@ data class Hold(
     val area: Float? = null,
     val centerTapeStr: String = "",
     val rightTapeStr: String = "",
-    val leftTapeStr: String = ""
+    val leftTapeStr: String = "",
+    val colorRgb: Int? = null
 ) {
     /**
      * Parse le polygonStr et retourne une liste de points.

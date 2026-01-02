@@ -1,5 +1,7 @@
 package com.mastoc.app.data.repository
 
+import android.content.Context
+import com.mastoc.app.core.HoldColorExtractor
 import com.mastoc.app.data.api.ApiClient
 import com.mastoc.app.data.local.ClimbDao
 import com.mastoc.app.data.local.FaceDao
@@ -30,11 +32,13 @@ data class PaginatedClimbs(
  * Combine API réseau et cache local Room.
  */
 class ClimbRepository(
+    private val context: Context,
     private val climbDao: ClimbDao,
     private val holdDao: HoldDao,
     private val faceDao: FaceDao
 ) {
     private val api = ApiClient.apiService
+    private val holdColorExtractor = HoldColorExtractor(context, holdDao)
 
     // --- Climbs ---
 
@@ -207,5 +211,40 @@ class ClimbRepository(
         } catch (e: Exception) {
             false
         }
+    }
+
+    // --- Hold Color Extraction ---
+
+    /**
+     * Extrait les couleurs des holds d'une face depuis l'image du mur.
+     *
+     * @param faceId ID de la face
+     * @param onProgress Callback de progression (current, total)
+     * @return Nombre de holds traités
+     */
+    suspend fun extractHoldColors(
+        faceId: String,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
+    ): Result<Int> {
+        return try {
+            val face = faceDao.getFaceById(faceId)?.toDomain()
+                ?: return Result.failure(Exception("Face not found"))
+
+            val count = holdColorExtractor.extractColorsForFace(
+                faceId = faceId,
+                pictureUrl = face.pictureUrl,
+                onProgress = onProgress
+            )
+            Result.success(count)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Vérifie si une face a des holds sans couleur extraite.
+     */
+    suspend fun needsColorExtraction(faceId: String): Boolean {
+        return holdColorExtractor.needsColorExtraction(faceId)
     }
 }

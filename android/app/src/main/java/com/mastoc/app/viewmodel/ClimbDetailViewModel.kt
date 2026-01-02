@@ -36,6 +36,7 @@ class ClimbDetailViewModel(
 
     private val database = MastocDatabase.getInstance(application)
     private val repository = ClimbRepository(
+        context = application.applicationContext,
         climbDao = database.climbDao(),
         holdDao = database.holdDao(),
         faceDao = database.faceDao()

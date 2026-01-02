@@ -103,7 +103,8 @@ fun HoldEntity.toDomain(): Hold = Hold(
     area = area,
     centerTapeStr = centerTapeStr,
     rightTapeStr = rightTapeStr,
-    leftTapeStr = leftTapeStr
+    leftTapeStr = leftTapeStr,
+    colorRgb = colorRgb
 )
 
 fun HoldDto.toDomain(faceId: String): Hold = Hold(

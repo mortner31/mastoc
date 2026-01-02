@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Refonte des cartes de résultat (ClimbCard) avec un nouveau layout intégrant les pictos générés côté serveur.
+Refonte des cartes de résultat (ClimbCard) avec un nouveau layout intégrant les pictos générés côté client.
 
 ## Design
 
@@ -30,11 +30,11 @@ Refonte des cartes de résultat (ClimbCard) avec un nouveau layout intégrant le
 - `❤️ N` : nombre de likes (total_likes)
 - `✕ N` : nombre de croix / ascensions (climbed_by)
 
-## Algorithme Picto Python (référence)
+## Algorithme Picto (implémenté en Kotlin)
 
-Le picto est généré dans `mastoc/src/mastoc/core/picto.py` :
+Le picto est généré dans `core/PictoGenerator.kt` (port de `picto.py`) :
 
-1. **Fond blanc** carré (128x128 ou 48x48)
+1. **Fond blanc** carré (128x128 par défaut)
 2. **Top 20 prises populaires** en gris clair (contexte)
 3. **Prises du bloc** avec couleur dominante extraite du mur
 4. **Marqueurs spéciaux** :
@@ -43,83 +43,87 @@ Le picto est généré dans `mastoc/src/mastoc/core/picto.py` :
    - START : lignes de tape (V si 1 prise, centrales si plusieurs)
 5. **Calcul taille** : rayon proportionnel à l'aire du polygone
 
-### Extraction de couleur (IMPORTANT)
+### Extraction de couleur
 
-La couleur de chaque prise est extraite via `get_dominant_color()` :
+La couleur de chaque prise est extraite via `HoldColorExtractor.kt` :
 
-```python
-def get_dominant_color(img, centroid, radius=15):
-    # Sample pixels autour du centroïde
-    # Ignore les pixels gris (max_diff < 30)
-    # Quantifie les couleurs (pas de 32)
-    # Retourne la couleur la plus fréquente
+```kotlin
+// Sample pixels autour du centroïde (rayon 15, pas de 3)
+// Ignore les pixels gris (max_diff < 30)
+// Quantifie les couleurs (pas de 32)
+// Retourne la couleur la plus fréquente
 ```
 
-**Contrainte** : nécessite l'image haute résolution du mur (2263x3000).
+**Architecture** : Génération 100% côté CLIENT (Android)
 
-**Décision : Génération côté CLIENT (Android)**
-
-Raisons :
+Avantages :
 - Calcul très léger (~1-5 ms par picto)
 - Compatible avec les deux backends (Stokt ET mastoc)
 - Pas de dépendance réseau supplémentaire
-- Cache local possible
-
-**Prérequis** : stocker `color_rgb` dans les données Hold (synchro avec le client)
+- Cache local (mémoire + disque)
 
 ## Tâches
 
-### Phase 0 : Couleurs des Prises (prérequis)
+### Phase 1 : Couleurs des Prises (100%)
 
-- [ ] Ajouter colonne `color_rgb VARCHAR(7)` à table `holds` (ex: "#FF5733")
-- [ ] Script d'extraction : parcourir l'image du mur et calculer couleur dominante
-- [ ] Migration BDD Railway
-- [ ] Endpoint `GET /api/holds` retourne la couleur
+- [x] Ajouter `colorRgb: Int?` à `HoldEntity` (Room)
+- [x] Créer `HoldColorExtractor.kt` :
+  - Charger image mur (via Coil)
+  - Pour chaque hold : `extractDominantColor(bitmap, hold)`
+  - Ignorer pixels gris, quantifier, retourner majoritaire
+- [x] Persister en Room (update HoldEntity)
+- [x] Méthodes dans ClimbRepository
 
-### Phase 1 : Endpoint Picto Serveur
+### Phase 2 : Générateur Picto Android (100%)
 
-- [ ] Créer endpoint `GET /api/climbs/{id}/picto` (retourne PNG)
-- [ ] Porter logique `picto.py` côté serveur (FastAPI + Pillow)
-- [ ] Utiliser `color_rgb` des holds (pas d'image mur)
-- [ ] Cache filesystem pour les pictos générés
-- [ ] Option taille (`?size=48|96|128`)
+- [x] Créer `PictoGenerator.kt` (port de `picto.py`)
+  - Calcul centroïde/rayon depuis polygone
+  - Dessin Canvas (ellipses colorées)
+  - Marqueurs TOP (double cercle), FEET (bleu), START (tapes)
+- [x] Top 20 prises populaires en gris (contexte)
+- [x] Créer `PictoCache.kt` :
+  - Stockage fichiers PNG : `cacheDir/pictos/{climbId}.png`
+  - `hasPicto(climbId)` / `getPicto(climbId)` / `savePicto(climbId, bitmap)`
+  - LruCache mémoire (50 entrées) pour accès rapide
+- [x] Créer `PictoManager.kt` (combine génération + cache)
 
-### Phase 2 : Android - Nouveau Layout ClimbCard
+### Phase 3 : Nouveau Layout ClimbCard (100%)
 
-- [ ] Refactorer `ClimbCard.kt` avec layout Row 25|50|25
-- [ ] Zone gauche : `AsyncImage` pour le picto (Coil)
-- [ ] Zone centre : Column(titre, auteur, date)
-- [ ] Zone droite : Column(GradeBadge, Row(likes, croix))
-- [ ] Placeholder pendant chargement picto
+- [x] Refactorer `ClimbCard.kt` avec layout Row (25|50|25)
+- [x] Zone gauche : `Image` composable avec Bitmap du picto
+- [x] Zone centre : Column(titre, auteur, date formatée)
+- [x] Zone droite : Column(GradeBadge, Row(❤️ likes, ✕ croix))
+- [x] Placeholder quand pas de picto
 
-### Phase 3 : Génération Picto Android (option B)
+### Phase 4 : Tests et Polish (À faire)
 
-Alternative si endpoint serveur trop lourd :
-- [ ] Porter `picto.py` en Kotlin (Canvas)
-- [ ] Générer les pictos localement sur Android
-- [ ] Cache Room ou fichier local
-
-### Phase 4 : Tests et Polish
-
-- [ ] Tests endpoint picto serveur
-- [ ] Tests UI Android
-- [ ] Gestion erreurs (picto manquant, timeout)
-- [ ] Optimisation cache et lazy loading
+- [ ] Tests unitaires `PictoGenerator`
+- [ ] Tests `HoldColorExtractor`
+- [ ] Gestion cas limites (climb sans prises, couleur manquante)
+- [ ] Intégration dans ClimbListScreen (génération lazy des pictos au scroll)
 
 ## Fichiers impactés
 
-### Serveur
-- `server/src/mastoc_api/routers/climbs.py` (nouveau endpoint)
-- `server/src/mastoc_api/services/picto_service.py` (nouveau)
+### Android - Nouveaux fichiers
+- `core/HoldColorExtractor.kt` : extraction couleurs depuis image mur
+- `core/PictoGenerator.kt` : génération Bitmap picto
+- `core/PictoCache.kt` : cache local des pictos
+- `core/PictoManager.kt` : gestionnaire combiné
 
-### Android
-- `android/app/src/main/java/com/mastoc/app/ui/components/ClimbCard.kt`
+### Android - Fichiers modifiés
+- `data/local/HoldEntity.kt` : +colorRgb
+- `data/local/HoldDao.kt` : +updateHoldColor, +getHoldsWithoutColor
+- `data/local/MastocDatabase.kt` : version 3
+- `data/model/Hold.kt` : +colorRgb
+- `data/Mappers.kt` : colorRgb dans toDomain
+- `data/repository/ClimbRepository.kt` : +extractHoldColors, +needsColorExtraction
+- `ui/components/ClimbCard.kt` : nouveau layout avec picto
+- `viewmodel/*.kt` : context passé au repository
 
-### Python (référence)
-- `mastoc/src/mastoc/core/picto.py` (logique à porter)
+### Python (référence seulement)
+- `mastoc/src/mastoc/core/picto.py` : logique portée en Kotlin
 
 ## Références
 
 - TODO 22 Phase 1 : Cartouche filtres (déjà implémentée)
-- `ClimbCard.kt` : layout actuel (vertical, sans picto)
-- `picto.py` : algorithme de génération Python
+- `picto.py` : algorithme de génération Python (source)

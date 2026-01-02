@@ -42,5 +42,8 @@ data class HoldEntity(
     val leftTapeStr: String = "",
 
     @ColumnInfo(name = "cached_at")
-    val cachedAt: Long = System.currentTimeMillis()
+    val cachedAt: Long = System.currentTimeMillis(),
+
+    @ColumnInfo(name = "color_rgb")
+    val colorRgb: Int? = null
 )

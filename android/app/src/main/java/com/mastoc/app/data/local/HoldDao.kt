@@ -35,4 +35,16 @@ interface HoldDao {
 
     @Query("DELETE FROM holds")
     suspend fun deleteAll()
+
+    @Query("UPDATE holds SET color_rgb = :colorRgb WHERE id = :holdId")
+    suspend fun updateHoldColor(holdId: Int, colorRgb: Int)
+
+    @Query("UPDATE holds SET color_rgb = :colorRgb WHERE id IN (:holdIds)")
+    suspend fun updateHoldsColor(holdIds: List<Int>, colorRgb: Int)
+
+    @Query("SELECT COUNT(*) FROM holds WHERE face_id = :faceId AND color_rgb IS NULL")
+    suspend fun getHoldsWithoutColorCount(faceId: String): Int
+
+    @Query("SELECT * FROM holds WHERE face_id = :faceId AND color_rgb IS NULL")
+    suspend fun getHoldsWithoutColor(faceId: String): List<HoldEntity>
 }

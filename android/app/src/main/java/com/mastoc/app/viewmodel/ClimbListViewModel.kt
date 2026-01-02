@@ -1,10 +1,13 @@
 package com.mastoc.app.viewmodel
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.mastoc.app.core.PictoManager
 import com.mastoc.app.data.local.MastocDatabase
 import com.mastoc.app.data.model.Climb
+import com.mastoc.app.data.model.Hold
 import com.mastoc.app.data.repository.ClimbRepository
 import com.mastoc.app.ui.components.GRADE_COUNT
 import com.mastoc.app.ui.components.getMinIrcraForIndex
@@ -79,16 +82,31 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val database = MastocDatabase.getInstance(application)
     private val repository = ClimbRepository(
+        context = application.applicationContext,
         climbDao = database.climbDao(),
         holdDao = database.holdDao(),
         faceDao = database.faceDao()
     )
+
+    // Gestionnaire de pictos
+    val pictoManager = PictoManager(application.applicationContext)
 
     private val _uiState = MutableStateFlow(ClimbListUiState())
     val uiState: StateFlow<ClimbListUiState> = _uiState.asStateFlow()
 
     // Cache de tous les climbs non filtrés
     private var allClimbs: List<Climb> = emptyList()
+
+    // Cache des holds par face (pour générer les pictos)
+    private val _holdsMap = MutableStateFlow<Map<Int, Hold>>(emptyMap())
+    val holdsMap: StateFlow<Map<Int, Hold>> = _holdsMap.asStateFlow()
+
+    // Cache des pictos générés
+    private val _pictosCache = MutableStateFlow<Map<String, Bitmap>>(emptyMap())
+    val pictosCache: StateFlow<Map<String, Bitmap>> = _pictosCache.asStateFlow()
+
+    // Cache des top holds par face (prises les plus fréquentes pour le fond gris des pictos)
+    private val _topHoldsByFace = MutableStateFlow<Map<String, Set<Int>>>(emptyMap())
 
     init {
         // Observer les climbs depuis le cache
@@ -326,5 +344,163 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
      */
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    /**
+     * Charge les holds d'une face si pas encore en cache (suspend).
+     * Extrait les couleurs depuis l'image du mur si nécessaire.
+     * Retourne la map des holds pour cette face.
+     */
+    private suspend fun loadHoldsForFaceAsync(faceId: String): Map<Int, Hold> {
+        // Vérifier si déjà chargé avec couleurs
+        val currentHolds = _holdsMap.value
+        val existingHolds = currentHolds.values.filter { it.faceId == faceId }
+        if (existingHolds.isNotEmpty() && existingHolds.all { it.colorRgb != null }) {
+            return currentHolds
+        }
+
+        // Charger depuis le cache local ou l'API
+        var holds = repository.getHoldsByFace(faceId)
+        if (holds.isEmpty()) {
+            // Pas en cache, charger depuis l'API
+            val result = repository.refreshFaceSetup(faceId)
+            holds = result.getOrNull()?.holds ?: emptyList()
+        }
+
+        // Extraire les couleurs si nécessaire
+        if (repository.needsColorExtraction(faceId)) {
+            repository.extractHoldColors(faceId)
+            // Recharger les holds avec les couleurs
+            holds = repository.getHoldsByFace(faceId)
+        }
+
+        // Ajouter au cache
+        val newMap = currentHolds.toMutableMap()
+        holds.forEach { hold ->
+            newMap[hold.id] = hold
+            hold.stoktId?.let { newMap[it] = hold }
+        }
+        _holdsMap.value = newMap
+
+        return newMap
+    }
+
+    /**
+     * Charge les holds d'une face (version publique non-suspend).
+     */
+    fun loadHoldsForFace(faceId: String) {
+        viewModelScope.launch {
+            loadHoldsForFaceAsync(faceId)
+        }
+    }
+
+    /**
+     * Calcule les top N prises les plus utilisées pour une face.
+     * Ces prises sont affichées en gris sur les pictos pour donner du contexte.
+     */
+    private fun computeTopHoldsForFace(faceId: String, topN: Int = 20): Set<Int> {
+        // Compter l'utilisation de chaque prise dans les climbs de cette face
+        val holdCounts = mutableMapOf<Int, Int>()
+
+        allClimbs
+            .filter { it.faceId == faceId }
+            .forEach { climb ->
+                climb.getClimbHolds().forEach { climbHold ->
+                    holdCounts[climbHold.holdId] = (holdCounts[climbHold.holdId] ?: 0) + 1
+                }
+            }
+
+        // Retourner les top N
+        return holdCounts.entries
+            .sortedByDescending { it.value }
+            .take(topN)
+            .map { it.key }
+            .toSet()
+    }
+
+    /**
+     * Obtient les top holds pour une face, les calcule si nécessaire.
+     */
+    private fun getTopHoldsForFace(faceId: String): Set<Int> {
+        _topHoldsByFace.value[faceId]?.let { return it }
+
+        val topHolds = computeTopHoldsForFace(faceId)
+        _topHoldsByFace.value = _topHoldsByFace.value + (faceId to topHolds)
+        return topHolds
+    }
+
+    /**
+     * Génère le picto pour un climb (lazy, appelé au scroll).
+     */
+    fun loadPictoForClimb(climb: Climb) {
+        // Déjà en cache ?
+        if (_pictosCache.value.containsKey(climb.id)) return
+
+        viewModelScope.launch {
+            // Charger les holds et attendre qu'ils soient disponibles
+            val holdsMap = loadHoldsForFaceAsync(climb.faceId)
+            if (holdsMap.isEmpty()) return@launch
+
+            // Obtenir les top holds pour cette face (pour le fond gris)
+            val topHolds = getTopHoldsForFace(climb.faceId)
+
+            // Générer le picto
+            val picto = pictoManager.getPicto(
+                climb = climb,
+                holdsMap = holdsMap,
+                topHoldIds = topHolds,
+                size = 128 // Taille du picto
+            )
+
+            if (picto != null) {
+                _pictosCache.value = _pictosCache.value + (climb.id to picto)
+            }
+        }
+    }
+
+    /**
+     * Pré-charge les pictos pour les climbs visibles.
+     */
+    fun preloadPictosForVisibleClimbs(climbs: List<Climb>) {
+        climbs.forEach { loadPictoForClimb(it) }
+    }
+
+    /**
+     * Regénère le picto d'un climb spécifique (force la recréation).
+     */
+    fun regeneratePicto(climb: Climb) {
+        viewModelScope.launch {
+            // Charger les holds et attendre
+            val holdsMap = loadHoldsForFaceAsync(climb.faceId)
+            if (holdsMap.isEmpty()) return@launch
+
+            val topHolds = getTopHoldsForFace(climb.faceId)
+
+            // Regénérer le picto
+            val picto = pictoManager.regeneratePicto(
+                climb = climb,
+                holdsMap = holdsMap,
+                topHoldIds = topHolds,
+                size = 128
+            )
+
+            if (picto != null) {
+                _pictosCache.value = _pictosCache.value + (climb.id to picto)
+            }
+        }
+    }
+
+    /**
+     * Regénère tous les pictos (vide le cache et régénère).
+     */
+    fun regenerateAllPictos() {
+        viewModelScope.launch {
+            // Vider le cache mémoire local
+            _pictosCache.value = emptyMap()
+            _topHoldsByFace.value = emptyMap()
+
+            // Invalider le cache du PictoManager (mémoire + disque)
+            pictoManager.invalidateCache()
+        }
     }
 }

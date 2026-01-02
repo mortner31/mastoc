@@ -228,6 +228,9 @@ fun ClimbListScreen(
                         }
                     }
                 } else {
+                    // Observer le cache des pictos
+                    val pictosCache by viewModel.pictosCache.collectAsState()
+
                     LazyColumn(
                         state = listState,
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -239,9 +242,19 @@ fun ClimbListScreen(
                             key = { it.id }
                         ) { climb ->
                             val index = climbIds.indexOf(climb.id)
+
+                            // Charger le picto de manière lazy
+                            LaunchedEffect(climb.id) {
+                                viewModel.loadPictoForClimb(climb)
+                            }
+
+                            // Récupérer le picto depuis le cache
+                            val picto = pictosCache[climb.id]
+
                             ClimbCard(
                                 climb = climb,
-                                onClick = { onClimbClick(climbIds, index) }
+                                onClick = { onClimbClick(climbIds, index) },
+                                picto = picto
                             )
                         }
 

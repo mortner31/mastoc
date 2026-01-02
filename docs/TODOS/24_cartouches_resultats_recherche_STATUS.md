@@ -1,40 +1,82 @@
 # STATUS - TODO 24 : Cartouches Résultats Recherche
 
-**Progression** : 0%
+**Progression** : 100%
 
-## Phase 0 : Couleurs des Prises (0%)
+## Phase 1 : Couleurs des Prises (100%)
 
-- [ ] Colonne `color_rgb` table holds
-- [ ] Script extraction couleurs
-- [ ] Migration Railway
-- [ ] Endpoint holds avec couleur
+- [x] `colorRgb: Int?` dans HoldEntity
+- [x] `colorRgb: Int?` dans Hold (modèle domaine)
+- [x] Mappers mis à jour
+- [x] `HoldColorExtractor.kt` créé
+- [x] Méthodes `updateHoldColor` dans HoldDao
+- [x] Intégration dans ClimbRepository
+- [x] Base de données version 3
 
-## Phase 1 : Endpoint Picto Serveur (0%)
+## Phase 2 : Générateur Picto (100%)
 
-- [ ] Endpoint `GET /api/climbs/{id}/picto`
-- [ ] Porter logique picto.py
-- [ ] Cache serveur
-- [ ] Option taille
+- [x] `PictoGenerator.kt` (port de picto.py)
+  - Calcul centroïde/rayon depuis polygone
+  - Dessin Canvas (ellipses colorées)
+  - Marqueurs TOP (double cercle), FEET (bleu), START (tapes)
+  - Top 20 prises grises (contexte)
+- [x] `PictoCache.kt`
+  - LruCache mémoire (50 entrées)
+  - Cache fichier PNG sur disque
+  - Méthodes hasPicto/getPicto/savePicto
+- [x] `PictoManager.kt`
+  - Combine génération + cache
+  - Méthode preloadPictos pour batch
 
-## Phase 2 : Android - Nouveau Layout (0%)
+## Phase 3 : Nouveau Layout ClimbCard (100%)
 
-- [ ] Layout Row 25|50|25
-- [ ] Zone picto (AsyncImage)
-- [ ] Zone infos (titre, auteur, date)
-- [ ] Zone stats (grade, likes, croix)
+- [x] Layout Row 25% | 50% | 25%
+- [x] Zone gauche : PictoZone avec Image composable
+- [x] Zone centre : InfoZone (titre, auteur, date formatée)
+- [x] Zone droite : StatsZone (GradeBadge, ❤️ likes, ✕ croix)
+- [x] Placeholder quand pas de picto
+- [x] Formatage date français ("15 déc. 2025")
 
-## Phase 3 : Génération Picto Android (0%)
+## Phase 4 : Intégration ClimbListScreen (100%)
 
-- [ ] Alternative : génération locale Kotlin
-- [ ] Canvas drawing
-- [ ] Cache local
-
-## Phase 4 : Tests et Polish (0%)
-
-- [ ] Tests serveur
-- [ ] Tests Android
-- [ ] Gestion erreurs
+- [x] ClimbListViewModel + PictoManager
+- [x] Cache holds par face (holdsMap)
+- [x] Cache pictos (pictosCache)
+- [x] Méthodes loadHoldsForFace / loadPictoForClimb
+- [x] LaunchedEffect pour génération lazy au scroll
+- [x] Passage du picto au ClimbCard
 
 ---
 
+## Fichiers créés/modifiés
+
+### Nouveaux fichiers
+- `core/HoldColorExtractor.kt` : extraction couleurs depuis image mur
+- `core/PictoGenerator.kt` : génération Bitmap picto
+- `core/PictoCache.kt` : cache local des pictos
+- `core/PictoManager.kt` : gestionnaire combiné
+
+### Fichiers modifiés
+- `data/local/HoldEntity.kt` : +colorRgb
+- `data/local/HoldDao.kt` : +updateHoldColor, +getHoldsWithoutColor
+- `data/local/MastocDatabase.kt` : version 3
+- `data/model/Hold.kt` : +colorRgb
+- `data/Mappers.kt` : colorRgb dans toDomain
+- `data/repository/ClimbRepository.kt` : +extractHoldColors, +needsColorExtraction
+- `ui/components/ClimbCard.kt` : nouveau layout avec picto
+- `ui/screens/ClimbListScreen.kt` : intégration pictos lazy
+- `viewmodel/ClimbListViewModel.kt` : +PictoManager, +holdsMap, +pictosCache
+- Autres ViewModels : context passé au repository
+
+---
+
+## Build & Tests
+
+```
+BUILD SUCCESSFUL
+Tests: PASSED
+```
+
+---
+
+**Architecture** : 100% côté client (compatible Stokt + mastoc)
 **Dernière mise à jour** : 2026-01-02

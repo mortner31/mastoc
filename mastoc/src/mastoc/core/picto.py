@@ -5,10 +5,47 @@ Représentation simplifiée d'un bloc : cercles colorés sur fond blanc.
 """
 
 import math
+from dataclasses import dataclass, field
 from PIL import Image, ImageDraw
 from collections import Counter
 
 from mastoc.api.models import Climb, Hold, HoldType
+
+
+@dataclass
+class PictoStyle:
+    """Paramètres de style pour le rendu des pictogrammes."""
+
+    # Fond
+    background_color: tuple[int, int, int] = (255, 255, 255)  # Blanc par défaut
+
+    # Prises de contexte (top holds)
+    context_color: tuple[int, int, int] = (220, 220, 220)  # Gris clair
+    context_count: int = 20  # Nombre de prises de contexte
+    show_context: bool = True  # Afficher les prises de contexte
+
+    # Taille des cercles
+    hold_radius_factor: float = 1.0  # Multiplicateur du rayon
+    min_radius_climb: float = 3.0  # Rayon minimum prises du bloc
+    min_radius_context: float = 2.0  # Rayon minimum prises de contexte
+
+    # Contours
+    outline_light_holds: bool = True  # Liseré noir sur couleurs claires
+    light_threshold: int = 180  # Seuil de luminance pour "clair"
+
+    # Marqueurs spéciaux
+    top_marker_offset: float = 3.0  # Offset du double cercle TOP
+    top_marker_width: int = 2  # Épaisseur du marqueur TOP
+    feet_color: tuple[int, int, int] = (49, 218, 255)  # Bleu néon FEET
+    feet_width: int = 2  # Épaisseur contour FEET
+    tape_width: int = 2  # Épaisseur des lignes de tape
+
+    # Marge
+    margin_ratio: float = 0.1  # Marge autour des prises
+
+
+# Style par défaut (original)
+DEFAULT_STYLE = PictoStyle()
 
 
 def parse_polygon_points(polygon_str: str) -> list[tuple[float, float]]:
@@ -81,12 +118,12 @@ def get_dominant_color(
     return (200, 200, 200)
 
 
-def is_light_color(color: tuple[int, int, int]) -> bool:
+def is_light_color(color: tuple[int, int, int], threshold: int = 180) -> bool:
     """Détermine si une couleur est claire (besoin de liseré noir)."""
     r, g, b = color
     # Luminance perçue
     luminance = 0.299 * r + 0.587 * g + 0.114 * b
-    return luminance > 180
+    return luminance > threshold
 
 
 def get_hold_info(hold: Hold) -> tuple[float, float, float]:
@@ -105,7 +142,8 @@ def generate_climb_picto(
     holds_map: dict[int, Hold],
     wall_image: Image.Image = None,
     size: int = 128,
-    top_holds: list[int] = None
+    top_holds: list[int] = None,
+    style: PictoStyle = None
 ) -> Image.Image:
     """
     Génère un picto carré pour un bloc.
@@ -116,10 +154,14 @@ def generate_climb_picto(
         wall_image: Image du mur (pour extraire les couleurs)
         size: Taille du picto en pixels (carré)
         top_holds: Liste des IDs des prises les plus utilisées (affichées en gris)
+        style: Paramètres de style (PictoStyle)
 
     Returns:
         Image PIL du picto
     """
+    if style is None:
+        style = DEFAULT_STYLE
+
     # Collecter les infos des prises du bloc
     hold_infos = []  # [(cx, cy, radius, color, hold_type, hold), ...]
     climb_hold_ids = set()
@@ -148,11 +190,11 @@ def generate_climb_picto(
 
     if not hold_infos:
         # Aucune prise, retourner image vide
-        return Image.new('RGB', (size, size), (255, 255, 255))
+        return Image.new('RGB', (size, size), style.background_color)
 
     # Collecter les infos des top prises (pour le fond gris)
     bg_hold_infos = []  # [(cx, cy, radius), ...]
-    if top_holds:
+    if top_holds and style.show_context:
         for hold_id in top_holds:
             if hold_id in climb_hold_ids:
                 continue  # Ne pas redessiner les prises du bloc
@@ -172,7 +214,7 @@ def generate_climb_picto(
     max_y = max(h[1] + h[2] for h in all_infos)
 
     # Ajouter une marge
-    margin = 0.1
+    margin = style.margin_ratio
     width = max_x - min_x
     height = max_y - min_y
     min_x -= width * margin
@@ -192,42 +234,40 @@ def generate_climb_picto(
     offset_y = (size - height * scale) / 2 - min_y * scale
 
     # Créer l'image
-    img = Image.new('RGB', (size, size), (255, 255, 255))
+    img = Image.new('RGB', (size, size), style.background_color)
     draw = ImageDraw.Draw(img)
 
     # D'abord dessiner les top holds en gris clair (fond)
-    GRAY_COLOR = (220, 220, 220)
     for cx, cy, radius in bg_hold_infos:
         px = cx * scale + offset_x
         py = cy * scale + offset_y
-        pr = max(radius * scale, 2)
+        pr = max(radius * scale * style.hold_radius_factor, style.min_radius_context)
         bbox = (px - pr, py - pr, px + pr, py + pr)
-        draw.ellipse(bbox, fill=GRAY_COLOR)
+        draw.ellipse(bbox, fill=style.context_color)
 
     # Ensuite dessiner les prises du bloc (premier plan)
     for cx, cy, radius, color, hold_type, hold in hold_infos:
         px = cx * scale + offset_x
         py = cy * scale + offset_y
-        pr = max(radius * scale, 3)
+        pr = max(radius * scale * style.hold_radius_factor, style.min_radius_climb)
 
         bbox = (px - pr, py - pr, px + pr, py + pr)
         draw.ellipse(bbox, fill=color)
 
         # Liseré noir si couleur claire
-        if is_light_color(color):
+        if style.outline_light_holds and is_light_color(color, style.light_threshold):
             draw.ellipse(bbox, outline=(0, 0, 0), width=1)
 
         # Prise TOP : double cercle
         if hold_type == HoldType.TOP:
-            outer_pr = pr + 3
+            outer_pr = pr + style.top_marker_offset
             outer_bbox = (px - outer_pr, py - outer_pr, px + outer_pr, py + outer_pr)
-            outline_color = (0, 0, 0) if is_light_color(color) else color
-            draw.ellipse(outer_bbox, outline=outline_color, width=2)
+            outline_color = (0, 0, 0) if is_light_color(color, style.light_threshold) else color
+            draw.ellipse(outer_bbox, outline=outline_color, width=style.top_marker_width)
 
         # Prise FEET : contour NEON_BLUE
         if hold_type == HoldType.FEET:
-            NEON_BLUE = (49, 218, 255)
-            draw.ellipse(bbox, outline=NEON_BLUE, width=2)
+            draw.ellipse(bbox, outline=style.feet_color, width=style.feet_width)
 
     # Dessiner les lignes de tape pour les prises de départ
     # Construire le mapping hold_id -> couleur pour les prises START
@@ -236,7 +276,7 @@ def generate_climb_picto(
         if hold_type == HoldType.START:
             hold_colors[hold.id] = color
 
-    _draw_start_tapes(draw, start_holds, holds_map, hold_colors, scale, offset_x, offset_y)
+    _draw_start_tapes(draw, start_holds, holds_map, hold_colors, scale, offset_x, offset_y, style)
 
     return img
 
@@ -248,7 +288,8 @@ def _draw_start_tapes(
     hold_colors: dict[int, tuple[int, int, int]],
     scale: float,
     offset_x: float,
-    offset_y: float
+    offset_y: float,
+    style: PictoStyle = None
 ):
     """
     Dessine les lignes de tape pour les prises de départ.
@@ -257,6 +298,9 @@ def _draw_start_tapes(
     - 1 prise de départ → 2 lignes (left + right) formant un "V"
     - 2+ prises de départ → 1 ligne centrale par prise
     """
+    if style is None:
+        style = DEFAULT_STYLE
+
     for ch in start_holds:
         hold = holds_map.get(ch.hold_id)
         if not hold:
@@ -267,11 +311,11 @@ def _draw_start_tapes(
 
         if len(start_holds) == 1:
             # Une seule prise : deux lignes (V)
-            _draw_tape_line(draw, hold.left_tape_str, color, scale, offset_x, offset_y)
-            _draw_tape_line(draw, hold.right_tape_str, color, scale, offset_x, offset_y)
+            _draw_tape_line(draw, hold.left_tape_str, color, scale, offset_x, offset_y, style.tape_width)
+            _draw_tape_line(draw, hold.right_tape_str, color, scale, offset_x, offset_y, style.tape_width)
         else:
             # Plusieurs prises : ligne centrale
-            _draw_tape_line(draw, hold.center_tape_str, color, scale, offset_x, offset_y)
+            _draw_tape_line(draw, hold.center_tape_str, color, scale, offset_x, offset_y, style.tape_width)
 
 
 def _draw_tape_line(
@@ -280,7 +324,8 @@ def _draw_tape_line(
     color: tuple[int, int, int],
     scale: float,
     offset_x: float,
-    offset_y: float
+    offset_y: float,
+    width: int = 2
 ):
     """Dessine une ligne de tape avec les coordonnées transformées."""
     line = parse_tape_line(tape_str)
@@ -294,7 +339,7 @@ def _draw_tape_line(
     px2 = x2 * scale + offset_x
     py2 = y2 * scale + offset_y
 
-    draw.line([(px1, py1), (px2, py2)], fill=color, width=2)
+    draw.line([(px1, py1), (px2, py2)], fill=color, width=width)
 
 
 def compute_top_holds(climbs: list[Climb], n: int = 20) -> list[int]:
@@ -322,7 +367,8 @@ def generate_climb_pictos_batch(
     wall_image: Image.Image = None,
     size: int = 128,
     show_top_holds: bool = True,
-    top_n: int = 20
+    top_n: int = 20,
+    style: PictoStyle = None
 ) -> dict[str, Image.Image]:
     """
     Génère les pictos pour plusieurs blocs.
@@ -334,14 +380,19 @@ def generate_climb_pictos_batch(
         size: Taille des pictos
         show_top_holds: Afficher les prises populaires en gris
         top_n: Nombre de prises populaires à afficher
+        style: Paramètres de style (PictoStyle)
 
     Returns:
         Dictionnaire climb_id -> Image PIL
     """
-    # Calculer les top holds une seule fois
-    top_holds = compute_top_holds(climbs, top_n) if show_top_holds else None
+    if style is None:
+        style = DEFAULT_STYLE
+
+    # Calculer les top holds une seule fois (utilise context_count du style si show_top_holds est True)
+    effective_top_n = style.context_count if style.show_context else top_n
+    top_holds = compute_top_holds(climbs, effective_top_n) if show_top_holds and style.show_context else None
 
     return {
-        climb.id: generate_climb_picto(climb, holds_map, wall_image, size, top_holds)
+        climb.id: generate_climb_picto(climb, holds_map, wall_image, size, top_holds, style)
         for climb in climbs
     }
