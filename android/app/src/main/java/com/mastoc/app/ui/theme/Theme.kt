@@ -205,9 +205,9 @@ fun getColorScheme(appTheme: AppTheme, darkTheme: Boolean): ColorScheme {
 
 @Composable
 fun MastocTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,  // Dark mode par défaut
     dynamicColor: Boolean = false,
-    appTheme: AppTheme = AppTheme.COLORFUL,
+    appTheme: AppTheme = AppTheme.GRAY,  // Thème gris par défaut
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

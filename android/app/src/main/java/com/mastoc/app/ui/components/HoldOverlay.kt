@@ -117,7 +117,7 @@ fun ClimbHoldOverlay(
                     singleStart = singleStart,
                     scaleX = scaleX,
                     scaleY = scaleY,
-                    strokeWidth = contourWidth / 2
+                    strokeWidth = contourWidth
                 )
             }
         }
