@@ -9,6 +9,12 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-02
 
+- **TODO 25 créé** - Pictos polygonaux Android
+  - Intégration du mode polylignes dilatées dans l'app Android
+  - 4 paramètres configurables : dilatation, épaisseur contour, couleur fond, transparence
+  - Config de référence : `/home/mortner/mastock/data/pictos/finalbest.json`
+  - 5 phases : Modèle, Renderer, UI Settings, Intégration, Optimisation
+
 - **TODO 22 archivé** - Data & Recherche Android (100%)
   - Phase 5 : Pagination infinie (lazy loading)
     - `PaginatedClimbs` + `loadMore()` + indicateur loading
