@@ -9,10 +9,23 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-02
 
+- **TODO 22 archivé** - Data & Recherche Android (100%)
+  - Phase 5 : Pagination infinie (lazy loading)
+    - `PaginatedClimbs` + `loadMore()` + indicateur loading
+    - Page size 100, détection fin de liste avec `derivedStateOf`
+  - Phase 7 : Circuits analysés et reportés (0.2% usage)
+
+- **TODO 23 archivé** - Tests Tapes & Endpoints (100%)
+  - Fixtures tapes ajoutées aux tests serveur
+  - HoldResponse avec tape_str
+  - ClimbResponse avec synced_at/updated_at
+  - 110 tests serveur passent
+
 - **TODO 24 créé** - Cartouches Résultats Recherche
   - Nouveau layout ClimbCard : 25% picto | 50% infos | 25% stats
-  - Pictos générés côté serveur (port de picto.py)
-  - Phase 0 : extraction couleurs prises depuis image mur
+  - **Architecture 100% client** (compatible Stokt + mastoc)
+  - Phase 1 : extraction couleurs depuis image mur (Android)
+  - Phase 2 : `PictoGenerator.kt` (port de picto.py en Kotlin)
   - Stats : ❤️ likes + ✕ croix (climbed_by)
 
 - **TODO 23 créé** - Tests Tapes & Endpoints

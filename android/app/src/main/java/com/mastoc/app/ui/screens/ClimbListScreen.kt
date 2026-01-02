@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -55,10 +56,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -183,6 +186,25 @@ fun ClimbListScreen(
             )
 
             // Liste des climbs
+            val listState = rememberLazyListState()
+
+            // Détecter quand on approche de la fin pour charger plus
+            val shouldLoadMore by remember {
+                derivedStateOf {
+                    val layoutInfo = listState.layoutInfo
+                    val totalItems = layoutInfo.totalItemsCount
+                    val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                    // Charger quand on est à 5 items de la fin
+                    lastVisibleIndex >= totalItems - 5 && totalItems > 0
+                }
+            }
+
+            LaunchedEffect(shouldLoadMore) {
+                if (shouldLoadMore && uiState.hasMore && !uiState.isLoadingMore && !uiState.isRefreshing) {
+                    viewModel.loadMore()
+                }
+            }
+
             Box(modifier = Modifier.fillMaxSize()) {
                 if (uiState.filteredClimbs.isEmpty() && !uiState.isRefreshing) {
                     // État vide
@@ -202,6 +224,7 @@ fun ClimbListScreen(
                     }
                 } else {
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -216,6 +239,24 @@ fun ClimbListScreen(
                                 onClick = { onClimbClick(climbIds, index) }
                             )
                         }
+
+                        // Indicateur de chargement en bas
+                        if (uiState.isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                }
+                            }
+                        }
+
                         // Espace en bas
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -223,7 +264,7 @@ fun ClimbListScreen(
                     }
                 }
 
-                // Indicateur de chargement superposé
+                // Indicateur de chargement superposé (refresh)
                 if (uiState.isRefreshing) {
                     Box(
                         modifier = Modifier.fillMaxSize(),

@@ -52,6 +52,7 @@ data class ClimbListUiState(
     val filteredClimbs: List<Climb> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
     // Filtres grade (indices 0 à GRADE_COUNT-1)
@@ -64,7 +65,11 @@ data class ClimbListUiState(
     // Tri
     val sortOption: SortOption = SortOption.DATE_DESC,
     // Panneau filtres visible
-    val showFilters: Boolean = false
+    val showFilters: Boolean = false,
+    // Pagination
+    val currentPage: Int = 1,
+    val hasMore: Boolean = true,
+    val totalCount: Int = 0
 )
 
 /**
@@ -173,19 +178,67 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value = _uiState.value.copy(filteredClimbs = filtered)
     }
 
+    companion object {
+        private const val PAGE_SIZE = 100
+    }
+
     /**
-     * Rafraîchit les données depuis l'API.
+     * Rafraîchit les données depuis l'API (première page).
      */
     fun refresh() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
-
-            val result = repository.refreshClimbs()
-
             _uiState.value = _uiState.value.copy(
-                isRefreshing = false,
-                error = result.exceptionOrNull()?.message
+                isRefreshing = true,
+                error = null,
+                currentPage = 1,
+                hasMore = true
             )
+
+            val result = repository.refreshClimbs(page = 1, pageSize = PAGE_SIZE)
+
+            result.onSuccess { paginated ->
+                _uiState.value = _uiState.value.copy(
+                    isRefreshing = false,
+                    currentPage = paginated.page,
+                    hasMore = paginated.hasMore,
+                    totalCount = paginated.totalCount
+                )
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isRefreshing = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+
+    /**
+     * Charge la page suivante (pagination infinie).
+     */
+    fun loadMore() {
+        val state = _uiState.value
+        // Ne pas charger si déjà en cours ou si pas de page suivante
+        if (state.isLoadingMore || state.isRefreshing || !state.hasMore) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingMore = true)
+
+            val nextPage = state.currentPage + 1
+            val result = repository.refreshClimbs(page = nextPage, pageSize = PAGE_SIZE)
+
+            result.onSuccess { paginated ->
+                _uiState.value = _uiState.value.copy(
+                    isLoadingMore = false,
+                    currentPage = paginated.page,
+                    hasMore = paginated.hasMore,
+                    totalCount = paginated.totalCount
+                )
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isLoadingMore = false,
+                    error = e.message
+                )
+            }
         }
     }
 

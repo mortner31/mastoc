@@ -14,6 +14,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
+ * Résultat paginé pour les climbs.
+ */
+data class PaginatedClimbs(
+    val climbs: List<Climb>,
+    val page: Int,
+    val pageSize: Int,
+    val totalCount: Int
+) {
+    val hasMore: Boolean get() = (page * pageSize) < totalCount
+}
+
+/**
  * Repository pour accéder aux données climbs, faces et holds.
  * Combine API réseau et cache local Room.
  */
@@ -28,13 +40,14 @@ class ClimbRepository(
 
     /**
      * Récupère les climbs depuis l'API et les cache localement.
+     * Retourne les métadonnées de pagination.
      */
     suspend fun refreshClimbs(
         faceId: String? = null,
         search: String? = null,
         page: Int = 1,
-        pageSize: Int = 500
-    ): Result<List<Climb>> {
+        pageSize: Int = 100
+    ): Result<PaginatedClimbs> {
         return try {
             val response = api.getClimbs(
                 faceId = faceId,
@@ -43,10 +56,19 @@ class ClimbRepository(
                 pageSize = pageSize
             )
             if (response.isSuccessful) {
-                val climbsDto = response.body()?.results ?: emptyList()
+                val body = response.body()
+                    ?: return Result.failure(Exception("Empty response"))
+                val climbsDto = body.results
                 val entities = climbsDto.map { it.toEntity() }
                 climbDao.insertClimbs(entities)
-                Result.success(climbsDto.map { it.toDomain() })
+                Result.success(
+                    PaginatedClimbs(
+                        climbs = climbsDto.map { it.toDomain() },
+                        page = body.page,
+                        pageSize = body.pageSize,
+                        totalCount = body.count
+                    )
+                )
             } else {
                 Result.failure(Exception("API error: ${response.code()}"))
             }
