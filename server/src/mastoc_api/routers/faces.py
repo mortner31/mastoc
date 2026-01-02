@@ -163,6 +163,9 @@ def get_face_setup(face_id: UUID, db: Session = Depends(get_db)):
             path_str=hold.path_str,
             area=hold.area,
             centroid_str=centroid_str,
+            center_tape_str=hold.center_tape_str or "",
+            right_tape_str=hold.right_tape_str or "",
+            left_tape_str=hold.left_tape_str or "",
         ))
 
     # Récupérer les options de pieds
