@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.mastoc.app.data.local.MastocDatabase
 import com.mastoc.app.data.model.Climb
 import com.mastoc.app.data.repository.ClimbRepository
+import com.mastoc.app.ui.components.GRADE_COUNT
+import com.mastoc.app.ui.components.getMinIrcraForIndex
+import com.mastoc.app.ui.components.getMaxIrcraForIndex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,23 @@ enum class SortOption(val displayName: String) {
 }
 
 /**
+ * Mode de filtrage des setters.
+ */
+enum class SetterFilterMode(val displayName: String) {
+    NONE("Tous"),
+    INCLUDE("Inclure"),
+    EXCLUDE("Exclure")
+}
+
+/**
+ * Informations sur un setter avec son nombre de climbs.
+ */
+data class SetterInfo(
+    val name: String,
+    val climbCount: Int
+)
+
+/**
  * État UI pour la liste des climbs.
  */
 data class ClimbListUiState(
@@ -34,13 +54,13 @@ data class ClimbListUiState(
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
-    // Filtres grade (IRCRA)
-    val minGrade: Float = 0f,
-    val maxGrade: Float = 100f,
-    val gradeRange: ClosedFloatingPointRange<Float> = 0f..100f,
-    // Filtre setter
-    val selectedSetter: String? = null,
-    val availableSetters: List<String> = emptyList(),
+    // Filtres grade (indices 0 à GRADE_COUNT-1)
+    val minGradeIndex: Int = 0,
+    val maxGradeIndex: Int = GRADE_COUNT - 1,
+    // Filtre setter avancé
+    val setterFilterMode: SetterFilterMode = SetterFilterMode.NONE,
+    val selectedSetters: Set<String> = emptySet(),
+    val availableSetters: List<SetterInfo> = emptyList(),
     // Tri
     val sortOption: SortOption = SortOption.DATE_DESC,
     // Panneau filtres visible
@@ -79,24 +99,20 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /**
-     * Met à jour les états dérivés (setters disponibles, plage de grades).
+     * Met à jour les états dérivés (setters disponibles avec compteur).
      */
     private fun updateDerivedState(climbs: List<Climb>) {
-        // Extraire les setters uniques
-        val setters = climbs
+        // Compter les climbs par setter et trier par nombre décroissant
+        val setterCounts = climbs
             .mapNotNull { it.setterName }
-            .distinct()
-            .sorted()
-
-        // Calculer la plage de grades
-        val grades = climbs.mapNotNull { it.gradeIrcra }
-        val minAvailable = grades.minOrNull() ?: 0f
-        val maxAvailable = grades.maxOrNull() ?: 100f
+            .groupingBy { it }
+            .eachCount()
+            .map { (name, count) -> SetterInfo(name, count) }
+            .sortedByDescending { it.climbCount }
 
         _uiState.value = _uiState.value.copy(
             climbs = climbs,
-            availableSetters = setters,
-            gradeRange = minAvailable..maxAvailable
+            availableSetters = setterCounts
         )
     }
 
@@ -114,15 +130,33 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
 
-        // Filtre par grade
+        // Filtre par grade (utilise les indices avec logique epsilon)
+        val minIrcra = getMinIrcraForIndex(state.minGradeIndex)
+        val maxIrcra = getMaxIrcraForIndex(state.maxGradeIndex)
         filtered = filtered.filter { climb ->
             val grade = climb.gradeIrcra ?: return@filter true
-            grade >= state.minGrade && grade <= state.maxGrade
+            grade >= minIrcra && grade <= maxIrcra
         }
 
-        // Filtre par setter
-        if (state.selectedSetter != null) {
-            filtered = filtered.filter { it.setterName == state.selectedSetter }
+        // Filtre par setter (include/exclude)
+        if (state.selectedSetters.isNotEmpty()) {
+            when (state.setterFilterMode) {
+                SetterFilterMode.INCLUDE -> {
+                    // Ne garder QUE les climbs des setters sélectionnés
+                    filtered = filtered.filter { climb ->
+                        climb.setterName in state.selectedSetters
+                    }
+                }
+                SetterFilterMode.EXCLUDE -> {
+                    // Exclure les climbs des setters sélectionnés
+                    filtered = filtered.filter { climb ->
+                        climb.setterName == null || climb.setterName !in state.selectedSetters
+                    }
+                }
+                SetterFilterMode.NONE -> {
+                    // Pas de filtre
+                }
+            }
         }
 
         // Tri
@@ -164,34 +198,52 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /**
-     * Met à jour le filtre de grade minimum.
+     * Met à jour la plage de grades (pour RangeSlider avec indices).
      */
-    fun updateMinGrade(grade: Float) {
-        _uiState.value = _uiState.value.copy(minGrade = grade)
+    fun updateGradeRange(minIndex: Int, maxIndex: Int) {
+        _uiState.value = _uiState.value.copy(
+            minGradeIndex = minIndex.coerceIn(0, GRADE_COUNT - 1),
+            maxGradeIndex = maxIndex.coerceIn(0, GRADE_COUNT - 1)
+        )
         applyFiltersAndSort()
     }
 
     /**
-     * Met à jour le filtre de grade maximum.
+     * Met à jour le mode de filtrage des setters.
      */
-    fun updateMaxGrade(grade: Float) {
-        _uiState.value = _uiState.value.copy(maxGrade = grade)
+    fun updateSetterFilterMode(mode: SetterFilterMode) {
+        _uiState.value = _uiState.value.copy(setterFilterMode = mode)
         applyFiltersAndSort()
     }
 
     /**
-     * Met à jour la plage de grades (pour RangeSlider).
+     * Toggle la sélection d'un setter.
      */
-    fun updateGradeRange(min: Float, max: Float) {
-        _uiState.value = _uiState.value.copy(minGrade = min, maxGrade = max)
+    fun toggleSetterSelection(setterName: String) {
+        val current = _uiState.value.selectedSetters
+        val updated = if (setterName in current) {
+            current - setterName
+        } else {
+            current + setterName
+        }
+        _uiState.value = _uiState.value.copy(selectedSetters = updated)
         applyFiltersAndSort()
     }
 
     /**
-     * Met à jour le setter sélectionné.
+     * Sélectionne tous les setters.
      */
-    fun updateSetter(setter: String?) {
-        _uiState.value = _uiState.value.copy(selectedSetter = setter)
+    fun selectAllSetters() {
+        val allNames = _uiState.value.availableSetters.map { it.name }.toSet()
+        _uiState.value = _uiState.value.copy(selectedSetters = allNames)
+        applyFiltersAndSort()
+    }
+
+    /**
+     * Désélectionne tous les setters.
+     */
+    fun clearSetterSelection() {
+        _uiState.value = _uiState.value.copy(selectedSetters = emptySet())
         applyFiltersAndSort()
     }
 
@@ -214,12 +266,12 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
      * Réinitialise tous les filtres.
      */
     fun resetFilters() {
-        val range = _uiState.value.gradeRange
         _uiState.value = _uiState.value.copy(
             searchQuery = "",
-            minGrade = range.start,
-            maxGrade = range.endInclusive,
-            selectedSetter = null,
+            minGradeIndex = 0,
+            maxGradeIndex = GRADE_COUNT - 1,
+            setterFilterMode = SetterFilterMode.NONE,
+            selectedSetters = emptySet(),
             sortOption = SortOption.DATE_DESC
         )
         applyFiltersAndSort()

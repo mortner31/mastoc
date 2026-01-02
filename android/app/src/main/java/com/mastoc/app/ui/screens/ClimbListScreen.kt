@@ -1,6 +1,7 @@
 package com.mastoc.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
@@ -23,7 +29,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -40,6 +48,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,7 +64,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mastoc.app.ui.components.ClimbCard
+import com.mastoc.app.ui.components.GRADE_COUNT
+import com.mastoc.app.ui.components.indexToFont
 import com.mastoc.app.viewmodel.ClimbListViewModel
+import com.mastoc.app.viewmodel.SetterFilterMode
+import com.mastoc.app.viewmodel.SetterInfo
 import com.mastoc.app.viewmodel.SortOption
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,10 +135,15 @@ fun ClimbListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Barre de recherche
-            SearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::updateSearch,
+            // Cartouche résumé des filtres (cliquable)
+            FilterSummaryChip(
+                searchQuery = uiState.searchQuery,
+                minGradeIndex = uiState.minGradeIndex,
+                maxGradeIndex = uiState.maxGradeIndex,
+                setterFilterMode = uiState.setterFilterMode,
+                selectedSetters = uiState.selectedSetters,
+                sortOption = uiState.sortOption,
+                onClick = viewModel::toggleFilters,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -134,16 +152,22 @@ fun ClimbListScreen(
             // Panneau de filtres (animé)
             AnimatedVisibility(visible = uiState.showFilters) {
                 FilterPanel(
-                    minGrade = uiState.minGrade,
-                    maxGrade = uiState.maxGrade,
-                    gradeRange = uiState.gradeRange,
+                    searchQuery = uiState.searchQuery,
+                    onSearchChange = viewModel::updateSearch,
+                    minGradeIndex = uiState.minGradeIndex,
+                    maxGradeIndex = uiState.maxGradeIndex,
                     onGradeRangeChange = viewModel::updateGradeRange,
-                    selectedSetter = uiState.selectedSetter,
+                    setterFilterMode = uiState.setterFilterMode,
+                    selectedSetters = uiState.selectedSetters,
                     availableSetters = uiState.availableSetters,
-                    onSetterChange = viewModel::updateSetter,
+                    onSetterFilterModeChange = viewModel::updateSetterFilterMode,
+                    onSetterToggle = viewModel::toggleSetterSelection,
+                    onSelectAllSetters = viewModel::selectAllSetters,
+                    onClearSetterSelection = viewModel::clearSetterSelection,
                     sortOption = uiState.sortOption,
                     onSortChange = viewModel::updateSort,
                     onReset = viewModel::resetFilters,
+                    onApply = viewModel::toggleFilters,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -213,52 +237,114 @@ fun ClimbListScreen(
     }
 }
 
+/**
+ * Cartouche cliquable affichant un résumé des filtres actifs.
+ */
 @Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
+private fun FilterSummaryChip(
+    searchQuery: String,
+    minGradeIndex: Int,
+    maxGradeIndex: Int,
+    setterFilterMode: SetterFilterMode,
+    selectedSetters: Set<String>,
+    sortOption: SortOption,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Rechercher un bloc...") },
-        leadingIcon = {
+    // Construire le texte du résumé
+    val summaryParts = mutableListOf<String>()
+
+    // Recherche textuelle
+    if (searchQuery.isNotBlank()) {
+        summaryParts.add("\"${searchQuery}\"")
+    }
+
+    // Grade (seulement si différent des valeurs par défaut)
+    val gradeChanged = minGradeIndex > 0 || maxGradeIndex < GRADE_COUNT - 1
+    if (gradeChanged) {
+        summaryParts.add("${indexToFont(minGradeIndex)} → ${indexToFont(maxGradeIndex)}")
+    }
+
+    // Setter (mode include/exclude)
+    if (setterFilterMode != SetterFilterMode.NONE && selectedSetters.isNotEmpty()) {
+        val prefix = if (setterFilterMode == SetterFilterMode.INCLUDE) "+" else "-"
+        val setterText = if (selectedSetters.size <= 2) {
+            selectedSetters.joinToString(", ") { "$prefix$it" }
+        } else {
+            "$prefix${selectedSetters.size} setters"
+        }
+        summaryParts.add(setterText)
+    }
+
+    // Tri (seulement si différent du défaut)
+    if (sortOption != SortOption.DATE_DESC) {
+        summaryParts.add(sortOption.displayName)
+    }
+
+    val summaryText = if (summaryParts.isEmpty()) {
+        "Tous les blocs"
+    } else {
+        summaryParts.joinToString(" • ")
+    }
+
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Effacer"
-                    )
-                }
-            }
-        },
-        singleLine = true
-    )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = summaryText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Filtres",
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun FilterPanel(
-    minGrade: Float,
-    maxGrade: Float,
-    gradeRange: ClosedFloatingPointRange<Float>,
-    onGradeRangeChange: (Float, Float) -> Unit,
-    selectedSetter: String?,
-    availableSetters: List<String>,
-    onSetterChange: (String?) -> Unit,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit,
+    minGradeIndex: Int,
+    maxGradeIndex: Int,
+    onGradeRangeChange: (Int, Int) -> Unit,
+    setterFilterMode: SetterFilterMode,
+    selectedSetters: Set<String>,
+    availableSetters: List<SetterInfo>,
+    onSetterFilterModeChange: (SetterFilterMode) -> Unit,
+    onSetterToggle: (String) -> Unit,
+    onSelectAllSetters: () -> Unit,
+    onClearSetterSelection: () -> Unit,
     sortOption: SortOption,
     onSortChange: (SortOption) -> Unit,
     onReset: () -> Unit,
+    onApply: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -266,9 +352,11 @@ private fun FilterPanel(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .heightIn(max = 400.dp)
+                .padding(12.dp)
         ) {
-            // Header avec bouton reset
+            // Header avec bouton reset (fixe en haut)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,56 +364,198 @@ private fun FilterPanel(
             ) {
                 Text(
                     text = "Filtres",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleSmall
                 )
-                TextButton(onClick = onReset) {
-                    Text("Réinitialiser")
+                TextButton(
+                    onClick = onReset,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text("Réinitialiser", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            // Contenu scrollable
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+            ) {
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Recherche textuelle (plus compact)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Rechercher...", style = MaterialTheme.typography.bodySmall) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { onSearchChange("") }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Effacer",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Slider grade
+                Text(
+                    text = "Grade: ${indexToFont(minGradeIndex)} - ${indexToFont(maxGradeIndex)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                RangeSlider(
+                    value = minGradeIndex.toFloat()..maxGradeIndex.toFloat(),
+                    onValueChange = { range ->
+                        onGradeRangeChange(range.start.toInt(), range.endInclusive.toInt())
+                    },
+                    valueRange = 0f..(GRADE_COUNT - 1).toFloat(),
+                    steps = GRADE_COUNT - 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Section setter avancée
+                SetterFilterSection(
+                    filterMode = setterFilterMode,
+                    selectedSetters = selectedSetters,
+                    availableSetters = availableSetters,
+                    onFilterModeChange = onSetterFilterModeChange,
+                    onSetterToggle = onSetterToggle,
+                    onSelectAll = onSelectAllSetters,
+                    onClearSelection = onClearSetterSelection
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Chips de tri
+                Text(
+                    text = "Trier par",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    SortOption.entries.forEach { option ->
+                        FilterChip(
+                            selected = sortOption == option,
+                            onClick = { onSortChange(option) },
+                            label = { Text(option.displayName, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Slider grade
-            Text(
-                text = "Grade: ${ircraToFont(minGrade)} - ${ircraToFont(maxGrade)}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            RangeSlider(
-                value = minGrade..maxGrade,
-                onValueChange = { range ->
-                    onGradeRangeChange(range.start, range.endInclusive)
-                },
-                valueRange = gradeRange,
+            // Bouton Appliquer (fixe en bas)
+            Button(
+                onClick = onApply,
                 modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Dropdown setter
-            SetterDropdown(
-                selectedSetter = selectedSetter,
-                availableSetters = availableSetters,
-                onSetterChange = onSetterChange,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Chips de tri
-            Text(
-                text = "Trier par",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                SortOption.entries.forEach { option ->
-                    FilterChip(
-                        selected = sortOption == option,
-                        onClick = { onSortChange(option) },
-                        label = { Text(option.displayName) }
+                Text("Appliquer")
+            }
+        }
+    }
+}
+
+/**
+ * Section de filtrage avancé des setters avec mode Include/Exclude.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun SetterFilterSection(
+    filterMode: SetterFilterMode,
+    selectedSetters: Set<String>,
+    availableSetters: List<SetterInfo>,
+    onFilterModeChange: (SetterFilterMode) -> Unit,
+    onSetterToggle: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        // Titre + Chips de mode sur la même ligne
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Setters",
+                style = MaterialTheme.typography.bodySmall
+            )
+            SetterFilterMode.entries.forEach { mode ->
+                FilterChip(
+                    selected = filterMode == mode,
+                    onClick = { onFilterModeChange(mode) },
+                    label = { Text(mode.displayName, style = MaterialTheme.typography.labelSmall) }
+                )
+            }
+        }
+
+        // Liste des setters (seulement si mode != NONE)
+        if (filterMode != SetterFilterMode.NONE) {
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Boutons Tout / Aucun (compact)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TextButton(
+                    onClick = onSelectAll,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text("Tout", style = MaterialTheme.typography.labelSmall)
+                }
+                TextButton(
+                    onClick = onClearSelection,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text("Aucun", style = MaterialTheme.typography.labelSmall)
+                }
+                Text(
+                    text = "(${selectedSetters.size} sélectionné${if (selectedSetters.size > 1) "s" else ""})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+
+            // Liste des setters (compact)
+            availableSetters.take(15).forEach { setterInfo ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSetterToggle(setterInfo.name) }
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = setterInfo.name in selectedSetters,
+                        onCheckedChange = { onSetterToggle(setterInfo.name) },
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Text(
+                        text = "${setterInfo.name} (${setterInfo.climbCount})",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -333,84 +563,3 @@ private fun FilterPanel(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SetterDropdown(
-    selectedSetter: String?,
-    availableSetters: List<String>,
-    onSetterChange: (String?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedSetter ?: "Tous les setters",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Setter") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            // Option "Tous"
-            DropdownMenuItem(
-                text = { Text("Tous les setters") },
-                onClick = {
-                    onSetterChange(null)
-                    expanded = false
-                }
-            )
-            // Setters disponibles
-            availableSetters.forEach { setter ->
-                DropdownMenuItem(
-                    text = { Text(setter) },
-                    onClick = {
-                        onSetterChange(setter)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-/**
- * Convertit un grade IRCRA en notation Fontainebleau approximative.
- */
-private fun ircraToFont(ircra: Float): String {
-    return when {
-        ircra < 10 -> "3"
-        ircra < 15 -> "4"
-        ircra < 20 -> "5"
-        ircra < 23 -> "5+"
-        ircra < 26 -> "6A"
-        ircra < 29 -> "6A+"
-        ircra < 32 -> "6B"
-        ircra < 35 -> "6B+"
-        ircra < 38 -> "6C"
-        ircra < 41 -> "6C+"
-        ircra < 44 -> "7A"
-        ircra < 47 -> "7A+"
-        ircra < 50 -> "7B"
-        ircra < 53 -> "7B+"
-        ircra < 56 -> "7C"
-        ircra < 59 -> "7C+"
-        ircra < 62 -> "8A"
-        ircra < 65 -> "8A+"
-        ircra < 68 -> "8B"
-        ircra < 71 -> "8B+"
-        ircra < 74 -> "8C"
-        else -> "8C+"
-    }
-}

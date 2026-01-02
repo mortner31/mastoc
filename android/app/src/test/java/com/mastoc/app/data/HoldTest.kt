@@ -12,10 +12,11 @@ class HoldTest {
 
     @Test
     fun `getPolygonPoints parses polygon string correctly`() {
+        // Format API: "x,y x,y x,y" (points séparés par espaces, coords par virgules)
         val hold = Hold(
             id = 1,
             faceId = "face1",
-            polygonStr = "100 200, 150 200, 150 250, 100 250"
+            polygonStr = "100,200 150,200 150,250 100,250"
         )
 
         val points = hold.getPolygonPoints()
