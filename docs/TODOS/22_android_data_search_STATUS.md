@@ -1,6 +1,6 @@
 # STATUS - TODO 22 : Data & Recherche Android
 
-**Progression** : 45%
+**Progression** : 80%
 
 ## Phase 1 : Refonte UI Recherche (100%)
 
@@ -21,11 +21,11 @@
 - [x] UI ComboBox + checkboxes (`SetterFilterSection`)
 - [x] Nombre de climbs par setter (`SetterInfo`)
 
-## Phase 4 : Serveur & Sync (0%)
+## Phase 4 : Serveur & Sync (100%)
 
-- [ ] Déployer fix date_created sur Railway
-- [ ] Re-sync données Stokt
-- [ ] Vérifier dates
+- [x] Fix dates `created_at` (1008 climbs corrigés)
+- [x] Script SQL direct `fix_climb_dates_sql.py`
+- [x] Endpoint bulk update `/api/climbs/bulk/dates`
 
 ## Phase 5 : Lazy Loading (0%)
 
@@ -34,10 +34,13 @@
 - [ ] Indicateur loading
 - [ ] Cache local
 
-## Phase 6 : Rendu Visuel (0%)
+## Phase 6 : Rendu Visuel (100%)
 
-- [ ] Lignes tapes START
-- [ ] Conformité Python
+- [x] Lignes tapes START (serveur + Android)
+- [x] Épaisseur tapes = contours (8px)
+- [x] Dark mode + thème GRAY par défaut
+- [x] Nouvelle icône app
+- [x] Titre "Montoboard"
 
 ## Phase 7 : Parcours Santé 25 (0%)
 
@@ -47,4 +50,4 @@
 ---
 
 **Dernière mise à jour** : 2026-01-02
-**Session** : Phases 1-3 complétées
+**Session** : Phases 4 et 6 complétées, reste Phase 5 (lazy loading) et Phase 7 (circuits)

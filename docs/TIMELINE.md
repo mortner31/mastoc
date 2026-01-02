@@ -7,6 +7,25 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ---
 
+## 2026-01-02
+
+- **TODO 22 Phase 4 complétée** - Correction des dates
+  - Endpoint bulk update `/api/climbs/bulk/dates`
+  - Script SQL `fix_climb_dates_sql.py`
+  - 1008 climbs corrigés avec vraies dates Stokt
+  - Rapport : `docs/reports/SESSION_2026-01-02_phase4_dates.md`
+
+- **TODO 22 Phase 6 complétée** - Rendu Visuel + UX
+  - Titre "Montoboard" au lieu de "mastoc"
+  - Nouvelle icône app (grimpeur devant mur coloré)
+  - Support lignes START serveur + Android (tapes)
+  - Migration BDD Railway (colonnes tape_str)
+  - Resync 776 holds avec données tape
+  - Backup versionné données Stokt (`data/stokt_backup/`)
+  - Épaisseur tapes = contours (8px)
+  - Dark mode + thème GRAY par défaut
+  - Rapport : `docs/reports/SESSION_2026-01-02_phase6_tapes_icons.md`
+
 ## 2026-01-01
 
 - **TODO 22 créé** - Data & Recherche Android
