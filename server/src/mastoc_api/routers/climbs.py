@@ -60,6 +60,8 @@ class ClimbResponse(ClimbBase):
     personal_notes: Optional[str] = None
     is_project: bool = False
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    synced_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -145,6 +147,8 @@ def list_climbs(
             personal_notes=climb.personal_notes,
             is_project=climb.is_project,
             created_at=climb.created_at,
+            updated_at=climb.updated_at,
+            synced_at=climb.synced_at,
         )
         results.append(resp)
 
@@ -182,6 +186,8 @@ def get_climb(climb_id: UUID, db: Session = Depends(get_db)):
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
         created_at=climb.created_at,
+        updated_at=climb.updated_at,
+        synced_at=climb.synced_at,
     )
 
 
@@ -212,6 +218,8 @@ def get_climb_by_stokt_id(stokt_id: UUID, db: Session = Depends(get_db)):
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
         created_at=climb.created_at,
+        updated_at=climb.updated_at,
+        synced_at=climb.synced_at,
     )
 
 
@@ -269,6 +277,8 @@ def create_climb(
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
         created_at=climb.created_at,
+        updated_at=climb.updated_at,
+        synced_at=climb.synced_at,
     )
 
 
@@ -315,6 +325,8 @@ def update_climb(
         personal_notes=climb.personal_notes,
         is_project=climb.is_project,
         created_at=climb.created_at,
+        updated_at=climb.updated_at,
+        synced_at=climb.synced_at,
     )
 
 
@@ -410,10 +422,17 @@ def bulk_update_dates(
 
     for item in data.updates:
         try:
-            stokt_id = item.get("stokt_id")
+            stokt_id_str = item.get("stokt_id")
             created_at_str = item.get("created_at")
 
-            if not stokt_id or not created_at_str:
+            if not stokt_id_str or not created_at_str:
+                errors += 1
+                continue
+
+            # Convertir stokt_id en UUID
+            try:
+                stokt_id = UUID(stokt_id_str) if isinstance(stokt_id_str, str) else stokt_id_str
+            except ValueError:
                 errors += 1
                 continue
 

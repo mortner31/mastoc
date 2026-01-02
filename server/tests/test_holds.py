@@ -144,3 +144,76 @@ def test_get_hold_by_stokt_id_not_found(client, api_key_header):
         headers=api_key_header
     )
     assert response.status_code == 404
+
+
+# === Tests Tape Lines (START holds) ===
+
+@pytest.fixture
+def test_holds_with_tape(db_session, test_face):
+    """Cree des holds avec données tape pour START."""
+    holds = []
+    # Hold avec tape center (pour single start)
+    hold1 = Hold(
+        stokt_id=830001,
+        face_id=test_face.id,
+        polygon_str="100,200 150,200 150,250 100,250",
+        centroid_x=125.0,
+        centroid_y=225.0,
+        area=2500.0,
+        center_tape_str="125,180 125,270",
+        right_tape_str="150,180 170,200 150,270",
+        left_tape_str="100,180 80,200 100,270",
+    )
+    holds.append(hold1)
+
+    # Hold sans tape
+    hold2 = Hold(
+        stokt_id=830002,
+        face_id=test_face.id,
+        polygon_str="200,200 250,200 250,250 200,250",
+        centroid_x=225.0,
+        centroid_y=225.0,
+        area=2500.0,
+    )
+    holds.append(hold2)
+
+    db_session.add_all(holds)
+    db_session.commit()
+    return holds
+
+
+def test_hold_response_includes_tape_fields(client, api_key_header, test_holds_with_tape):
+    """Test que HoldResponse inclut les champs tape_str."""
+    hold_with_tape = test_holds_with_tape[0]
+    response = client.get(
+        f"/api/holds/{hold_with_tape.id}",
+        headers=api_key_header
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    # Vérifier présence des champs tape
+    assert "center_tape_str" in data
+    assert "right_tape_str" in data
+    assert "left_tape_str" in data
+
+    # Vérifier les valeurs
+    assert data["center_tape_str"] == "125,180 125,270"
+    assert data["right_tape_str"] == "150,180 170,200 150,270"
+    assert data["left_tape_str"] == "100,180 80,200 100,270"
+
+
+def test_hold_response_empty_tape_fields(client, api_key_header, test_holds_with_tape):
+    """Test que les holds sans tape ont des champs vides."""
+    hold_no_tape = test_holds_with_tape[1]
+    response = client.get(
+        f"/api/holds/{hold_no_tape.id}",
+        headers=api_key_header
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    # Champs tape présents mais None ou vides
+    assert data.get("center_tape_str") is None or data.get("center_tape_str") == ""
+    assert data.get("right_tape_str") is None or data.get("right_tape_str") == ""
+    assert data.get("left_tape_str") is None or data.get("left_tape_str") == ""

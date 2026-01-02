@@ -43,9 +43,18 @@ def test_face(db_session, test_gym):
 
 @pytest.fixture
 def test_holds(db_session, test_face):
-    """Crée des holds de test."""
+    """Crée des holds de test avec données tape pour START."""
     holds = []
     for i in range(5):
+        # Premier hold avec tape (pour tests START)
+        tape_data = {}
+        if i == 0:
+            tape_data = {
+                "center_tape_str": "125,180 125,270",
+                "right_tape_str": "150,180 170,200 150,270",
+                "left_tape_str": "100,180 80,200 100,270",
+            }
+
         hold = Hold(
             stokt_id=829000 + i,
             face_id=test_face.id,
@@ -53,6 +62,7 @@ def test_holds(db_session, test_face):
             centroid_x=125.0,
             centroid_y=225.0 + i * 50,
             area=2500.0,
+            **tape_data,
         )
         holds.append(hold)
         db_session.add(hold)
@@ -131,6 +141,13 @@ class TestGetFaceSetup:
         assert len(data["holds"]) == 5
         assert data["holds"][0]["polygon_str"].startswith("100,")
         assert data["holds"][0]["centroid_str"] == "125.0 225.0"
+
+        # Vérifier tape fields (premier hold a des tapes)
+        first_hold = data["holds"][0]
+        assert "center_tape_str" in first_hold
+        assert "right_tape_str" in first_hold
+        assert "left_tape_str" in first_hold
+        assert first_hold["center_tape_str"] == "125,180 125,270"
 
         # Vérifier feet_rules_options
         assert "Free feet" in data["feet_rules_options"]

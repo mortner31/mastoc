@@ -26,6 +26,10 @@ class HoldResponse(BaseModel):
     centroid_x: Optional[float] = None
     centroid_y: Optional[float] = None
     area: Optional[float] = None
+    # Tape lines for START holds
+    center_tape_str: Optional[str] = None
+    right_tape_str: Optional[str] = None
+    left_tape_str: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -57,6 +61,9 @@ def list_holds(
             centroid_x=h.centroid_x,
             centroid_y=h.centroid_y,
             area=h.area,
+            center_tape_str=h.center_tape_str,
+            right_tape_str=h.right_tape_str,
+            left_tape_str=h.left_tape_str,
         )
         for h in holds
     ]
@@ -79,6 +86,9 @@ def get_hold(hold_id: int, db: Session = Depends(get_db)):
         centroid_x=hold.centroid_x,
         centroid_y=hold.centroid_y,
         area=hold.area,
+        center_tape_str=hold.center_tape_str,
+        right_tape_str=hold.right_tape_str,
+        left_tape_str=hold.left_tape_str,
     )
 
 
@@ -98,4 +108,7 @@ def get_hold_by_stokt_id(stokt_id: int, db: Session = Depends(get_db)):
         centroid_x=hold.centroid_x,
         centroid_y=hold.centroid_y,
         area=hold.area,
+        center_tape_str=hold.center_tape_str,
+        right_tape_str=hold.right_tape_str,
+        left_tape_str=hold.left_tape_str,
     )

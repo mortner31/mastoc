@@ -9,6 +9,17 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-02
 
+- **TODO 24 créé** - Cartouches Résultats Recherche
+  - Nouveau layout ClimbCard : 25% picto | 50% infos | 25% stats
+  - Pictos générés côté serveur (port de picto.py)
+  - Phase 0 : extraction couleurs prises depuis image mur
+  - Stats : ❤️ likes + ✕ croix (climbed_by)
+
+- **TODO 23 créé** - Tests Tapes & Endpoints
+  - Gaps identifiés lors analyse propagation BD
+  - Tests serveur sans vérification tape_str
+  - Endpoints à enrichir (HoldResponse, ClimbResponse)
+
 - **TODO 22 Phase 4 complétée** - Correction des dates
   - Endpoint bulk update `/api/climbs/bulk/dates`
   - Script SQL `fix_climb_dates_sql.py`
