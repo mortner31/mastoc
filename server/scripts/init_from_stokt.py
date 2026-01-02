@@ -133,6 +133,9 @@ def import_holds(client: httpx.Client, holds: list, face_stokt_id: str) -> int:
                 "centroid_y": centroid[1],
                 "area": hold.area,
                 "path_str": hold.path_str,
+                "center_tape_str": hold.center_tape_str,
+                "right_tape_str": hold.right_tape_str,
+                "left_tape_str": hold.left_tape_str,
             }
         )
         response.raise_for_status()
@@ -153,6 +156,9 @@ def import_holds_batch(client: httpx.Client, holds: list, face_stokt_id: str) ->
             "centroid_y": centroid[1],
             "area": hold.area,
             "path_str": hold.path_str,
+            "center_tape_str": hold.center_tape_str,
+            "right_tape_str": hold.right_tape_str,
+            "left_tape_str": hold.left_tape_str,
         })
 
     response = client.post(

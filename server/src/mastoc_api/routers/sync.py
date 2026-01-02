@@ -73,6 +73,9 @@ class ImportHoldRequest(BaseModel):
     centroid_y: float | None = None
     area: float | None = None
     path_str: str | None = None
+    center_tape_str: str | None = None
+    right_tape_str: str | None = None
+    left_tape_str: str | None = None
 
 
 class BatchImportResult(BaseModel):
@@ -208,6 +211,9 @@ def import_hold(data: ImportHoldRequest, db: Session = Depends(get_db)):
         centroid_y=data.centroid_y,
         area=data.area,
         path_str=data.path_str,
+        center_tape_str=data.center_tape_str,
+        right_tape_str=data.right_tape_str,
+        left_tape_str=data.left_tape_str,
     )
     db.add(hold)
     db.commit()
@@ -252,6 +258,9 @@ def import_holds_batch(data: BatchImportHoldsRequest, db: Session = Depends(get_
                 centroid_y=hold_data.centroid_y,
                 area=hold_data.area,
                 path_str=hold_data.path_str,
+                center_tape_str=hold_data.center_tape_str,
+                right_tape_str=hold_data.right_tape_str,
+                left_tape_str=hold_data.left_tape_str,
             )
             db.add(hold)
             created += 1

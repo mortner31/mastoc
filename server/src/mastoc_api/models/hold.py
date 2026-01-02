@@ -33,6 +33,10 @@ class Hold(Base):
     centroid_y: Mapped[float | None] = mapped_column(Float)
     path_str: Mapped[str | None] = mapped_column(String(5000))
     area: Mapped[float | None] = mapped_column(Float)
+    # Tape lines for START holds
+    center_tape_str: Mapped[str | None] = mapped_column(String(200))
+    right_tape_str: Mapped[str | None] = mapped_column(String(200))
+    left_tape_str: Mapped[str | None] = mapped_column(String(200))
 
     # Relations
     face: Mapped["Face"] = relationship(back_populates="holds")

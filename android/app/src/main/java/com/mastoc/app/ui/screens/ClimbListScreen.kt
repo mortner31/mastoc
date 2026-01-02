@@ -92,7 +92,7 @@ fun ClimbListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("mastoc") },
+                title = { Text("Montoboard") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
