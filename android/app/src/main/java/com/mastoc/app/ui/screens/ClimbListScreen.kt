@@ -177,9 +177,14 @@ fun ClimbListScreen(
                 )
             }
 
-            // Compteur résultats
+            // Compteur résultats (affichés / total serveur)
+            val countText = if (uiState.totalCount > 0 && uiState.filteredClimbs.size < uiState.totalCount) {
+                "${uiState.filteredClimbs.size} / ${uiState.totalCount} blocs"
+            } else {
+                "${uiState.filteredClimbs.size} bloc(s)"
+            }
             Text(
-                text = "${uiState.filteredClimbs.size} bloc(s)",
+                text = countText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)

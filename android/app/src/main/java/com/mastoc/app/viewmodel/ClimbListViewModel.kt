@@ -183,7 +183,8 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /**
-     * Rafraîchit les données depuis l'API (première page).
+     * Rafraîchit les données depuis l'API (charge TOUTES les pages pour sync complète).
+     * Le cache local doit être une copie complète du serveur pour le filtrage client.
      */
     fun refresh() {
         viewModelScope.launch {
@@ -194,52 +195,42 @@ class ClimbListViewModel(application: Application) : AndroidViewModel(applicatio
                 hasMore = true
             )
 
-            val result = repository.refreshClimbs(page = 1, pageSize = PAGE_SIZE)
+            var page = 1
+            var hasMore = true
 
-            result.onSuccess { paginated ->
-                _uiState.value = _uiState.value.copy(
-                    isRefreshing = false,
-                    currentPage = paginated.page,
-                    hasMore = paginated.hasMore,
-                    totalCount = paginated.totalCount
-                )
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    isRefreshing = false,
-                    error = e.message
-                )
+            // Charger toutes les pages jusqu'à la fin
+            while (hasMore) {
+                val result = repository.refreshClimbs(page = page, pageSize = PAGE_SIZE)
+
+                result.onSuccess { paginated ->
+                    _uiState.value = _uiState.value.copy(
+                        currentPage = paginated.page,
+                        hasMore = paginated.hasMore,
+                        totalCount = paginated.totalCount
+                    )
+                    hasMore = paginated.hasMore
+                    page++
+                }.onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isRefreshing = false,
+                        error = e.message
+                    )
+                    return@launch
+                }
             }
+
+            _uiState.value = _uiState.value.copy(
+                isRefreshing = false,
+                hasMore = false
+            )
         }
     }
 
     /**
-     * Charge la page suivante (pagination infinie).
+     * Charge la page suivante (plus utilisé car refresh charge tout).
      */
     fun loadMore() {
-        val state = _uiState.value
-        // Ne pas charger si déjà en cours ou si pas de page suivante
-        if (state.isLoadingMore || state.isRefreshing || !state.hasMore) return
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoadingMore = true)
-
-            val nextPage = state.currentPage + 1
-            val result = repository.refreshClimbs(page = nextPage, pageSize = PAGE_SIZE)
-
-            result.onSuccess { paginated ->
-                _uiState.value = _uiState.value.copy(
-                    isLoadingMore = false,
-                    currentPage = paginated.page,
-                    hasMore = paginated.hasMore,
-                    totalCount = paginated.totalCount
-                )
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    isLoadingMore = false,
-                    error = e.message
-                )
-            }
-        }
+        // Plus nécessaire car refresh() charge toutes les pages
     }
 
     /**
