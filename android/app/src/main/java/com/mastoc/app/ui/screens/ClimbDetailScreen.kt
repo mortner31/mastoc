@@ -1,7 +1,10 @@
 package com.mastoc.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,22 +13,34 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -240,7 +255,7 @@ private fun ClimbInfoHeader(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        // Nom + Grade
+        // Nom + Grade + Bouton Info
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -249,6 +264,8 @@ private fun ClimbInfoHeader(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.weight(1f)
             )
+
+
             GradeBadge(grade = climb.displayGrade)
         }
 
@@ -314,13 +331,13 @@ private fun ClimbInfoHeader(
             )
         }
 
-        // Description
-        if (!climb.description.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
+        // Règle des pieds
+        if (!climb.feetRule.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = climb.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = climb.feetRule,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -396,14 +413,39 @@ private fun WallImageWithClimbOverlay(
             .clipToBounds()
             .onSizeChanged { containerSize = it }
             .pointerInput(Unit) {
-                detectTransformGestures { _, pan, zoom, _ ->
-                    scale = (scale * zoom).coerceIn(1f, 4f)
-                    val maxOffsetX = (containerSize.width * (scale - 1) / 2).coerceAtLeast(0f)
-                    val maxOffsetY = (containerSize.height * (scale - 1) / 2).coerceAtLeast(0f)
-                    offset = Offset(
-                        x = (offset.x + pan.x).coerceIn(-maxOffsetX, maxOffsetX),
-                        y = (offset.y + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
-                    )
+                awaitEachGesture {
+                    // Attendre le premier touch
+                    awaitFirstDown(requireUnconsumed = false)
+
+                    do {
+                        val event = awaitPointerEvent()
+                        val pointerCount = event.changes.count { it.pressed }
+
+                        // Calculer le zoom (pinch)
+                        val zoomChange = event.calculateZoom()
+                        if (zoomChange != 1f) {
+                            scale = (scale * zoomChange).coerceIn(1f, 4f)
+                            // Consommer les événements de zoom
+                            event.changes.forEach { it.consume() }
+                        }
+
+                        // Pan uniquement si zoomé (scale > 1) ou si 2+ doigts
+                        if (scale > 1.01f || pointerCount >= 2) {
+                            val pan = event.calculatePan()
+                            val maxOffsetX = (containerSize.width * (scale - 1) / 2).coerceAtLeast(0f)
+                            val maxOffsetY = (containerSize.height * (scale - 1) / 2).coerceAtLeast(0f)
+                            offset = Offset(
+                                x = (offset.x + pan.x).coerceIn(-maxOffsetX, maxOffsetX),
+                                y = (offset.y + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
+                            )
+                            // Consommer les événements de pan SI on est zoomé
+                            if (scale > 1.01f) {
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                        // Sinon: ne pas consommer → le VerticalPager reçoit le swipe
+
+                    } while (event.changes.any { it.pressed })
                 }
             },
         contentAlignment = Alignment.Center
@@ -481,6 +523,34 @@ private fun WallImageWithClimbOverlay(
                 contourWidth = renderSettings.contourWidth.toFloat(),
                 modifier = Modifier.fillMaxSize()
             )
+        }
+
+        // Bouton reset zoom (visible uniquement si zoomé)
+        AnimatedVisibility(
+            visible = scale > 1.01f,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+        ) {
+            FilledIconButton(
+                onClick = {
+                    scale = 1f
+                    offset = Offset.Zero
+                },
+                modifier = Modifier.size(40.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Réinitialiser le zoom",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

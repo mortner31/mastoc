@@ -320,6 +320,14 @@ def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
     if data.setter_stokt_id:
         setter = db.query(User).filter(User.stokt_id == data.setter_stokt_id).first()
 
+    # Parser date_created si fourni
+    created_at = None
+    if data.date_created:
+        try:
+            created_at = datetime.fromisoformat(data.date_created.replace("Z", "+00:00"))
+        except ValueError:
+            created_at = None
+
     climb = Climb(
         stokt_id=data.stokt_id,
         face_id=face.id,
@@ -334,6 +342,7 @@ def import_climb(data: ImportClimbRequest, db: Session = Depends(get_db)):
         climbed_by=data.climbed_by,
         total_likes=data.total_likes,
         source="stokt",
+        created_at=created_at if created_at else datetime.utcnow(),
         synced_at=datetime.utcnow(),
     )
     db.add(climb)
@@ -394,6 +403,14 @@ def import_climbs_batch(data: BatchImportClimbsRequest, db: Session = Depends(ge
             # Trouver le setter
             setter = user_map.get(climb_data.setter_stokt_id) if climb_data.setter_stokt_id else None
 
+            # Parser date_created si fourni
+            created_at = None
+            if climb_data.date_created:
+                try:
+                    created_at = datetime.fromisoformat(climb_data.date_created.replace("Z", "+00:00"))
+                except ValueError:
+                    created_at = None
+
             climb = Climb(
                 stokt_id=climb_data.stokt_id,
                 face_id=face.id,
@@ -408,6 +425,7 @@ def import_climbs_batch(data: BatchImportClimbsRequest, db: Session = Depends(ge
                 climbed_by=climb_data.climbed_by,
                 total_likes=climb_data.total_likes,
                 source="stokt",
+                created_at=created_at if created_at else datetime.utcnow(),
                 synced_at=datetime.utcnow(),
             )
             db.add(climb)

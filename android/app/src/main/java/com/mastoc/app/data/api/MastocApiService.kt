@@ -30,7 +30,7 @@ interface MastocApiService {
         @Query("search") search: String? = null,
         @Query("source") source: String? = null,
         @Query("page") page: Int = 1,
-        @Query("page_size") pageSize: Int = 50
+        @Query("page_size") pageSize: Int = 500
     ): Response<ClimbsListDto>
 
     @GET("api/climbs/{climbId}")

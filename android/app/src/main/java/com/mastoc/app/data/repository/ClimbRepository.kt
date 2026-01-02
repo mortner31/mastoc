@@ -33,7 +33,7 @@ class ClimbRepository(
         faceId: String? = null,
         search: String? = null,
         page: Int = 1,
-        pageSize: Int = 50
+        pageSize: Int = 500
     ): Result<List<Climb>> {
         return try {
             val response = api.getClimbs(

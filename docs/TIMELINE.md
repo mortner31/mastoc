@@ -9,6 +9,20 @@ Ce fichier trace l'historique chronologique des TODOs et jalons du projet.
 
 ## 2026-01-01
 
+- **TODO 22 créé** - Data & Recherche Android
+  - Phase 1 : Déployer fix serveur + re-sync données
+  - Phase 2 : Lazy loading (pagination infinie)
+  - Phase 3 : Amélioration moteur de recherche
+
+- **TODO 21 avancé à 100%** - Corrections UX Android
+  - **Fix swipe vertical** : `detectTransformGestures` → `awaitEachGesture` custom
+  - **Bouton reset zoom** : X en haut à gauche (AnimatedVisibility)
+  - **Fix date serveur** : Mapping `date_created` → `created_at` dans import
+  - **Pagination** : 50 → 500 blocs
+  - **Affichage feetRule** : Règle des pieds dans header bloc
+  - **ADR 010 créé** : Gestion des Gestes Zoom/Swipe
+  - Rapport : `docs/reports/SESSION_2026-01-01_ux_fixes.md`
+
 - **TODO 21 avancé à 80%** - Conformité UX/Design Android
   - **P0 - Critique (100%)** :
     - NAV-01 : Bottom Navigation Bar (5 destinations)

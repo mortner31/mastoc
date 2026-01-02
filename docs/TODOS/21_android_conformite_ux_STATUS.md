@@ -1,11 +1,13 @@
 # STATUS - TODO 21 : Conformité UX/Design Android
 
-**Progression** : 80%
+**Progression** : 100%
 
 ## Décisions Prises
 
 - **Auth** : REPORTÉ - Garder API Key hardcodée pour l'instant
 - **Thème** : 3 choix implémentés (Coloré/Bleu/Gris) avec persistance DataStore
+- **Rendu** : ADR 009 - Système de rendu fidèle au Python
+- **Gestes** : ADR 010 - Gestion Zoom/Swipe dans VerticalPager
 
 ---
 
@@ -15,6 +17,12 @@
 - [x] NAV-02 : Accès Recherche Avancée (intégré dans nav)
 - [x] IMG-01 : Correction alignement overlay/image (ContentScale.Fit pris en compte)
 - [x] IMG-02 : Chargement image vérifié
+- [x] RENDER-01 : Rendu fidèle Python (fond grisé + prises couleur + contours)
+- [x] SWIPE-01 : Navigation swipe vertical entre blocs (VerticalPager)
+- [x] SWIPE-02 : Fix gestes zoom/swipe (awaitEachGesture custom)
+- [x] SWIPE-03 : Bouton reset zoom (AnimatedVisibility)
+- [x] INFO-02 : Affichage feetRule dans header bloc
+- [x] DATA-01 : Pagination 500 blocs (au lieu de 50)
 
 ## P1 - Majeur (100%)
 
@@ -24,6 +32,8 @@
 - [x] SETTINGS-04 : Persistance DataStore
 - [x] SETTINGS-05 : Bouton engrenage TopAppBar
 - [x] PICTO-01 : Pictos dans ClimbCard (HoldTypeIndicators déjà implémenté)
+- [x] RENDER-02 : Paramètres de rendu (saturation, luminosité, épaisseur, prises couleur)
+- [x] INFO-01 : Date création dans infos bloc
 
 ## P2 - Mineur (33%)
 
