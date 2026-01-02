@@ -11,6 +11,8 @@
 - [x] Méthodes `updateHoldColor` dans HoldDao
 - [x] Intégration dans ClimbRepository
 - [x] Base de données version 3
+- [x] **Appel extraction dans loadHoldsForFaceAsync**
+- [x] **Image chargée en taille originale (Coil)**
 
 ## Phase 2 : Générateur Picto (100%)
 
@@ -19,6 +21,7 @@
   - Dessin Canvas (ellipses colorées)
   - Marqueurs TOP (double cercle), FEET (bleu), START (tapes)
   - Top 20 prises grises (contexte)
+  - **Marge réduite à 2%**
 - [x] `PictoCache.kt`
   - LruCache mémoire (50 entrées)
   - Cache fichier PNG sur disque
@@ -26,15 +29,17 @@
 - [x] `PictoManager.kt`
   - Combine génération + cache
   - Méthode preloadPictos pour batch
+  - **+regeneratePicto() pour regénération**
 
 ## Phase 3 : Nouveau Layout ClimbCard (100%)
 
 - [x] Layout Row 25% | 50% | 25%
 - [x] Zone gauche : PictoZone avec Image composable
 - [x] Zone centre : InfoZone (titre, auteur, date formatée)
-- [x] Zone droite : StatsZone (GradeBadge, ❤️ likes, ✕ croix)
+- [x] Zone droite : StatsZone (GradeBadge, likes, croix)
 - [x] Placeholder quand pas de picto
 - [x] Formatage date français ("15 déc. 2025")
+- [x] **fillMaxSize + FillBounds (remplit le cadre)**
 
 ## Phase 4 : Intégration ClimbListScreen (100%)
 
@@ -44,6 +49,16 @@
 - [x] Méthodes loadHoldsForFace / loadPictoForClimb
 - [x] LaunchedEffect pour génération lazy au scroll
 - [x] Passage du picto au ClimbCard
+- [x] **computeTopHoldsForFace / getTopHoldsForFace**
+- [x] **Extraction couleurs automatique si manquantes**
+
+## Phase 5 : SettingsScreen (100%)
+
+- [x] Sections dépliables avec animation
+- [x] Section Thème de couleurs
+- [x] Section Cache et pictos (stats + regénérer)
+- [x] Section Apparence des blocs (rendu)
+- [x] Section À propos
 
 ---
 
@@ -62,19 +77,10 @@
 - `data/model/Hold.kt` : +colorRgb
 - `data/Mappers.kt` : colorRgb dans toDomain
 - `data/repository/ClimbRepository.kt` : +extractHoldColors, +needsColorExtraction
-- `ui/components/ClimbCard.kt` : nouveau layout avec picto
+- `ui/components/ClimbCard.kt` : nouveau layout avec picto, fillMaxSize
 - `ui/screens/ClimbListScreen.kt` : intégration pictos lazy
-- `viewmodel/ClimbListViewModel.kt` : +PictoManager, +holdsMap, +pictosCache
-- Autres ViewModels : context passé au repository
-
----
-
-## Build & Tests
-
-```
-BUILD SUCCESSFUL
-Tests: PASSED
-```
+- `ui/screens/SettingsScreen.kt` : sections dépliables
+- `viewmodel/ClimbListViewModel.kt` : +PictoManager, +holdsMap, +pictosCache, +topHolds
 
 ---
 
